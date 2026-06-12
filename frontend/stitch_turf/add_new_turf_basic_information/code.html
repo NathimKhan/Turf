@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VenueManager - Add New Turf</title>
+<!-- Google Fonts: Inter for the Kinetic Precision aesthetic -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#004ac6",
+                    "on-tertiary-container": "#c1ffc5",
+                    "primary-container": "#2563eb",
+                    "tertiary-fixed": "#6bff8f",
+                    "primary-fixed": "#dbe1ff",
+                    "inverse-primary": "#b4c5ff",
+                    "on-tertiary-fixed": "#002109",
+                    "surface-tint": "#0053db",
+                    "on-secondary-fixed": "#001f26",
+                    "secondary": "#00687a",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "surface-container-highest": "#e1e2ed",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-primary-container": "#eeefff",
+                    "tertiary": "#006229",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "outline-variant": "#c3c6d7",
+                    "outline": "#737686",
+                    "surface-variant": "#e1e2ed",
+                    "secondary-fixed-dim": "#4cd7f6",
+                    "on-surface": "#191b23",
+                    "surface-dim": "#d9d9e5",
+                    "surface-container-high": "#e7e7f3",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#191b23",
+                    "secondary-container": "#57dffe",
+                    "on-secondary-container": "#006172",
+                    "surface-container-low": "#f3f3fe",
+                    "tertiary-container": "#007e37",
+                    "on-secondary-fixed-variant": "#004e5c",
+                    "on-error": "#ffffff",
+                    "inverse-on-surface": "#f0f0fb",
+                    "secondary-fixed": "#acedff",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-surface": "#2e3039",
+                    "on-tertiary": "#ffffff",
+                    "surface": "#faf8ff",
+                    "background": "#faf8ff",
+                    "on-surface-variant": "#434655",
+                    "surface-container": "#ededf9",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#faf8ff",
+                    "on-primary-fixed": "#00174b",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "stack-sm": "8px",
+                    "stack-lg": "32px",
+                    "base": "8px",
+                    "stack-md": "16px",
+                    "margin-desktop": "40px",
+                    "container-max": "1280px",
+                    "section-gap": "80px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-2xl": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+      }
+      .glass-effect {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .magnetic-button {
+        transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+      }
+      .magnetic-button:active {
+        transform: scale(0.98);
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+      }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 flex justify-between items-center w-full px-margin-desktop h-20 bg-surface/70 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-4">
+<span class="font-headline-lg text-headline-lg font-extrabold tracking-tighter text-primary">VenueManager</span>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="px-6 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-primary/5 transition-colors magnetic-button">
+                Save Progress
+            </button>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md shadow-md hover:brightness-110 transition-all magnetic-button">
+                Exit Wizard
+            </button>
+</div>
+</header>
+<div class="flex min-h-[calc(100vh-80px)]">
+<!-- SideNavBar (Progress Navigation) -->
+<aside class="hidden lg:flex flex-col pt-24 pb-8 px-6 space-y-4 h-screen w-80 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/30">
+<div class="mb-10 px-2">
+<h2 class="font-headline-xl text-headline-xl font-bold text-primary">New Turf</h2>
+<div class="mt-2 flex items-center gap-2">
+<div class="h-1.5 flex-1 bg-outline-variant/30 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[60%] transition-all duration-700"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">60% Complete</span>
+</div>
+</div>
+<nav class="space-y-2">
+<!-- Step 1: Basic Details (Active) -->
+<div class="flex items-center gap-3 px-4 py-3 bg-primary text-on-primary rounded-lg font-bold shadow-md translate-x-1 transition-transform duration-300">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<span class="font-label-md text-label-md">Venue Details</span>
+</div>
+<!-- Inactive Steps -->
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-all cursor-pointer group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">sports_soccer</span>
+<span class="font-label-md text-label-md">Turf Specifications</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-all cursor-pointer group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">payments</span>
+<span class="font-label-md text-label-md">Pricing &amp; Slots</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-all cursor-pointer group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">photo_library</span>
+<span class="font-label-md text-label-md">Photos &amp; Media</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-all cursor-pointer group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">check_circle</span>
+<span class="font-label-md text-label-md">Review &amp; Publish</span>
+</div>
+</nav>
+<div class="mt-auto px-4">
+<button class="w-full py-3 border border-outline/20 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                    Need Help?
+                </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 lg:ml-80 bg-surface min-h-full">
+<div class="max-w-4xl mx-auto px-margin-desktop py-section-gap">
+<!-- Header Section -->
+<div class="mb-stack-lg">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full mb-4">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">info</span>
+<span class="font-label-sm text-label-sm">Step 1: Basic Information</span>
+</div>
+<h1 class="font-headline-2xl text-headline-2xl mb-4">Tell us about your venue</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+                        Provide the fundamental details of your sporting facility. This information will be displayed prominently to athletes during the discovery process.
+                    </p>
+</div>
+<!-- Form Section -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-sm overflow-hidden">
+<div class="p-8 space-y-gutter">
+<!-- Venue Name Input -->
+<div class="space-y-2">
+<label class="block font-label-md text-label-md text-on-surface" for="venue-name">Venue Name</label>
+<input class="w-full px-4 py-3 bg-white border border-outline-variant/60 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-body-md" id="venue-name" placeholder="e.g. Olympic Arena Central" type="text"/>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Keep it catchy and recognizable.</p>
+</div>
+<!-- Description Textarea -->
+<div class="space-y-2">
+<label class="block font-label-md text-label-md text-on-surface" for="description">Description</label>
+<textarea class="w-full px-4 py-3 bg-white border border-outline-variant/60 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-body-md" id="description" placeholder="Describe the atmosphere, facilities, and unique features..." rows="4"></textarea>
+</div>
+<!-- Turf Type Grid (Interactive Cards) -->
+<div class="space-y-4">
+<label class="block font-label-md text-label-md text-on-surface">Turf Type</label>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<label class="relative cursor-pointer group">
+<input checked="" class="peer sr-only" name="turf-type" type="radio"/>
+<div class="p-4 border border-outline-variant/60 rounded-xl bg-white peer-checked:border-primary peer-checked:bg-primary/5 transition-all hover:border-primary/40">
+<div class="flex items-center justify-between mb-2">
+<span class="material-symbols-outlined text-primary">grass</span>
+<div class="w-4 h-4 rounded-full border border-outline-variant/60 peer-checked:bg-primary flex items-center justify-center">
+<div class="w-2 h-2 bg-white rounded-full scale-0 peer-checked:scale-100 transition-transform"></div>
+</div>
+</div>
+<div class="font-label-md text-label-md">Natural Grass</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Premium organic feel</div>
+</div>
+</label>
+<label class="relative cursor-pointer group">
+<input class="peer sr-only" name="turf-type" type="radio"/>
+<div class="p-4 border border-outline-variant/60 rounded-xl bg-white peer-checked:border-primary peer-checked:bg-primary/5 transition-all hover:border-primary/40">
+<div class="flex items-center justify-between mb-2">
+<span class="material-symbols-outlined text-primary">layers</span>
+<div class="w-4 h-4 rounded-full border border-outline-variant/60 peer-checked:bg-primary flex items-center justify-center">
+<div class="w-2 h-2 bg-white rounded-full scale-0 peer-checked:scale-100 transition-transform"></div>
+</div>
+</div>
+<div class="font-label-md text-label-md">Artificial Turf</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">High-durability hybrid</div>
+</div>
+</label>
+<label class="relative cursor-pointer group">
+<input class="peer sr-only" name="turf-type" type="radio"/>
+<div class="p-4 border border-outline-variant/60 rounded-xl bg-white peer-checked:border-primary peer-checked:bg-primary/5 transition-all hover:border-primary/40">
+<div class="flex items-center justify-between mb-2">
+<span class="material-symbols-outlined text-primary">sports_basketball</span>
+<div class="w-4 h-4 rounded-full border border-outline-variant/60 peer-checked:bg-primary flex items-center justify-center">
+<div class="w-2 h-2 bg-white rounded-full scale-0 peer-checked:scale-100 transition-transform"></div>
+</div>
+</div>
+<div class="font-label-md text-label-md">Hard Court</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Consistent multisport</div>
+</div>
+</label>
+</div>
+</div>
+<!-- Amenities (Chips Selection) -->
+<div class="space-y-4">
+<label class="block font-label-md text-label-md text-on-surface">Available Amenities</label>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 bg-secondary-container/20 text-on-secondary-container border border-on-secondary-container/20 rounded-full font-label-sm text-label-sm flex items-center gap-2 hover:bg-secondary-container/40 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">wifi</span> Wi-Fi
+                                </button>
+<button class="px-4 py-2 bg-surface-container border border-outline-variant/40 rounded-full font-label-sm text-label-sm flex items-center gap-2 hover:border-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">shower</span> Showers
+                                </button>
+<button class="px-4 py-2 bg-surface-container border border-outline-variant/40 rounded-full font-label-sm text-label-sm flex items-center gap-2 hover:border-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">local_parking</span> Parking
+                                </button>
+<button class="px-4 py-2 bg-surface-container border border-outline-variant/40 rounded-full font-label-sm text-label-sm flex items-center gap-2 hover:border-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">restaurant</span> Cafe
+                                </button>
+<button class="px-4 py-2 bg-surface-container border border-outline-variant/40 rounded-full font-label-sm text-label-sm flex items-center gap-2 hover:border-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">medical_services</span> First Aid
+                                </button>
+<button class="px-4 py-2 border border-primary/40 text-primary rounded-full font-label-sm text-label-sm flex items-center gap-2 hover:bg-primary/5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span> Add More
+                                </button>
+</div>
+</div>
+</div>
+<!-- Footer Action Bar (Glassmorphic) -->
+<div class="p-8 bg-surface-container-low/50 border-t border-outline-variant/30 flex justify-between items-center">
+<button class="px-6 py-3 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined">arrow_back</span> Back
+                        </button>
+<button class="px-10 py-3 bg-primary text-on-primary rounded-lg font-label-md text-label-md shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2">
+                            Next Step <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Guidance Bento -->
+<div class="mt-section-gap grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="p-6 bg-white border border-outline-variant/30 rounded-xl flex items-start gap-4">
+<div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary">visibility</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface mb-1">Visual Preview</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">See how your venue looks to athletes in real-time as you type.</p>
+</div>
+</div>
+<div class="p-6 bg-white border border-outline-variant/30 rounded-xl flex items-start gap-4">
+<div class="w-12 h-12 bg-tertiary-container/10 rounded-full flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-tertiary-container">verified</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface mb-1">Trust Badges</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Complete venues get a "Verified Performance" badge automatically.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Background Decorative Element (Subtle Kinetic Energy) -->
+<div class="fixed top-0 right-0 -z-10 opacity-10 pointer-events-none">
+<svg fill="none" height="600" viewbox="0 0 600 600" width="600" xmlns="http://www.w3.org/2000/svg">
+<circle cx="450" cy="150" r="250" stroke="url(#paint0_linear)" stroke-width="2"></circle>
+<circle cx="450" cy="150" r="150" stroke="url(#paint1_linear)" stroke-dasharray="10 10" stroke-width="1"></circle>
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="paint0_linear" x1="200" x2="700" y1="-100" y2="400">
+<stop stop-color="#004ac6"></stop>
+<stop offset="1" stop-color="#2563eb" stop-opacity="0"></stop>
+</lineargradient>
+<lineargradient gradientunits="userSpaceOnUse" id="paint1_linear" x1="300" x2="600" y1="0" y2="300">
+<stop stop-color="#004ac6"></stop>
+<stop offset="1" stop-color="#2563eb" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+<script>
+        // Simple Interaction logic for Amenities selection
+        const amenityButtons = document.querySelectorAll('button[type="button"]');
+        amenityButtons.forEach(btn => {
+            if (btn.innerText.includes('Add More')) return;
+            btn.addEventListener('click', () => {
+                const isActive = btn.classList.contains('bg-secondary-container/20');
+                if (isActive) {
+                    btn.classList.remove('bg-secondary-container/20', 'text-on-secondary-container', 'border-on-secondary-container/20');
+                    btn.classList.add('bg-surface-container', 'border-outline-variant/40');
+                } else {
+                    btn.classList.add('bg-secondary-container/20', 'text-on-secondary-container', 'border-on-secondary-container/20');
+                    btn.classList.remove('bg-surface-container', 'border-outline-variant/40');
+                }
+            });
+        });
+
+        // Magnetic effect for primary button
+        const mainCta = document.querySelector('.bg-primary.shadow-lg');
+        if (mainCta) {
+            mainCta.addEventListener('mousemove', (e) => {
+                const rect = mainCta.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                mainCta.style.transform = `translate(${x * 0.1}px, ${y * 0.1}px) scale(1.02)`;
+            });
+            mainCta.addEventListener('mouseleave', () => {
+                mainCta.style.transform = `translate(0px, 0px) scale(1)`;
+            });
+        }
+    </script>
+</body></html>

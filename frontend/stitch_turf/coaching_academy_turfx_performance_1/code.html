@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TurfX | Elite Sports Academy</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#007e37",
+                    "surface-variant": "#e1e2ed",
+                    "surface-container-high": "#e7e7f3",
+                    "surface": "#faf8ff",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "tertiary-fixed": "#6bff8f",
+                    "surface-tint": "#0053db",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "on-surface-variant": "#434655",
+                    "on-error": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "on-primary-container": "#eeefff",
+                    "error": "#ba1a1a",
+                    "outline": "#737686",
+                    "on-secondary-container": "#006172",
+                    "on-primary-fixed": "#00174b",
+                    "tertiary": "#006229",
+                    "on-tertiary-container": "#c1ffc5",
+                    "error-container": "#ffdad6",
+                    "on-tertiary": "#ffffff",
+                    "secondary-container": "#57dffe",
+                    "outline-variant": "#c3c6d7",
+                    "surface-container": "#ededf9",
+                    "surface-container-low": "#f3f3fe",
+                    "secondary-fixed": "#acedff",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "on-secondary-fixed-variant": "#004e5c",
+                    "secondary-fixed-dim": "#4cd7f6",
+                    "inverse-on-surface": "#f0f0fb",
+                    "on-surface": "#191b23",
+                    "background": "#faf8ff",
+                    "surface-container-highest": "#e1e2ed",
+                    "surface-bright": "#faf8ff",
+                    "on-background": "#191b23",
+                    "secondary": "#00687a",
+                    "surface-dim": "#d9d9e5",
+                    "primary-fixed": "#dbe1ff",
+                    "inverse-primary": "#b4c5ff",
+                    "inverse-surface": "#2e3039",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-tertiary-fixed": "#002109",
+                    "primary": "#004ac6",
+                    "primary-container": "#2563eb",
+                    "on-secondary-fixed": "#001f26"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "40px",
+                    "stack-md": "16px",
+                    "container-max": "1280px",
+                    "gutter": "24px",
+                    "stack-lg": "32px",
+                    "section-gap": "80px",
+                    "stack-sm": "8px",
+                    "margin-mobile": "16px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-2xl-mobile": ["Inter"],
+                    "headline-2xl": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-2xl-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                    "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+        .kinetic-hover {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .kinetic-hover:hover {
+            transform: scale(1.02) translateY(-4px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/70 dark:bg-surface-dim/70 backdrop-blur-xl border-b border-outline-variant/30 dark:border-outline/20 shadow-sm">
+<div class="flex justify-between items-center px-margin-desktop h-20 max-w-container-max mx-auto">
+<span class="font-headline-lg text-headline-lg font-black tracking-tighter text-primary dark:text-primary-fixed-dim cursor-pointer">TurfX</span>
+<div class="hidden md:flex items-center gap-gutter">
+<a class="font-body-md text-body-md text-primary dark:text-primary-fixed-dim font-bold border-b-2 border-primary pb-1" href="#">Programs</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors" href="#">Schedules</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors" href="#">Mentors</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors" href="#">Campus</a>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="px-6 py-2 rounded-lg font-label-md bg-transparent text-primary hover:bg-surface-container-low transition-all">Login</button>
+<button class="px-6 py-2 rounded-lg font-label-md bg-primary text-on-primary hover:bg-primary-container active:scale-95 transition-all">Join Academy</button>
+</div>
+</div>
+</nav>
+<main class="pt-20">
+<!-- 1. Cinematic Hero -->
+<section class="relative h-[870px] flex items-center overflow-hidden">
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="A cinematic, wide-angle shot of a professional football stadium at sunset with bright stadium floodlights illuminating a lush green pitch. The atmosphere is high-energy and epic, with a slight cool blue tint to match the TurfX brand. The lighting creates dramatic long shadows, emphasizing the precision of the elite sports environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOnYDgZ_su9nw0SoNFSd4ibxKNzKHLh6HUB4oR9SHIojyKTLH9PsuV_aKkhNwUnPuUgLfRhhCKrRiRDTXtSu6NTfuzVaZ4LWC9ZoN3XQ6jVpNGLpEFRxHg2oekwhGept1TLDA7bJEK0Yg4P--CzG1gk2MaTs2kp0rsJIHq5U1GsbbEUB_0OoXKMhjj8nV1-reo1xbGnM5JZL3klxG-TV1vVquhvZ0SKv2HmUhh4beDMsnagjzq58xpCBzVygi0tcH9ZlzKm36WkmEA"/>
+<div class="absolute inset-0 bg-gradient-to-r from-on-surface/80 to-transparent"></div>
+<div class="relative z-10 px-margin-desktop max-w-container-max mx-auto w-full">
+<div class="max-w-2xl text-on-primary">
+<span class="font-label-md uppercase tracking-widest text-secondary-container mb-stack-sm block">Welcome to the Elite Tier</span>
+<h1 class="font-headline-2xl text-headline-2xl mb-stack-md leading-[1.1]">Master the Game</h1>
+<p class="font-body-lg text-body-lg mb-stack-lg text-surface-variant">Experience elite performance training at TurfX Academy. Designed for athletes who demand precision, intensity, and excellence in every play.</p>
+<div class="flex flex-wrap gap-stack-md">
+<button class="px-8 py-4 bg-primary text-on-primary rounded-lg font-label-md kinetic-hover shadow-lg">Enroll in Winter Batch</button>
+<button class="px-8 py-4 bg-surface/10 backdrop-blur-md border border-on-primary/20 text-on-primary rounded-lg font-label-md hover:bg-on-primary/10 transition-all">Watch Program Tour</button>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Impact Stats -->
+<section class="bg-surface-container-lowest border-b border-outline-variant/30 py-stack-lg">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-gutter text-center">
+<div>
+<div class="font-headline-xl text-headline-xl text-primary font-black">94%</div>
+<div class="font-label-sm text-on-surface-variant uppercase tracking-tighter">Success Rate</div>
+</div>
+<div>
+<div class="font-headline-xl text-headline-xl text-primary font-black">1:8</div>
+<div class="font-label-sm text-on-surface-variant uppercase tracking-tighter">Coach-Student Ratio</div>
+</div>
+<div>
+<div class="font-headline-xl text-headline-xl text-primary font-black">120+</div>
+<div class="font-label-sm text-on-surface-variant uppercase tracking-tighter">Pro Alumni</div>
+</div>
+<div>
+<div class="font-headline-xl text-headline-xl text-primary font-black">Elite</div>
+<div class="font-label-sm text-on-surface-variant uppercase tracking-tighter">FIFA Certified</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Precision Programs -->
+<section class="py-section-gap bg-surface">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<div class="mb-stack-lg flex justify-between items-end">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-on-surface">Precision Programs</h2>
+<p class="text-on-surface-variant font-body-md">Specialized pathways for every role on the field.</p>
+</div>
+<a class="text-primary font-label-md flex items-center gap-1" href="#">View all paths <span class="material-symbols-outlined">arrow_forward</span></a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<div class="glass-card rounded-xl overflow-hidden kinetic-hover group">
+<div class="h-64 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A focused young athlete practicing striking a soccer ball with perfect technique. The background shows a high-end training facility with precision markers on the grass. The lighting is crisp, morning sunlight, reflecting a high-performance athletic mood in the TurfX blue and white color scheme." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1AFdzerXtw56OkBTv6J9cFt4qr91MMg3WMdfWNiybYaAauJDuPStUsFqfq7VXxgfLIEaSsbMJ9SVle9KxkedQoq0FZJocVTIDhSnoQmLRLpeUTnqkqR6BfCrSPM6GwZNc0Pzh5zvVFOSdsrgucI8HDcYo0b-84utfXdkAeV6nPxkPAzxVMFgYnLd9IicXWwqF9-8G0vHfDOVZu9F1eAFf1xDp1p57GFXHLfXa4MpRw0nV2IAkZfr3_iWsKqiC28x-jwBP-BMeVdvp"/>
+<div class="absolute bottom-4 left-4 flex gap-2">
+<span class="bg-primary/90 text-on-primary px-3 py-1 rounded-full text-label-sm backdrop-blur-sm">12 Weeks</span>
+</div>
+</div>
+<div class="p-stack-md">
+<div class="flex justify-between items-center mb-stack-sm">
+<h3 class="font-headline-lg text-headline-lg">Elite Striker Program</h3>
+<span class="material-symbols-outlined text-primary" data-weight="fill">sports_soccer</span>
+</div>
+<p class="text-on-surface-variant font-body-md mb-stack-md">Master the art of clinical finishing and positioning under pressure.</p>
+<div class="flex items-center gap-stack-md mb-stack-md">
+<div class="flex items-center gap-1 text-label-sm text-tertiary">
+<span class="material-symbols-outlined text-sm">signal_cellular_alt</span> High Intensity
+                                </div>
+</div>
+<button class="w-full py-3 border border-primary text-primary font-label-md rounded-lg hover:bg-primary hover:text-on-primary transition-all">View Details</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="glass-card rounded-xl overflow-hidden kinetic-hover group">
+<div class="h-64 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A professional player in action, distributing the ball with vision. The scene captures the 'flow state' of high-performance athletes in a modern arena. The lighting is sophisticated, with architectural precision seen in the background structures. Blue and white accents dominate the palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoPVjRSr6m8T4ECdmJ2MPCZC5h6snVsVVUFnJaehobZWuC3Zy7cZf6ibrKBUaqX0mm-HtMQAyQolYoosEmBzZLoebu7Hes7ZjrNJp9xqtHRpyoeeTV3BXyUzsXu8Ura6QsaEpYQ_WJJlZN340YdgFIL3OxWpZZwx1iBBYDvCP59dc46DYV22KkTG5heCpymnH4zE89jj4_4RnU9MhH4f5oZhmHbCjIrQzeb3sF07NWUO677Eyyg0Mdfef0NkfHFaqOR0D9YyvPGn3D"/>
+<div class="absolute bottom-4 left-4 flex gap-2">
+<span class="bg-primary/90 text-on-primary px-3 py-1 rounded-full text-label-sm backdrop-blur-sm">16 Weeks</span>
+</div>
+</div>
+<div class="p-stack-md">
+<div class="flex justify-between items-center mb-stack-sm">
+<h3 class="font-headline-lg text-headline-lg">Midfield Maestro</h3>
+<span class="material-symbols-outlined text-primary" data-weight="fill">hub</span>
+</div>
+<p class="text-on-surface-variant font-body-md mb-stack-md">Strategic vision, technical passing, and control over the game's tempo.</p>
+<div class="flex items-center gap-stack-md mb-stack-md">
+<div class="flex items-center gap-1 text-label-sm text-tertiary">
+<span class="material-symbols-outlined text-sm">signal_cellular_alt</span> Advanced
+                                </div>
+</div>
+<button class="w-full py-3 border border-primary text-primary font-label-md rounded-lg hover:bg-primary hover:text-on-primary transition-all">View Details</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="glass-card rounded-xl overflow-hidden kinetic-hover group">
+<div class="h-64 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A defender making a precise, calculated challenge. The focus is on the athletic movement and architectural precision of the training environment. Clean lines, white space, and a premium athletic aesthetic with cool lighting and vibrant blue details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD35Ygl0R4Vk0F11EA7YeNQVVJCy5VYPP6ROkA6HJ-u9KdjFJG1OVesv6NiNYBFz56BWv0rnB7sq3VK_IIn5EXq5cYT8ajIZdO7xTxDgi39aEiXtIQ6mYkFZxZynIhg5tz4gf3K_y8iRlqetzQ6rSgXZ_bfwJaTWRhm1d9GY1awjSbhkBR9nM6kJN5uh4R8S9eS1c15S5JJUCFlX0hfhk0xQRrHBlnmjrrG0cL1RFZmprhhpXIJewfTHrzmIM2heRq9IqJs4MJILnaw"/>
+<div class="absolute bottom-4 left-4 flex gap-2">
+<span class="bg-primary/90 text-on-primary px-3 py-1 rounded-full text-label-sm backdrop-blur-sm">10 Weeks</span>
+</div>
+</div>
+<div class="p-stack-md">
+<div class="flex justify-between items-center mb-stack-sm">
+<h3 class="font-headline-lg text-headline-lg">Defensive Wall</h3>
+<span class="material-symbols-outlined text-primary" data-weight="fill">shield</span>
+</div>
+<p class="text-on-surface-variant font-body-md mb-stack-md">Elite defensive positioning, tactical tackling, and leadership from the back.</p>
+<div class="flex items-center gap-stack-md mb-stack-md">
+<div class="flex items-center gap-1 text-label-sm text-tertiary">
+<span class="material-symbols-outlined text-sm">signal_cellular_alt</span> Expert
+                                </div>
+</div>
+<button class="w-full py-3 border border-primary text-primary font-label-md rounded-lg hover:bg-primary hover:text-on-primary transition-all">View Details</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Upcoming Batches (Professional Table) -->
+<section class="py-section-gap bg-surface-container-low">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<h2 class="font-headline-xl text-headline-xl text-on-surface mb-stack-lg text-center">Upcoming Batches</h2>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/30">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container text-on-surface-variant border-b border-outline-variant/30">
+<tr>
+<th class="p-stack-md font-label-md">Program Name</th>
+<th class="p-stack-md font-label-md">Intake Date</th>
+<th class="p-stack-md font-label-md">Status</th>
+<th class="p-stack-md font-label-md text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20">
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="p-stack-md font-body-md font-semibold">Elite Striker Program</td>
+<td class="p-stack-md font-body-md">Jan 15, 2025</td>
+<td class="p-stack-md">
+<span class="px-3 py-1 bg-error-container text-on-error-container rounded-full text-label-sm font-bold">2 Slots Left</span>
+</td>
+<td class="p-stack-md text-right">
+<button class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-sm kinetic-hover shadow-sm">Enroll Now</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="p-stack-md font-body-md font-semibold">Midfield Maestro</td>
+<td class="p-stack-md font-body-md">Feb 01, 2025</td>
+<td class="p-stack-md">
+<span class="px-3 py-1 bg-tertiary-container/20 text-tertiary-container rounded-full text-label-sm font-bold">Open</span>
+</td>
+<td class="p-stack-md text-right">
+<button class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-sm kinetic-hover shadow-sm">Enroll Now</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="p-stack-md font-body-md font-semibold">Defensive Wall</td>
+<td class="p-stack-md font-body-md">Feb 15, 2025</td>
+<td class="p-stack-md">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full text-label-sm font-bold">Waitlist Only</span>
+</td>
+<td class="p-stack-md text-right">
+<button class="px-6 py-2 bg-outline text-on-surface rounded-lg font-label-sm opacity-50 cursor-not-allowed">Join Waitlist</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- 5. Elite Mentorship -->
+<section class="py-section-gap">
+<div class="max-w-container-max mx-auto px-margin-desktop text-center">
+<h2 class="font-headline-xl text-headline-xl text-on-surface mb-stack-lg">Elite Mentorship</h2>
+<div class="flex flex-wrap justify-center gap-stack-lg">
+<!-- Coach 1 -->
+<div class="flex flex-col items-center max-w-[200px] group">
+<div class="w-32 h-32 rounded-full border-4 border-primary/20 p-1 mb-stack-sm overflow-hidden group-hover:border-primary transition-all duration-300">
+<img class="w-full h-full object-cover rounded-full" data-alt="A professional sports coach portrait, Marcus, with a confident and motivating expression. He is wearing high-end athletic training gear in a minimalist white and blue studio. The lighting is bright and architectural, reflecting a professional and elite sports environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2t33HfVjZW-lOPJNS7j47jBxb29vrstDcGRaFUYcThSNtff7sMvHDzycJ2kBBIUjbM-CDL-jDy2BxtLf4sW3WUxiCjaSMbedNCgQS2tQWwCMb0gUsmrheQ180mkO9M-O29v2pWGPQpctF_2avX4vCq-XmAUlVvKmbCu9xX48rKrQLRl8Y4YIRrZ448EJmGtbah4Zy8_r1lRxkDr_lde3iroOTiZyVCa65iPsijVKhWIzEf1vqxxjGm9HnTMeYYLE9pPnD8xyC1fbz"/>
+</div>
+<h4 class="font-headline-lg text-headline-lg">Coach Marcus</h4>
+<p class="text-primary font-label-sm uppercase">Striker Specialist</p>
+<p class="text-on-surface-variant text-label-sm">12 Years Experience</p>
+</div>
+<!-- Coach 2 -->
+<div class="flex flex-col items-center max-w-[200px] group">
+<div class="w-32 h-32 rounded-full border-4 border-primary/20 p-1 mb-stack-sm overflow-hidden group-hover:border-primary transition-all duration-300">
+<img class="w-full h-full object-cover rounded-full" data-alt="A professional sports coach portrait, Sarah, wearing a TurfX branded high-performance tracksuit. She looks visionary and experienced, set against a clean, architectural gym interior with soft, even lighting. The palette is professional white and navy blue." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAO0uzEVCKgf5PaZmYV_8-dqfrOWq1F3khT8OUx50qY92n4ljiHb30vCaRSVCziGN95qw5-rPWXBH9FMhenwzsEMZk2_nwM0w3x4pT3-0zX1nNjAtiv_Pj1bl2iicNqfGZKHbXq9D4OhVti0qg6FEGfO0J9LKrFcaSmWRMhgcsT-QQzsFLKHI21vlouwQY-BazrQkFXssZ0ZmziFRbPYgwc3QcJ7X0ZL8-FyYUofMvocLwHQKhiEDUx6nLTTB-5nk6I4eDaw3SWD6rZ"/>
+</div>
+<h4 class="font-headline-lg text-headline-lg">Coach Sarah</h4>
+<p class="text-primary font-label-sm uppercase">Tactical Director</p>
+<p class="text-on-surface-variant text-label-sm">15 Years Experience</p>
+</div>
+<!-- Coach 3 -->
+<div class="flex flex-col items-center max-w-[200px] group">
+<div class="w-32 h-32 rounded-full border-4 border-primary/20 p-1 mb-stack-sm overflow-hidden group-hover:border-primary transition-all duration-300">
+<img class="w-full h-full object-cover rounded-full" data-alt="A professional male sports mentor portrait in high-key lighting. He has a focused, elite athlete aura, wearing modern athletic gear. The background is a blurred high-end turf field. The style is sharp, kinetic, and modern." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDE_mmhyyK7g-aZepA2GFUq8SLtP20LiyrXRWk3AXqM4G-F3WagZrPQs6D_oF0dagF8o3e0TlL8aXUutfNLOosd7UioI1hJMOgdI05cC8fMXRXZqiGEUKmPj8jeru5Pq6Cv585NMdFIs1-gs3ZWP8RIKOLuymVhQhCj4aZUJuMa3mM0kuHZWDLGf7CdEIK7w7XCXF-WwRIJ8KdGCP00sXQp0Ygtmi3F7ERtpa8ZLsPmzrTskzG3ajTE70M8P4BJLy-1Il56SOqRuY0"/>
+</div>
+<h4 class="font-headline-lg text-headline-lg">Coach David</h4>
+<p class="text-primary font-label-sm uppercase">Performance Lead</p>
+<p class="text-on-surface-variant text-label-sm">10 Years Experience</p>
+</div>
+</div>
+</div>
+</section>
+<!-- 6. World-Class Infrastructure -->
+<section class="py-section-gap bg-inverse-surface text-on-primary">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter items-center mb-stack-lg">
+<div>
+<h2 class="font-headline-2xl text-headline-2xl leading-tight">World-Class Infrastructure</h2>
+<p class="font-body-lg text-surface-variant mt-stack-md">Every inch of our campus is designed for performance. From state-of-the-art tech labs to professional-grade pitches, we provide the ultimate environment for athletic evolution.</p>
+</div>
+<div class="grid grid-cols-2 gap-stack-md">
+<div class="glass-card bg-white/5 border-white/10 p-stack-md rounded-xl text-center">
+<span class="material-symbols-outlined text-4xl mb-2 text-secondary-container">biotech</span>
+<div class="font-label-md">Performance Labs</div>
+</div>
+<div class="glass-card bg-white/5 border-white/10 p-stack-md rounded-xl text-center">
+<span class="material-symbols-outlined text-4xl mb-2 text-secondary-container">water_drop</span>
+<div class="font-label-md">Hydrotherapy Wing</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-stack-md h-[500px]">
+<div class="col-span-12 md:col-span-7 rounded-xl overflow-hidden group relative">
+<img class="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700" data-alt="A hyper-modern indoor performance lab with high-tech equipment and minimalist architectural lighting. Professional athletes are being monitored by elite sports scientists. The aesthetic is futuristic and precise, with clean white surfaces and intense blue accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3rBtkqboIWheOcyQVxy604N68lcde7mXps7NWfbghpsvGF5TVvOmYgijtPu4Jh0CPZ0K8uOgVnEpUsU1iHNPAQB9u7W1ymW8WmmWrtjjeAkyyaqYqr8CYXXfxnIiwfq_zUXIoik6NrDWiY5zRX4L4q1W9MPO4qdUG_9ZIS3RFxf3PL9U9AODAXsROBeJYQd84PKnrJ0YCCaf7wKSs5bp5me2cXpvsk5m_fQtqX2DV0rER_2ydTLtJzjFqAjH6Mmgsbb5SiE_b8wrY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+<div class="absolute bottom-6 left-6">
+<h4 class="font-headline-lg text-white">Advanced Performance Labs</h4>
+<p class="text-on-primary/70 font-label-sm">Biometric tracking and motion analysis</p>
+</div>
+</div>
+<div class="col-span-12 md:col-span-5 flex flex-col gap-stack-md">
+<div class="h-1/2 rounded-xl overflow-hidden group relative">
+<img class="w-full h-full object-cover" data-alt="A professional football pitch at night with intense stadium lighting and atmospheric haze. The grass is pristine green with sharp white boundary lines. The scene conveys a sense of architectural precision and professional athletic intensity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcg_pzcn0ePibzBBC8VkI9Pp1vjrn2Tu1nXnlt8BbUR5WyvAlYC4995mTj6ah8bXQqfsx6Kuxf5OeKqUyy20fNqMBsNEY6BEI8cwONkMf653_IoiB3ISaBxzW9L1_Em11mjaDD8hh58yVcBBaUiykVLcTeO3g9sR_HAr_cy-oJ67CU7V-q6cq7zqwQEkAFWlp5Zb57rr_7GNrGJFid6Zr_7RuImgPGl5BeMmzJ3xtqxJm75K2N9pnRbON75iIIQKXNCbIOiw3HaCa4"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute bottom-4 left-4">
+<h4 class="font-label-md text-white font-bold">Pro-Turf Pitches</h4>
+</div>
+</div>
+<div class="h-1/2 rounded-xl overflow-hidden group relative">
+<img class="w-full h-full object-cover" data-alt="A modern, high-end hydrotherapy and recovery wing for elite athletes. The space features clean lines, white tiling, and soft blue underwater lighting in a recovery pool. The environment is serene, scientific, and premium." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyv0hGJ0bp6Jb5ajPlNGbBSAlFDqgbsukj-yfqWk0KE4RM7cVTGi3zkFHgjBKEzSWgu3wx0RJVkACow593_uWUqyDq_QUKFlPakJcw81SSNjX6DIHDXPdNuThTYNf6VmDxVDQpq_M3ZzkL0BH-PdJY8C67YJBNXejfLLeHvcKLfh65YSmVhAg_gMqt8P0Fe-9qK8xtI-VHQWsIZyfYAAhST4R_yuReLttCIWFCm7LbQfk_S9nJSzl8rs1nrlWjz-sP052AafSd6HRG"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute bottom-4 left-4">
+<h4 class="font-label-md text-white font-bold">Recovery Wing</h4>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 7. Legacy of Excellence & 8. Life at TurfX -->
+<section class="py-section-gap">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<div class="flex flex-col md:flex-row gap-section-gap">
+<!-- Legacy (Grid style) -->
+<div class="md:w-1/3">
+<h2 class="font-headline-xl text-headline-xl text-on-surface mb-stack-md">Legacy of Excellence</h2>
+<div class="space-y-stack-md">
+<div class="p-stack-md border-l-4 border-primary bg-surface-container-low rounded-r-xl">
+<h4 class="font-headline-lg text-primary">2024</h4>
+<p class="font-body-md font-bold text-on-surface">Academy Championship Winners</p>
+<p class="text-on-surface-variant text-label-sm">National U-19 Premier League</p>
+</div>
+<div class="p-stack-md border-l-4 border-secondary bg-surface-container-low rounded-r-xl">
+<h4 class="font-headline-lg text-secondary">2023</h4>
+<p class="font-body-md font-bold text-on-surface">32 Pro Contracts Signed</p>
+<p class="text-on-surface-variant text-label-sm">Placement across Top-Flight Clubs</p>
+</div>
+<div class="p-stack-md border-l-4 border-primary-container bg-surface-container-low rounded-r-xl">
+<h4 class="font-headline-lg text-primary-container">2022</h4>
+<p class="font-body-md font-bold text-on-surface">FIFA Training Grade A</p>
+<p class="text-on-surface-variant text-label-sm">Official Certification Received</p>
+</div>
+</div>
+</div>
+<!-- Life at TurfX (Masonry Gallery) -->
+<div class="md:w-2/3">
+<h2 class="font-headline-xl text-headline-xl text-on-surface mb-stack-md">Life at TurfX</h2>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-stack-sm auto-rows-[150px]">
+<div class="row-span-2 rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover kinetic-hover" data-alt="Action shot of elite young athletes training on a sunny day. High energy, focused expressions, and crisp blue sky." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPq53wh2OQaSGpebRmk3l0hWrWkSNiJQqWZ8BluugOFrvfxFluWR_JGIIeUjWM0chz_oXo475GpwA4j-PovJdRehUdexcqwSCFO1nZdLTzcjZ8G7g5jiq3MPVeYw7Zh4--Zv9VlNSx6Cbs93DV6LQWOPL8UD91kqb0MiJV0e-zXdR-oysTA3TSa1PejoAZHpivbV8AgXN5KCSkvmlbgESNj9QrwSDec8gb-8NIeMTLZOQcGbsEIODmq0RIGxaJ3qPj753Rr15VWJ75"/>
+</div>
+<div class="rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover kinetic-hover" data-alt="A tactical session in a classroom setting with digital boards and elite coaches." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAixl_u5ZpkiCpsxSIYMOC9dhSUeifAdwGyPVTOx0XShLCrbrDzFRw-z_825_GjeqSjzJF1owP-9eichNJ4lRzvqyUerwbNaqDl0dmafCsaN4iuIftjQ5IW7CT5o9kygiB9ak-g3PL9BiFs_8QfvNgJ7UAofhusPr-8qXVrv5opUDH7m9TrFKnUbYh3tUQ1tEPpMTX0W8x5ymtuftU7mt5tKHn41yODRjR0CxARDxs9trnLxoxJdlHvJDrK3hJgB-Z_q0wCdGqf5Cnt"/>
+</div>
+<div class="row-span-2 rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover kinetic-hover" data-alt="Athletes celebrating a goal together, showing teamwork and positive sports culture at the academy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCj59k76qzIod8yULIhGShMhQgsw7YfoZVdzrQdtii2Z9Zwjfqbcf4aNHGIJeEvUtgaiCgeLgXM2CrppHN1bntWJeAYC-rrjMqEobBIzbZyJf9ixdiiG9Zz4WAeEf36VXBpNnb3GA0HtT2cfPFpdKk5A27910xSqPH8aJdcPENbsZ27wpdS-i_h3opzk7MNGvWw54DaZCOOVtoEyEYQ_wGDBkL8ye7mbc8BakcXJtLo_Qb6oe85QlGcOk2w5fu4huHiFywchHebGqpK"/>
+</div>
+<div class="rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover kinetic-hover" data-alt="Professional gear and boots lined up precisely in a clean, modern locker room." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCssst8J16rf7RYA5xtitZlnTeyiSm9acrAjQItsj2BWnEt1aYO4_9Qn54tg1FxgMiRa9NM58IfUyoIKX0s5WTXMy_L81E6S373jwqswKNC3S4DoxOdkvbifk5hcMS0waqogRxp-AUK5lRBSX0cqSxH_K2GLkVKVVRSBqWoXYf_37bDQewviz_Ha51ExX8eGVmjtw3A7bBjwqvFeKZkNF104bi-DNQec3H2WcdvfPQycK6g4miIdOW-o-c-yUwD1adohIEla2DtfdZ5"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 9. Student Success Stories -->
+<section class="py-section-gap bg-surface-container-low">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<h2 class="font-headline-xl text-headline-xl text-on-surface mb-section-gap text-center">Student Success Stories</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Testimonial 1 -->
+<div class="glass-card p-stack-lg rounded-2xl relative">
+<span class="material-symbols-outlined absolute -top-4 -left-2 text-primary/20 text-6xl opacity-30" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+<p class="font-body-lg italic text-on-surface mb-stack-md leading-relaxed relative z-10">"TurfX didn't just teach me how to play soccer; they taught me how to think like a pro. The precision of the training and the direct mentorship from Coach Marcus was a game-changer for my career."</p>
+<div class="flex items-center gap-stack-md">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="A portrait of a young professional athlete, smiling confidently. Minimalist lighting, modern athletic style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgSOFU2ee5DL6sPlzvUNsrB2leCUnIVj5AcALzqBEIZvDXdB_eXGUU_F7Z8ypEkDQ9d8gaxxeeD9yf8Si0keU0OhBDbAM5p27a4evVNMrU7DrerI2g0z4vdhdZSMdeLKVldawqWZ5i2Vl4APJSccNUYUlRvBu1U_v99XoGwWJMyiu6bNngc6_QcBhv17FAms_34xNK53b6qUpkYKnKcK71oMmDRgK6F4JDcohkDYoUvWEgre46NyBEyk3PJ7AqHCNCGOh1CC_kzRQi"/>
+<div>
+<h5 class="font-label-md">Alex Rivera</h5>
+<p class="text-on-surface-variant text-label-sm">Forward, National U-21 Team</p>
+</div>
+</div>
+</div>
+<!-- Testimonial 2 -->
+<div class="glass-card p-stack-lg rounded-2xl relative">
+<span class="material-symbols-outlined absolute -top-4 -left-2 text-primary/20 text-6xl opacity-30" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+<p class="font-body-lg italic text-on-surface mb-stack-md leading-relaxed relative z-10">"The infrastructure here is unmatched. Having access to high-tech recovery labs allowed me to maintain peak performance throughout a grueling season. Best investment in my future."</p>
+<div class="flex items-center gap-stack-md">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="A portrait of a disciplined student athlete in a professional sports environment. Modern, architectural light-mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDr0uGDxiEDIx5oIv2tmf0ifhRTBKU1spvNquz4tSh3p-QuDU7ce8ryoUTayqFon9iKDVlz4Jt3EDZ458SrZm-0Ce-XPc_MNB4aFfa8W0anaKDDgdfpo6x9TEGCh5U_8mhxBYOXif2BsDsH_KrzId2aL60fJbNlnVfjU0wL4Q_dHwYUfpelmoBKwycV5urxJrTlpG-QtvxrZ7ayi-WFJieCbf_Vz0TaXphizoabi3dcl2gkYkO69s7J5wG45xMJbMX_yoUQwMsIqG5m"/>
+<div>
+<h5 class="font-label-md">James Chen</h5>
+<p class="text-on-surface-variant text-label-sm">Midfielder, Elite Batch 2023</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 10. Final Enrollment CTA -->
+<section class="py-section-gap bg-primary text-on-primary">
+<div class="max-w-container-max mx-auto px-margin-desktop text-center">
+<h2 class="font-headline-2xl text-headline-2xl mb-stack-md">Join the Next Generation of Elite Athletes</h2>
+<p class="font-body-lg mb-stack-lg text-primary-fixed max-w-2xl mx-auto">Take the first step towards a professional career. Limited spots available for our upcoming elite intake. Apply today to secure your future.</p>
+<div class="flex flex-wrap justify-center gap-stack-md">
+<button class="px-10 py-5 bg-on-primary text-primary rounded-lg font-headline-lg kinetic-hover shadow-xl">Apply for Admission</button>
+<button class="px-10 py-5 bg-transparent border-2 border-on-primary/30 text-on-primary rounded-lg font-headline-lg hover:bg-on-primary/10 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">download</span> Download Prospectus
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-highest dark:bg-surface-dim border-t border-outline-variant dark:border-outline py-stack-lg">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto gap-stack-md">
+<div class="flex flex-col items-center md:items-start">
+<span class="font-headline-lg text-headline-lg font-black text-on-surface">TurfX</span>
+<p class="font-label-sm text-on-surface-variant">Elite Sports Academy</p>
+</div>
+<div class="flex flex-wrap justify-center gap-stack-lg">
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Campus Safety</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Us</a>
+</div>
+<p class="font-label-sm text-on-surface-variant">© 2024 TurfX Elite Sports Academy. All rights reserved.</p>
+</div>
+</footer>
+<script>
+        // Simple micro-interaction for magnetic buttons
+        const magneticButtons = document.querySelectorAll('.kinetic-hover');
+        magneticButtons.forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                btn.style.transform = `scale(1.02) translate(${x * 0.15}px, ${y * 0.15}px)`;
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = '';
+            });
+        });
+
+        // Sticky header opacity on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('shadow-md');
+                nav.classList.remove('shadow-sm');
+            } else {
+                nav.classList.remove('shadow-md');
+                nav.classList.add('shadow-sm');
+            }
+        });
+    </script>
+</body></html>

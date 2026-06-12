@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TurfX Owner - Daily Slot Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .glass-header {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        
+        .time-line-indicator {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #ef4444;
+            z-index: 30;
+            pointer-events: none;
+        }
+        .time-line-indicator::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: -4px;
+            width: 10px;
+            height: 10px;
+            background-color: #ef4444;
+            border-radius: 50%;
+        }
+
+        .heat-map-gradient {
+            background: linear-gradient(to bottom, #2563eb10, #2563eb40, #2563eb90, #2563eb40, #2563eb10);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#2563eb",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#191b23",
+                        "tertiary": "#006229",
+                        "inverse-primary": "#b4c5ff",
+                        "on-secondary-container": "#006172",
+                        "inverse-on-surface": "#f0f0fb",
+                        "secondary": "#00687a",
+                        "on-surface-variant": "#434655",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#faf8ff",
+                        "surface-container": "#ededf9",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e1e2ed",
+                        "surface-container-low": "#f3f3fe",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#4cd7f6",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "primary-fixed": "#dbe1ff",
+                        "outline": "#737686",
+                        "on-tertiary-fixed": "#002109",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#00174b",
+                        "tertiary-container": "#007e37",
+                        "surface-dim": "#d9d9e5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#eeefff",
+                        "on-tertiary-container": "#c1ffc5",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "tertiary-fixed": "#6bff8f",
+                        "secondary-fixed": "#acedff",
+                        "outline-variant": "#c3c6d7",
+                        "on-secondary-fixed": "#001f26",
+                        "on-background": "#191b23",
+                        "surface": "#faf8ff",
+                        "background": "#faf8ff",
+                        "surface-tint": "#0053db",
+                        "primary": "#004ac6",
+                        "surface-variant": "#e1e2ed",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e7e7f3",
+                        "inverse-surface": "#2e3039",
+                        "secondary-container": "#57dffe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "section-gap": "80px",
+                        "margin-desktop": "40px",
+                        "stack-md": "16px",
+                        "margin-mobile": "16px",
+                        "container-max": "1280px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-2xl-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "headline-2xl": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-2xl-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+<div class="flex min-h-screen">
+<!-- Side Navigation (Shared Component Context) -->
+<aside class="bg-surface-container-lowest dark:bg-inverse-surface h-screen w-64 fixed left-0 top-0 flex flex-col border-r border-outline-variant/20 py-stack-lg px-4 z-50">
+<div class="mb-stack-lg px-2">
+<h1 class="font-headline-lg text-headline-lg font-extrabold text-primary">TurfX Owner</h1>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">Main Arena • Premium Turf</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 rounded-lg font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-bold font-label-md text-label-md shadow-sm" href="#">
+<span class="material-symbols-outlined">calendar_today</span> Calendar
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 rounded-lg font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">stadium</span> Venues
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 rounded-lg font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">payments</span> Pricing
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 rounded-lg font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">leaderboard</span> Analytics
+                </a>
+</nav>
+<button class="bg-primary text-on-primary py-3 px-4 rounded-xl font-bold mb-stack-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined">add</span> Add New Slot
+            </button>
+<div class="space-y-2 border-t border-outline-variant/20 pt-4">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined">contact_support</span> Support
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span> Sign Out
+                </a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-64 flex-1 flex flex-col relative min-h-screen">
+<!-- Top App Bar -->
+<header class="bg-surface/70 backdrop-blur-xl sticky top-0 z-40 border-b border-outline-variant/30 shadow-sm flex items-center justify-between px-margin-desktop h-16 w-full">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 bg-surface-container-high/50 px-4 py-2 rounded-full border border-outline-variant/30">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-64" placeholder="Search bookings..." type="text"/>
+</div>
+<div class="h-8 w-px bg-outline-variant/30"></div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1 font-semibold text-primary border-b-2 border-primary py-1">Daily View</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors py-1">Weekly</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors py-1">Monthly</button>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high/50 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high/50 rounded-full transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high/50 rounded-full transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<img alt="Owner Profile Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-primary-container/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZP5IBYf9rTPd6aofx5MKQCjrlRno_tXZPs2XlQXMwTy9xrextYZF2eakdD4bU8dusGo9VaNReQkv51_SwDgtjz0vf2OrBndhPivWtvKJkM2ju22zkcasXlHwbw5IMfb5cZArElG75k5cFU1ocMZJ_r8ShJkHYAEGvFPVosd4UeI8k_28GDqvGDQuwULM5G_60eHn3z1L9FMx7ya1OoMrv4z1xDm3TOT1LWpSek0a0bGXwzOPcqXphmI74rQegPj_TUsoVXwYypaUj"/>
+</div>
+</header>
+<div class="flex-1 flex overflow-hidden">
+<!-- Daily Schedule Grid -->
+<div class="flex-1 flex flex-col overflow-auto bg-white">
+<!-- Grid Header (Courts) -->
+<div class="sticky top-0 z-30 bg-white grid grid-cols-[100px_1fr_1fr_1fr_1fr] border-b border-outline-variant/30">
+<div class="p-4 border-r border-outline-variant/20 flex items-center justify-center font-label-md text-outline">GMT +3</div>
+<div class="p-4 border-r border-outline-variant/20 text-center">
+<span class="block font-headline-lg text-headline-lg text-primary">Pitch 1</span>
+<span class="text-label-sm text-outline uppercase tracking-wider">7-a-side Turf</span>
+</div>
+<div class="p-4 border-r border-outline-variant/20 text-center">
+<span class="block font-headline-lg text-headline-lg text-primary">Pitch 2</span>
+<span class="text-label-sm text-outline uppercase tracking-wider">5-a-side Turf</span>
+</div>
+<div class="p-4 border-r border-outline-variant/20 text-center">
+<span class="block font-headline-lg text-headline-lg text-primary">Court A</span>
+<span class="text-label-sm text-outline uppercase tracking-wider">Hardcourt Tennis</span>
+</div>
+<div class="p-4 text-center">
+<span class="block font-headline-lg text-headline-lg text-primary">Court B</span>
+<span class="text-label-sm text-outline uppercase tracking-wider">Indoor Gym</span>
+</div>
+</div>
+<!-- Scrollable Timeline Area -->
+<div class="relative grid grid-cols-[100px_1fr_1fr_1fr_1fr] divide-x divide-outline-variant/10">
+<!-- Timeline Sidebar -->
+<div class="flex flex-col">
+<!-- Loop for 24 hours -->
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">12 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">1 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">2 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">3 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">4 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">5 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">6 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">7 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline font-bold text-primary">8 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">9 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">10 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">11 AM</div>
+<div class="h-20 border-b border-outline-variant/10 flex items-start justify-center pt-2 font-label-md text-outline">12 PM</div>
+</div>
+<!-- Pitch 1 Column -->
+<div class="relative min-h-[1040px] group">
+<!-- Helper Lines -->
+<div class="absolute inset-0 grid grid-rows-13 pointer-events-none">
+<div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div>
+</div>
+<!-- Slot Card 1 -->
+<div class="absolute top-[640px] left-2 right-2 h-40 bg-white border border-outline-variant/50 rounded-xl p-3 shadow-sm hover:shadow-lg transition-all duration-300 group/card cursor-pointer border-l-4 border-l-primary-container z-10">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-primary-container/10 text-primary font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Football</span>
+<div class="flex gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline" title="Recurring">sync</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary" style="font-variation-settings: 'FILL' 1;" title="Paid">check_circle</span>
+</div>
+</div>
+<h4 class="font-bold text-on-surface line-clamp-1">Alex Johnson Academy</h4>
+<p class="text-label-sm text-outline flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 08:00 - 10:00
+                                </p>
+<div class="mt-3 flex items-center justify-between">
+<span class="bg-secondary-container/20 text-on-secondary-container px-2 py-1 rounded-full text-[11px] font-bold">Paid Online</span>
+<button class="opacity-0 group-hover/card:opacity-100 transition-opacity bg-surface-container-high p-1 rounded-md text-error hover:bg-error-container">
+<span class="material-symbols-outlined text-[18px]">block</span>
+</button>
+</div>
+</div>
+<!-- Inline Add Button -->
+<div class="absolute top-[820px] left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+<button class="bg-primary text-white rounded-full p-2 shadow-xl hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<!-- Slot Card 2 (Peak) -->
+<div class="absolute top-[880px] left-2 right-2 h-20 bg-primary/5 border border-primary/20 rounded-xl p-3 shadow-sm hover:shadow-lg transition-all border-l-4 border-l-primary z-10">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<h4 class="font-bold text-on-surface">Community League</h4>
+<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase italic">Peak</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline">history</span>
+</div>
+<p class="text-label-sm text-outline">11:00 - 12:00</p>
+</div>
+</div>
+<!-- Pitch 2 Column -->
+<div class="relative min-h-[1040px] group">
+<div class="absolute inset-0 grid grid-rows-13 pointer-events-none">
+<div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div>
+</div>
+<!-- Blocked Slot -->
+<div class="absolute top-[720px] left-2 right-2 h-20 bg-surface-container-high/50 border-2 border-dashed border-outline-variant rounded-xl flex items-center justify-center text-outline gap-2 group/blocked hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="material-symbols-outlined">lock</span>
+<span class="font-bold text-label-sm uppercase tracking-widest">Maintenance</span>
+<button class="absolute right-2 opacity-0 group-hover/blocked:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-on-surface">edit</span>
+</button>
+</div>
+</div>
+<!-- Court A Column -->
+<div class="relative min-h-[1040px] group">
+<div class="absolute inset-0 grid grid-rows-13 pointer-events-none">
+<div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div>
+</div>
+</div>
+<!-- Court B Column -->
+<div class="relative min-h-[1040px] group">
+<div class="absolute inset-0 grid grid-rows-13 pointer-events-none">
+<div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div><div class="border-b border-outline-variant/10"></div>
+</div>
+</div>
+<!-- Timeline Scrub / Current Time Indicator -->
+<div class="time-line-indicator top-[700px]">
+<div class="absolute right-0 -top-6 bg-error text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> LIVE: 08:45 AM
+                            </div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Heatmap & Trends -->
+<aside class="w-80 bg-surface-container-low border-l border-outline-variant/30 flex flex-col p-6 overflow-y-auto">
+<div class="mb-stack-lg">
+<h3 class="font-headline-lg text-headline-lg text-on-surface mb-2">Demand Insights</h3>
+<p class="text-body-md text-on-surface-variant">Real-time venue traffic monitoring</p>
+</div>
+<!-- Weekly Heatmap Sidebar -->
+<div class="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/20 mb-stack-lg">
+<div class="flex items-center justify-between mb-4">
+<span class="font-bold text-label-md uppercase text-outline tracking-wider">Weekly Heatmap</span>
+<span class="material-symbols-outlined text-primary">insights</span>
+</div>
+<div class="flex gap-2 h-40 items-end">
+<!-- Mock Heatmap Columns -->
+<div class="flex-1 flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary/5 rounded-sm"></div>
+<div class="flex-1 bg-primary/10 rounded-sm"></div>
+<div class="flex-1 bg-primary/40 rounded-sm"></div>
+<div class="flex-1 bg-primary/20 rounded-sm"></div>
+<span class="text-[10px] text-center mt-1 text-outline font-bold">M</span>
+</div>
+<div class="flex-1 flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary/10 rounded-sm"></div>
+<div class="flex-1 bg-primary/20 rounded-sm"></div>
+<div class="flex-1 bg-primary/60 rounded-sm"></div>
+<div class="flex-1 bg-primary/10 rounded-sm"></div>
+<span class="text-[10px] text-center mt-1 text-outline font-bold">T</span>
+</div>
+<div class="flex-1 flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary/40 rounded-sm"></div>
+<div class="flex-1 bg-primary/80 rounded-sm"></div>
+<div class="flex-1 bg-primary/90 rounded-sm"></div>
+<div class="flex-1 bg-primary/40 rounded-sm"></div>
+<span class="text-[10px] text-center mt-1 text-outline font-bold">W</span>
+</div>
+<div class="flex-1 flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary/20 rounded-sm"></div>
+<div class="flex-1 bg-primary/40 rounded-sm"></div>
+<div class="flex-1 bg-primary/70 rounded-sm"></div>
+<div class="flex-1 bg-primary/30 rounded-sm"></div>
+<span class="text-[10px] text-center mt-1 text-outline font-bold">T</span>
+</div>
+<div class="flex-1 flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary/60 rounded-sm"></div>
+<div class="flex-1 bg-primary/90 rounded-sm"></div>
+<div class="flex-1 bg-primary/100 rounded-sm"></div>
+<div class="flex-1 bg-primary/60 rounded-sm"></div>
+<span class="text-[10px] text-center mt-1 text-primary font-black italic">F</span>
+</div>
+<div class="flex-1 flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary/10 rounded-sm"></div>
+<div class="flex-1 bg-primary/20 rounded-sm"></div>
+<div class="flex-1 bg-primary/30 rounded-sm"></div>
+<div class="flex-1 bg-primary/10 rounded-sm"></div>
+<span class="text-[10px] text-center mt-1 text-outline font-bold">S</span>
+</div>
+<div class="flex-1 flex flex-col gap-1 h-full">
+<div class="flex-1 bg-primary/5 rounded-sm"></div>
+<div class="flex-1 bg-primary/10 rounded-sm"></div>
+<div class="flex-1 bg-primary/20 rounded-sm"></div>
+<div class="flex-1 bg-primary/5 rounded-sm"></div>
+<span class="text-[10px] text-center mt-1 text-outline font-bold">S</span>
+</div>
+</div>
+</div>
+<!-- Peak Performance Stats -->
+<div class="space-y-4">
+<div class="bg-primary-container text-on-primary-container p-4 rounded-2xl">
+<p class="font-bold text-label-md uppercase opacity-80 mb-1">Peak Utilization</p>
+<h3 class="text-headline-xl font-bold">94% <span class="text-body-md font-normal opacity-70">Today</span></h3>
+<div class="w-full bg-white/20 h-2 rounded-full mt-3 overflow-hidden">
+<div class="bg-secondary-container h-full w-[94%]"></div>
+</div>
+</div>
+<div class="bg-white border border-outline-variant/30 rounded-2xl p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-tertiary-container/10 rounded-full flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<div>
+<p class="font-bold text-label-md text-on-surface">Revenue Forecast</p>
+<p class="text-headline-lg font-bold text-tertiary">+$1,420.00</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Mini Calendar Quick Jump -->
+<div class="mt-stack-lg">
+<div class="flex items-center justify-between mb-4">
+<span class="font-bold text-label-md uppercase text-outline tracking-wider">Quick Calendar</span>
+<div class="flex gap-2">
+<button class="p-1 hover:bg-surface-container-high rounded transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="p-1 hover:bg-surface-container-high rounded transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-1 text-center">
+<span class="text-[10px] text-outline font-bold">M</span>
+<span class="text-[10px] text-outline font-bold">T</span>
+<span class="text-[10px] text-outline font-bold">W</span>
+<span class="text-[10px] text-outline font-bold">T</span>
+<span class="text-[10px] text-outline font-bold">F</span>
+<span class="text-[10px] text-outline font-bold text-primary italic">S</span>
+<span class="text-[10px] text-outline font-bold">S</span>
+<!-- Simple mock calendar -->
+<div class="p-1.5 text-label-sm text-outline-variant">25</div>
+<div class="p-1.5 text-label-sm text-outline-variant">26</div>
+<div class="p-1.5 text-label-sm text-outline-variant">27</div>
+<div class="p-1.5 text-label-sm text-outline-variant">28</div>
+<div class="p-1.5 text-label-sm text-outline-variant">29</div>
+<div class="p-1.5 text-label-sm font-bold bg-primary text-white rounded-lg cursor-pointer">30</div>
+<div class="p-1.5 text-label-sm text-on-surface hover:bg-surface-container-high rounded-lg cursor-pointer">1</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+<!-- Floating Action Button for New Booking (Relevance check: Home/Dashboard context) -->
+<button class="fixed bottom-margin-desktop right-margin-desktop w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 700;">add</span>
+</button>
+<script>
+        // Micro-interaction: Update timeline scrub position based on "mock" time for demo
+        function updateTimeline() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const totalMinutesInDay = 24 * 60;
+            const currentMinutes = (hours * 60) + minutes;
+            
+            // Adjust this logic to map correctly to the visual 12am-12pm 13-row grid
+            // For demo purposes, we lock it to a visible area in the scroll view
+        }
+
+        // Magnetic hover effect for primary buttons
+        document.querySelectorAll('button.bg-primary').forEach(button => {
+            button.addEventListener('mousemove', (e) => {
+                const { left, top, width, height } = button.getBoundingClientRect();
+                const x = (e.clientX - left - width / 2) * 0.15;
+                const y = (e.clientY - top - height / 2) * 0.15;
+                button.style.transform = `translate(${x}px, ${y}px)`;
+            });
+            button.addEventListener('mouseleave', () => {
+                button.style.transform = `translate(0px, 0px)`;
+            });
+        });
+    </script>
+</body></html>

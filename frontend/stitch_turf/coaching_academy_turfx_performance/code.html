@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TurfX | Elite Coaching &amp; Academies</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .magnetic-btn:active {
+            transform: scale(0.95);
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        }
+        .bento-gradient {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, rgba(0, 83, 219, 0.05) 100%);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#faf8ff",
+                        "on-tertiary-fixed": "#002109",
+                        "inverse-on-surface": "#f0f0fb",
+                        "inverse-primary": "#b4c5ff",
+                        "on-primary-fixed": "#00174b",
+                        "secondary": "#00687a",
+                        "inverse-surface": "#2e3039",
+                        "background": "#faf8ff",
+                        "tertiary-fixed": "#6bff8f",
+                        "on-secondary-fixed": "#001f26",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#ededf9",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#191b23",
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#434655",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#57dffe",
+                        "on-tertiary-container": "#c1ffc5",
+                        "surface-tint": "#0053db",
+                        "surface-container-low": "#f3f3fe",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#007e37",
+                        "surface-variant": "#e1e2ed",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-container-highest": "#e1e2ed",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-background": "#191b23",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "on-secondary-container": "#006172",
+                        "secondary-fixed": "#acedff",
+                        "outline-variant": "#c3c6d7",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-dim": "#d9d9e5",
+                        "on-error-container": "#93000a",
+                        "outline": "#737686",
+                        "on-primary-container": "#eeefff",
+                        "primary": "#004ac6",
+                        "primary-container": "#2563eb",
+                        "tertiary": "#006229",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#4cd7f6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "margin-desktop": "40px",
+                        "base": "8px",
+                        "section-gap": "80px",
+                        "margin-mobile": "16px",
+                        "stack-sm": "8px",
+                        "gutter": "24px",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-2xl": ["Inter"],
+                        "headline-2xl-mobile": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "headline-2xl-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center px-margin-desktop py-4 max-w-container-max mx-auto">
+<div class="flex items-center gap-gutter">
+<span class="font-headline-lg text-headline-lg font-black tracking-tighter text-primary">TurfX</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Tournaments</a>
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-1" href="#">Academy</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Memberships</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Venues</a>
+</div>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:scale-110 transition-transform" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:scale-110 transition-transform" data-icon="person">person</button>
+<button class="hidden md:block bg-primary text-on-primary px-6 py-2 rounded-full font-label-md text-label-md hover:opacity-80 hover:scale-[1.02] active:scale-95 transition-all duration-200">Book Now</button>
+</div>
+</div>
+</nav>
+<main class="pt-24">
+<!-- Hero Section -->
+<section class="px-margin-desktop max-w-container-max mx-auto py-stack-lg">
+<div class="relative overflow-hidden rounded-3xl bg-inverse-surface h-[500px] flex items-center p-12">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-40" data-alt="A cinematic, high-speed photograph of a professional athlete performing a high-intensity drill on a pristine green turf under bright stadium floodlights. The lighting is crisp and dramatic, emphasizing the 'Elite Athleticism' aesthetic. The atmosphere is energetic and motivational, using the brand's primary blue as a subtle tonal overlay in the shadows to maintain a premium feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuApAqJayvMq9N-MmPWNZq4kpB3Y062ETYHNSVsxCqCK_Xf5dZ_DZ-luAQM6aDXBw3S1ZMgtOrtiOPl-MFwr8E_PtAsADSLNeuCesy2f94c6zjooPsFh7ODtV0iO4sa9-ky2leDkL8rzI_Anv2KDZDHH4BGskLgQVVJY_zOICimJavgtQVfexYVQhO0Zu3fzPwJXSr5iy1fEIdOV3vrGoRfEltrbMpMQHjvPAnSrTt_Rzls_Blv-MMI3Kcy9CGPoM7EmPXD32OWvJNmc"/>
+</div>
+<div class="relative z-10 max-w-2xl space-y-stack-md">
+<span class="inline-block bg-tertiary-container text-on-tertiary-container px-4 py-1 rounded-full font-label-md text-label-md uppercase tracking-wider">The Academy Hub</span>
+<h1 class="font-headline-2xl text-headline-2xl text-white">Elevate Your Game with Elite Mentorship.</h1>
+<p class="font-body-lg text-body-lg text-white/80">Connect with certified performance coaches and join specialized training batches designed for the next generation of professional athletes.</p>
+<div class="flex gap-4 pt-4">
+<button class="bg-primary-container text-white px-8 py-4 rounded-full font-label-md text-label-md hover:scale-105 transition-all">Find a Coach</button>
+<button class="bg-white/10 backdrop-blur-md text-white border border-white/20 px-8 py-4 rounded-full font-label-md text-label-md hover:bg-white/20 transition-all">Explore Academies</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Grid (Subtle) -->
+<section class="px-margin-desktop max-w-container-max mx-auto py-stack-lg border-b border-outline-variant/20">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-gutter text-center">
+<div>
+<div class="font-headline-xl text-headline-xl text-primary">500+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Certified Coaches</div>
+</div>
+<div>
+<div class="font-headline-xl text-headline-xl text-primary">120</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Partner Academies</div>
+</div>
+<div>
+<div class="font-headline-xl text-headline-xl text-primary">15k+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Athletes Trained</div>
+</div>
+<div>
+<div class="font-headline-xl text-headline-xl text-primary">98%</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Success Rate</div>
+</div>
+</div>
+</section>
+<!-- Featured Coaches (Bento-ish Grid) -->
+<section class="px-margin-desktop max-w-container-max mx-auto py-section-gap">
+<div class="flex justify-between items-end mb-stack-lg">
+<div>
+<h2 class="font-headline-xl text-headline-xl">Elite Coach Profiles</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Learn from the masters of the game.</p>
+</div>
+<button class="text-primary font-label-md text-label-md flex items-center gap-2 hover:underline">
+                    View all coaches <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Coach Card 1 -->
+<div class="glass-card rounded-2xl overflow-hidden hover-lift flex flex-col">
+<div class="h-64 relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a professional male football coach in modern athletic gear, standing on a practice field during a golden hour sunset. The lighting is soft and cinematic, casting long shadows. He has a focused, professional expression. The background shows a blurred sports complex, emphasizing a high-performance training environment with a light, airy aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbWnv1DwjoAJXvcoj_wJf_YXL8G96LguuIkijBuVKi4tDlDaSVa_x-vCcpEWJLYX745sZcDcCLAQprdoepj6HcnHTHcv8oO1SgeD-GUp03o4uckJI0Atx4RzhY3vcG-Yh3FqwJrTAsx8OPCN3kBXZNl6OZoTKyk9hJjkB6fCt-QoHs8M-P96Q1cM7VgBZE1lgTPix7xeVSlqU2n6SnZKSyWjl8ZmAEpQqvSZaMaLVpPGnJCq7oGXu6BIfnLAt3qflUhz0qZDCWN3kO"/>
+<div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-yellow-500 text-[18px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md font-bold">4.9</span>
+</div>
+</div>
+<div class="p-6 space-y-4 flex-1 flex flex-col">
+<div>
+<h3 class="font-headline-lg text-headline-lg">Coach Marcus Sterling</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">UEFA Pro License • 12yrs Exp.</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-secondary-container/20 text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm border border-secondary-container/30">Football Tactics</span>
+<span class="bg-secondary-container/20 text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm border border-secondary-container/30">Performance Mindset</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Specializes in tactical analysis and high-performance positioning for professional-track athletes.</p>
+<div class="mt-auto pt-4 flex items-center justify-between">
+<span class="font-headline-lg text-headline-lg text-primary">$80<span class="text-label-sm font-normal text-on-surface-variant">/hr</span></span>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md active:scale-95 transition-all">Book Session</button>
+</div>
+</div>
+</div>
+<!-- Coach Card 2 -->
+<div class="glass-card rounded-2xl overflow-hidden hover-lift flex flex-col">
+<div class="h-64 relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A high-resolution image of a professional female fitness and cricket coach wearing sleek black training apparel. She is standing confidently in a modern, well-lit indoor training facility with wood accents and large windows. The lighting is bright and clean, characteristic of a premium athletic brand. The mood is empowering and aspirational, focusing on growth and performance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFh0E8R4WLsV2NnviEu_r0VK1JH5eNaa8Qg1sjfnw3N6wQge8nlFgM_HnByz0E402s2S6RP41qVFzutgdWkx7MBnjGfbK-_dn4-gpC4vvJG8lTClSOzKftDmB2OCT9MaWNsB6HKUE6wOjWBQ1YeWFZLbBni4W4PhWc7D71MEfCKjABGohHs8jdyXsF5sem5XQ_PB8d9Uj1D-B3RNz7_C6pY0brV6OI0KmIVnCyQbrmAJGP1tNL8YdspPCjZ1KSXk3RXkJSrih51GlS"/>
+<div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-yellow-500 text-[18px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md font-bold">5.0</span>
+</div>
+</div>
+<div class="p-6 space-y-4 flex-1 flex flex-col">
+<div>
+<h3 class="font-headline-lg text-headline-lg">Coach Elena Rossi</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Elite Cricket Certified • ICC L3</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-secondary-container/20 text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm border border-secondary-container/30">Cricket Bowling</span>
+<span class="bg-secondary-container/20 text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm border border-secondary-container/30">Agility Training</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">World-class bowling biomechanics specialist focusing on speed and accuracy optimization.</p>
+<div class="mt-auto pt-4 flex items-center justify-between">
+<span class="font-headline-lg text-headline-lg text-primary">$95<span class="text-label-sm font-normal text-on-surface-variant">/hr</span></span>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md active:scale-95 transition-all">Book Session</button>
+</div>
+</div>
+</div>
+<!-- Coach Card 3 -->
+<div class="glass-card rounded-2xl overflow-hidden hover-lift flex flex-col">
+<div class="h-64 relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional male basketball coach wearing a navy athletic polo, holding a whistle. He is on a bright, polished indoor basketball court with natural light streaming through large windows. The overall aesthetic is clean, high-contrast, and modern. The background is slightly out of focus, highlighting the coach's authoritative yet approachable presence in an elite academy setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWDLCd6sIlkOi0YEsrlVyOIFJjBazrJv0RAi6AKtBvs-CvCR9ZdCqjDsAR6mm1hcwgMFpjoMhQSCGWR4ymYLSD4DetpoPE39Jpl_2uMIYbPCFsYv5pZhzm283Ta4id9_eZyR3WE9QzXEVprjHyXKjzcB2k-WMIlDSUz_vKe611EMO3TS3xdIjA0Bm6gHYB_Q5tK5ySyGoEUwLwq30J2U3fyWjpizwdYldPoqsgU0HKRJq1oxZZt9VJFLvap8i1bL5Ou9WFpAA-hsBa"/>
+<div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-yellow-500 text-[18px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md font-bold">4.8</span>
+</div>
+</div>
+<div class="p-6 space-y-4 flex-1 flex flex-col">
+<div>
+<h3 class="font-headline-lg text-headline-lg">Coach David Chen</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">NCAA Background • FIBA Coach</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-secondary-container/20 text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm border border-secondary-container/30">Vertical Jump</span>
+<span class="bg-secondary-container/20 text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm border border-secondary-container/30">Court Vision</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Explosive movement and plyometric expert for competitive basketball players looking to reach the next level.</p>
+<div class="mt-auto pt-4 flex items-center justify-between">
+<span class="font-headline-lg text-headline-lg text-primary">$75<span class="text-label-sm font-normal text-on-surface-variant">/hr</span></span>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md active:scale-95 transition-all">Book Session</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Academy Batches Section -->
+<section class="bg-surface-container-low py-section-gap">
+<div class="px-margin-desktop max-w-container-max mx-auto">
+<div class="mb-stack-lg">
+<h2 class="font-headline-xl text-headline-xl">Academy Training Programs</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Structured growth for every skill level.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- Batch Type 1 -->
+<div class="relative group h-[400px] rounded-3xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A group of young athletes in matching professional training kits running through orange cones on a lush green soccer pitch during a bright summer morning. The lighting is vibrant and high-key, creating an aspirational and joyful mood for a 'Summer Camp' program. The focus is on movement, teamwork, and athletic development in a premium outdoor setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-Nsb4znOXim6ylNGjNITOZmZitc0Fmf5EIi9SwPpLsgSidTHwss3fc-oOa5OLo7cSSsw5UBwKbhOmf6KeLf0YuPD2HZD3pdOqCtQegLRdABDfpLrO0lMSVvMpI8iemakZ4_AOImMDcqoOZ-UfCZzFvy0FIejXH6d9Inmv8Tg6hQyW_GDE5w5MD_4dHC1sJC2KKWGtI5v48aVECWm2f6goCcAvEP8BuHas1eeaA_AFZi85nYAbnJoW-6wjAJeNUC34PqtQ5xNKkBUH"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
+<div class="mb-4">
+<span class="bg-tertiary text-on-tertiary px-3 py-1 rounded font-label-md text-label-md">Open Now</span>
+</div>
+<h3 class="font-headline-xl text-headline-xl text-white mb-2">Summer Camps 2024</h3>
+<p class="font-body-md text-body-md text-white/80 mb-6">A 4-week intensive multisport immersion for ages 8-16. Focus on fundamentals, teamwork, and core fitness.</p>
+<div class="flex items-center justify-between">
+<div class="text-white">
+<span class="block font-label-sm text-label-sm opacity-70">Starts June 15</span>
+<span class="font-headline-lg text-headline-lg">$450 <span class="text-label-sm font-normal">/full course</span></span>
+</div>
+<button class="bg-white text-primary px-8 py-3 rounded-full font-label-md text-label-md hover:scale-105 transition-all">Enroll Now</button>
+</div>
+</div>
+</div>
+<!-- Batch Type 2 -->
+<div class="relative group h-[400px] rounded-3xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A focused high-performance training session in a state-of-the-art indoor sports lab. Professional athletes are using wearable technology and motion-capture sensors during high-speed drills. The lighting is cool-toned and clinical, emphasizing 'Professional Training Batches'. The aesthetic is high-tech, precise, and elite, using deep blues and crisp whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzWJvPXODVzwp7ZKlBMUp_FEU-B_baNHaFoguN5kGc2vAfkSdYorlrKLvZugGF-6qEonFhg_uAdWoUCmGFO5j0FJasfoM4BiE6nlIR2J6uODSSIrJrb5endbLTjOdq6PvAeZZX8c-LP3yB7ZrlFihMPU7uUsb7SD_Tn_Y4sokFEdykJTsioqGXzbh96vzCPup1Q0xpbKR4HgVREGU6FMeXfpTh17o_EN0lE7ekzyBnLHTPNgKjseEG2jqnX8yhcfvaLCKifoRS2eGp"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent flex flex-col justify-end p-8">
+<div class="mb-4">
+<span class="bg-white/20 backdrop-blur-md text-white border border-white/30 px-3 py-1 rounded font-label-md text-label-md">Professional Track</span>
+</div>
+<h3 class="font-headline-xl text-headline-xl text-white mb-2">Pro Performance Batches</h3>
+<p class="font-body-md text-body-md text-white/80 mb-6">Elite-level training for competitive athletes. 1:4 coach ratio with data-driven performance tracking.</p>
+<div class="flex items-center justify-between">
+<div class="text-white">
+<span class="block font-label-sm text-label-sm opacity-70">Year-Round Access</span>
+<span class="font-headline-lg text-headline-lg">$1,200 <span class="text-label-sm font-normal">/quarterly</span></span>
+</div>
+<button class="bg-white text-primary px-8 py-3 rounded-full font-label-md text-label-md hover:scale-105 transition-all">Apply Now</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Dynamic Progress/CTA Section -->
+<section class="px-margin-desktop max-w-container-max mx-auto py-section-gap">
+<div class="bento-gradient rounded-3xl p-12 flex flex-col md:flex-row items-center gap-stack-lg border border-primary-container/10">
+<div class="flex-1 space-y-4 text-center md:text-left">
+<h2 class="font-headline-xl text-headline-xl text-primary">Ready to reach your flow state?</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Our intelligent matching engine will help you find the perfect coach based on your goals, schedule, and skill level.</p>
+<div class="w-full bg-outline-variant/20 h-1.5 rounded-full mt-8 overflow-hidden">
+<div class="bg-primary h-full w-[65%]" id="progress-bar"></div>
+</div>
+<div class="flex justify-between text-label-sm text-on-surface-variant">
+<span>Profile Completion</span>
+<span>65%</span>
+</div>
+</div>
+<div class="flex-none">
+<button class="bg-primary-container text-white px-12 py-5 rounded-full font-headline-lg text-headline-lg shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all">Start Your Journey</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-gap bg-surface-container-lowest border-t border-outline-variant/20">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop max-w-container-max mx-auto">
+<div class="space-y-4">
+<span class="font-headline-lg text-headline-lg font-black text-on-surface">TurfX</span>
+<p class="font-body-md text-body-md text-on-surface-variant">The leading marketplace for elite sports performance and athletic mentorship.</p>
+</div>
+<div>
+<h4 class="font-label-md text-label-md font-bold mb-4 uppercase tracking-widest text-primary">Company</h4>
+<ul class="space-y-2">
+<li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">About Us</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Careers</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Partner with Us</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-label-md font-bold mb-4 uppercase tracking-widest text-primary">Support</h4>
+<ul class="space-y-2">
+<li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
+<li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-label-md font-bold mb-4 uppercase tracking-widest text-primary">Newsletter</h4>
+<div class="flex gap-2">
+<input class="flex-1 bg-surface-variant/30 border-none rounded-lg font-label-sm text-label-sm focus:ring-2 focus:ring-primary" placeholder="Your email" type="email"/>
+<button class="bg-primary text-on-primary p-2 rounded-lg material-symbols-outlined" data-icon="send">send</button>
+</div>
+</div>
+</div>
+<div class="px-margin-desktop max-w-container-max mx-auto mt-stack-lg pt-8 border-t border-outline-variant/10 text-center">
+<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 TurfX Performance Hub. All rights reserved.</p>
+</div>
+</footer>
+<script>
+        // Subtle Parallax & Interaction Logic
+        document.addEventListener('mousemove', (e) => {
+            const btns = document.querySelectorAll('.magnetic-btn');
+            btns.forEach(btn => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                if (Math.abs(x) < 100 && Math.abs(y) < 100) {
+                    btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+                } else {
+                    btn.style.transform = `translate(0, 0)`;
+                }
+            });
+        });
+
+        // Animation on scroll observer
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-8');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.hover-lift').forEach(el => {
+            el.classList.add('opacity-0', 'translate-y-8', 'transition-all', 'duration-700');
+            observer.observe(el);
+        });
+    </script>
+</body></html>

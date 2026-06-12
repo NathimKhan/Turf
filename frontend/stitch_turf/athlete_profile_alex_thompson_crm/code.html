@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#e1e2ed",
+                    "surface-container": "#ededf9",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed": "#6bff8f",
+                    "on-error": "#ffffff",
+                    "tertiary": "#006229",
+                    "error": "#ba1a1a",
+                    "tertiary-container": "#007e37",
+                    "on-primary": "#ffffff",
+                    "primary": "#004ac6",
+                    "on-primary-fixed": "#00174b",
+                    "surface-tint": "#0053db",
+                    "error-container": "#ffdad6",
+                    "surface": "#faf8ff",
+                    "on-secondary-container": "#006172",
+                    "secondary-fixed": "#acedff",
+                    "outline-variant": "#c3c6d7",
+                    "on-secondary-fixed-variant": "#004e5c",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-secondary": "#ffffff",
+                    "on-background": "#191b23",
+                    "inverse-surface": "#2e3039",
+                    "background": "#faf8ff",
+                    "surface-dim": "#d9d9e5",
+                    "surface-container-lowest": "#ffffff",
+                    "outline": "#737686",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "primary-container": "#2563eb",
+                    "on-secondary-fixed": "#001f26",
+                    "secondary": "#00687a",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#434655",
+                    "secondary-container": "#57dffe",
+                    "on-surface": "#191b23",
+                    "on-primary-container": "#eeefff",
+                    "inverse-on-surface": "#f0f0fb",
+                    "surface-container-high": "#e7e7f3",
+                    "on-tertiary-container": "#c1ffc5",
+                    "surface-bright": "#faf8ff",
+                    "surface-container-highest": "#e1e2ed",
+                    "inverse-primary": "#b4c5ff",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "secondary-fixed-dim": "#4cd7f6",
+                    "surface-container-low": "#f3f3fe",
+                    "on-tertiary-fixed": "#002109",
+                    "primary-fixed": "#dbe1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "stack-sm": "8px",
+                    "section-gap": "80px",
+                    "gutter": "24px",
+                    "stack-md": "16px",
+                    "margin-desktop": "40px",
+                    "stack-lg": "32px",
+                    "container-max": "1280px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "headline-2xl": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-2xl-mobile": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-2xl-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid #E2E8F0;
+        }
+        .magnetic-lift:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface selection:bg-primary-fixed-dim">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-outline bg-surface dark:bg-on-background shadow-sm flex flex-col py-base z-50">
+<div class="px-gutter mb-stack-lg">
+<h1 class="font-headline-lg text-headline-lg font-black text-primary dark:text-primary-fixed-dim tracking-tighter">ProStadium CRM</h1>
+<p class="font-label-md text-label-md text-on-surface-variant opacity-60">Elite Management</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 transition-colors duration-200 text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary dark:border-primary-fixed-dim bg-surface-container-low dark:bg-surface-variant/10" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-label-md text-label-md">Athletes</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-md text-label-md">Bookings</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="military_tech">military_tech</span>
+<span class="font-label-md text-label-md">Memberships</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-6 py-stack-md border-t border-outline-variant">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 magnetic-lift shadow-md">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                New Booking
+            </button>
+<div class="mt-stack-md space-y-1">
+<a class="flex items-center gap-3 py-2 text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+                    Support
+                </a>
+<a class="flex items-center gap-3 py-2 text-on-surface-variant font-label-md text-label-md hover:text-error transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="logout">logout</span>
+                    Log Out
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- Top Nav Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-surface/70 dark:bg-on-background/70 backdrop-blur-md z-40 flex justify-between items-center px-gutter border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-stack-lg">
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full w-64 focus:ring-2 focus:ring-primary text-label-md" placeholder="Search athletes..." type="text"/>
+</div>
+<nav class="hidden md:flex gap-stack-md">
+<a class="text-primary border-b-2 border-primary pb-1 font-label-md text-label-md" href="#">Recent</a>
+<a class="text-on-surface-variant hover:text-primary font-label-md text-label-md transition-all" href="#">Flagged</a>
+<a class="text-on-surface-variant hover:text-primary font-label-md text-label-md transition-all" href="#">New Athletes</a>
+</nav>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-all relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="flex items-center gap-2 pl-4 border-l border-outline-variant">
+<div class="text-right hidden sm:block">
+<p class="font-label-md text-label-md leading-none">Marcus Jensen</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">Venue Manager</p>
+</div>
+<img alt="Manager Avatar" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="A professional close-up portrait of a venue manager in a sleek, modern office setting. The person has a friendly but authoritative expression. The lighting is bright and high-key, emphasizing a clean and corporate athletic brand identity. The background is softly blurred showing minimalist athletic infrastructure." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGx5kaw851GQMlD-GBWYbCAep4BqyfQanWJOP045pzQl2Lgbo6YYQCcY_Ushr4RXHcIIWqa15TuPniFcOKJ4P4hrnvNWQka9YKfC3NDkoCZrY17A9sL_Jzosuln0fhFgSeZzwsN4x-FbVyAjjPkUWRvxAkNkvc_BCaLG108E5VrHC4ei8TT_mwlbM3bnYfXUVcCWAWGSVDLnSFc0zqbxhGK2coUvg5m-gHNKJHUsWZ4XL94TIZwtXARYMQCGS8cBk7VQZx3tXk_ixT"/>
+</div>
+</div>
+</header>
+<!-- Athlete Profile Content -->
+<div class="pt-24 pb-stack-lg px-margin-desktop max-w-container-max mx-auto">
+<!-- Hero Profile Header -->
+<section class="glass-card rounded-2xl p-stack-lg mb-gutter flex flex-col md:flex-row items-center md:items-start gap-stack-lg relative overflow-hidden shadow-sm">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32"></div>
+<div class="relative">
+<img alt="Athlete Avatar" class="w-32 h-32 rounded-2xl object-cover border-2 border-white shadow-lg" data-alt="A heroic, high-contrast portrait of a young adult athlete with an intense, focused gaze. The athlete is sweating slightly, suggesting a post-training state. The lighting is dramatic, coming from the side to emphasize muscle definition and determination. The background is a clean, dark grey athletic facility, maintaining a premium and serious sports aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeVE9QRaceSV5J3H5uND_JCxyJsqhVimc9golMtGUCgZKvRfPtahPTQqXo_K1em8u5FQ7Gu6ZU_lji_NRLOKu3fw6P3BcRpmfulNT_mjmlHUawVlJuQ9uDJ-ppiYxdao6wkd1A48rgFskcckVTPcqOmS6qF664ZzlBmRZeclx8mPXA8Uyf1P_azBLo6ZeIByEDLs-Sq8BDJ-O8wE2K839KfEFsnBLFxy8W10-HIqGLtkBUamAE3vHAl1x8OZJhFAjqm0MquMazNENi"/>
+<div class="absolute -bottom-2 -right-2 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm shadow-md flex items-center gap-1 border border-white">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified" data-weight="fill">verified</span>
+                        Elite
+                    </div>
+</div>
+<div class="flex-1 text-center md:text-left z-10">
+<div class="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+<h2 class="font-headline-xl text-headline-xl">Alexander Thorne</h2>
+<div class="flex gap-2 justify-center md:justify-start">
+<span class="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full font-label-sm text-label-sm">#ATH-4920</span>
+<span class="bg-tertiary-container/10 text-tertiary font-bold px-3 py-1 rounded-full font-label-sm text-label-sm border border-tertiary-container/20">Active</span>
+</div>
+</div>
+<p class="text-body-lg text-on-surface-variant mb-stack-md flex items-center justify-center md:justify-start gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="location_on">location_on</span>
+                        London, United Kingdom
+                    </p>
+<div class="flex flex-wrap gap-stack-sm justify-center md:justify-start">
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-xl font-label-md text-label-md flex items-center gap-2 magnetic-lift shadow-sm">
+<span class="material-symbols-outlined text-[20px]" data-icon="mail">mail</span>
+                            Email
+                        </button>
+<button class="bg-surface-container text-on-surface px-6 py-2.5 rounded-xl font-label-md text-label-md flex items-center gap-2 magnetic-lift border border-outline-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="chat_bubble">chat_bubble</span>
+                            Message
+                        </button>
+<button class="p-2.5 rounded-xl border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Quick Stats Ribbon -->
+<div class="flex gap-stack-lg border-t md:border-t-0 md:border-l border-outline-variant pt-stack-md md:pt-0 md:pl-stack-lg">
+<div class="text-center">
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">Attendance</p>
+<p class="font-headline-lg text-headline-lg text-primary">94%</p>
+</div>
+<div class="text-center">
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">LTV</p>
+<p class="font-headline-lg text-headline-lg text-on-surface">$2,840</p>
+</div>
+</div>
+</section>
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Left Sidebar Column -->
+<div class="col-span-12 lg:col-span-4 space-y-gutter">
+<!-- Personal Details -->
+<div class="glass-card rounded-2xl p-stack-md">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-stack-md px-2">Personal Details</h3>
+<div class="space-y-stack-md bg-surface-container-low rounded-xl p-stack-md">
+<div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
+<span class="text-on-surface-variant text-body-md">Age</span>
+<span class="font-bold">26</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
+<span class="text-on-surface-variant text-body-md">Gender</span>
+<span class="font-bold">Male</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
+<span class="text-on-surface-variant text-body-md">Height</span>
+<span class="font-bold">188cm</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant text-body-md">Joined</span>
+<span class="font-bold">Mar 12, 2023</span>
+</div>
+</div>
+</div>
+<!-- Sports Interests -->
+<div class="glass-card rounded-2xl p-stack-md">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-stack-md px-2">Sports Interests</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-1.5 rounded-full bg-secondary-container/20 text-secondary border border-secondary/20 font-label-md text-label-md">Football (5v5)</span>
+<span class="px-4 py-1.5 rounded-full bg-secondary-container/20 text-secondary border border-secondary/20 font-label-md text-label-md">Padel</span>
+<span class="px-4 py-1.5 rounded-full bg-secondary-container/20 text-secondary border border-secondary/20 font-label-md text-label-md">High Intensity Training</span>
+<span class="px-4 py-1.5 rounded-full bg-secondary-container/20 text-secondary border border-secondary/20 font-label-md text-label-md">Swimming</span>
+</div>
+</div>
+<!-- Membership Tier -->
+<div class="bg-primary text-on-primary rounded-2xl p-stack-lg relative overflow-hidden group shadow-lg">
+<div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+<span class="material-symbols-outlined text-[120px]" data-icon="military_tech">military_tech</span>
+</div>
+<p class="font-label-md text-label-md text-on-primary/80 uppercase tracking-widest mb-1">Current Tier</p>
+<h4 class="font-headline-lg text-headline-lg mb-stack-md">Pro Annual Pass</h4>
+<div class="flex items-end gap-2 mb-stack-lg">
+<span class="text-headline-xl font-bold">$120</span>
+<span class="text-body-md opacity-80 pb-1">/ month</span>
+</div>
+<div class="space-y-2 mb-stack-lg">
+<div class="flex items-center gap-2 text-body-md">
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle">check_circle</span>
+                                Priority booking (48h early)
+                            </div>
+<div class="flex items-center gap-2 text-body-md">
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle">check_circle</span>
+                                Access to Recovery Lounge
+                            </div>
+</div>
+<button class="w-full bg-white text-primary py-3 rounded-xl font-label-md text-label-md shadow-inner transition-transform active:scale-95">Manage Plan</button>
+</div>
+</div>
+<!-- Main Content Column -->
+<div class="col-span-12 lg:col-span-8 space-y-gutter">
+<!-- Analytics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-stack-md">
+<div class="glass-card rounded-2xl p-stack-md border-l-4 border-primary">
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider mb-1">Lifetime Bookings</p>
+<h5 class="font-headline-lg text-headline-lg">142</h5>
+<div class="mt-2 text-tertiary font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+                                +12% vs last year
+                            </div>
+</div>
+<div class="glass-card rounded-2xl p-stack-md border-l-4 border-secondary">
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider mb-1">Tournament Wins</p>
+<h5 class="font-headline-lg text-headline-lg">08</h5>
+<div class="mt-2 text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="military_tech">military_tech</span>
+                                Rank: Amateur Elite
+                            </div>
+</div>
+<div class="glass-card rounded-2xl p-stack-md border-l-4 border-tertiary">
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider mb-1">Avg Score/Rating</p>
+<h5 class="font-headline-lg text-headline-lg">4.9</h5>
+<div class="mt-2 flex gap-0.5">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="star" data-weight="fill">star</span>
+</div>
+</div>
+</div>
+<!-- Interactive Activity Timeline -->
+<div class="glass-card rounded-2xl p-stack-lg">
+<div class="flex justify-between items-center mb-stack-lg">
+<h3 class="font-headline-lg text-headline-lg">Activity Timeline</h3>
+<div class="flex bg-surface-container-low rounded-lg p-1">
+<button class="px-4 py-1.5 bg-white shadow-sm rounded-md text-label-md font-bold text-primary">All</button>
+<button class="px-4 py-1.5 text-label-md text-on-surface-variant">Bookings</button>
+<button class="px-4 py-1.5 text-label-md text-on-surface-variant">Payments</button>
+</div>
+</div>
+<div class="relative space-y-stack-lg">
+<!-- Timeline Line -->
+<div class="absolute left-[19px] top-2 bottom-0 w-0.5 bg-outline-variant/50"></div>
+<!-- Timeline Item 1 -->
+<div class="relative flex gap-stack-md pl-12 group">
+<div class="absolute left-0 top-1 w-10 h-10 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center border-4 border-surface z-10 transition-transform group-hover:scale-110">
+<span class="material-symbols-outlined text-[20px]" data-icon="sports_soccer">sports_soccer</span>
+</div>
+<div class="flex-1 pb-stack-md border-b border-outline-variant/30">
+<div class="flex justify-between items-start mb-1">
+<p class="font-bold text-body-lg">Indoor Soccer - Pitch 4</p>
+<span class="text-label-sm text-on-surface-variant">2 hours ago</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-2">Completed a 60-minute match with 'Friday Night Stars' group.</p>
+<div class="flex gap-stack-sm">
+<span class="bg-tertiary-container/10 text-tertiary px-2 py-0.5 rounded text-[12px] font-bold">Win (4-2)</span>
+<span class="text-on-surface-variant text-[12px] italic">"Great pace today!"</span>
+</div>
+</div>
+</div>
+<!-- Timeline Item 2 -->
+<div class="relative flex gap-stack-md pl-12 group">
+<div class="absolute left-0 top-1 w-10 h-10 bg-secondary-container text-on-secondary-container rounded-full flex items-center justify-center border-4 border-surface z-10 transition-transform group-hover:scale-110">
+<span class="material-symbols-outlined text-[20px]" data-icon="payments">payments</span>
+</div>
+<div class="flex-1 pb-stack-md border-b border-outline-variant/30">
+<div class="flex justify-between items-start mb-1">
+<p class="font-bold text-body-lg">Membership Renewal</p>
+<span class="text-label-sm text-on-surface-variant">Yesterday</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-2">Pro Annual Pass renewed successfully for another billing cycle.</p>
+<span class="font-label-md text-label-md text-on-surface">$120.00 • Invoice #INV-8821</span>
+</div>
+</div>
+<!-- Timeline Item 3 -->
+<div class="relative flex gap-stack-md pl-12 group">
+<div class="absolute left-0 top-1 w-10 h-10 bg-surface-container-highest text-on-surface-variant rounded-full flex items-center justify-center border-4 border-surface z-10 transition-transform group-hover:scale-110">
+<span class="material-symbols-outlined text-[20px]" data-icon="event_note">event_note</span>
+</div>
+<div class="flex-1 pb-stack-md">
+<div class="flex justify-between items-start mb-1">
+<p class="font-bold text-body-lg">Padel Tournament Registration</p>
+<span class="text-label-sm text-on-surface-variant">Oct 24, 2023</span>
+</div>
+<p class="text-on-surface-variant text-body-md">Signed up for the 'Autumn Open' Championship scheduled for Nov 15.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Support Interactions -->
+<div class="glass-card rounded-2xl p-stack-lg">
+<div class="flex justify-between items-center mb-stack-md">
+<h3 class="font-headline-lg text-headline-lg">Communication History</h3>
+<button class="text-primary font-label-md text-label-md flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-[18px]" data-icon="add_comment">add_comment</span>
+                                Log Interaction
+                            </button>
+</div>
+<div class="space-y-stack-md">
+<div class="p-stack-md rounded-xl bg-surface-container/30 border border-outline-variant/20 hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="chat">chat</span>
+<p class="font-bold text-body-md">Locker Room Inquiry</p>
+</div>
+<span class="text-[12px] text-on-surface-variant">Oct 20, 14:30</span>
+</div>
+<p class="text-on-surface-variant text-body-md line-clamp-1 group-hover:line-clamp-none transition-all">Athlete requested information about towel service availability in the North Wing locker rooms. Provided info about premium perks.</p>
+<div class="mt-2 flex items-center justify-between">
+<p class="text-[11px] text-outline uppercase font-bold">Assigned to: Sarah K.</p>
+<span class="text-tertiary text-[11px] font-bold px-2 py-0.5 bg-tertiary-container/10 rounded">Resolved</span>
+</div>
+</div>
+<div class="p-stack-md rounded-xl bg-surface-container/30 border border-outline-variant/20 hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="call">call</span>
+<p class="font-bold text-body-md">Booking Reschedule</p>
+</div>
+<span class="text-[12px] text-on-surface-variant">Oct 12, 09:15</span>
+</div>
+<p class="text-on-surface-variant text-body-md line-clamp-1 group-hover:line-clamp-none">Phoned to move the Friday slot to Saturday due to travel delays. Successfully adjusted Pitch 2 booking.</p>
+<div class="mt-2 flex items-center justify-between">
+<p class="text-[11px] text-outline uppercase font-bold">Assigned to: James P.</p>
+<span class="text-tertiary text-[11px] font-bold px-2 py-0.5 bg-tertiary-container/10 rounded">Resolved</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Interactive Atmospheric Micro-interaction -->
+<script>
+        document.querySelectorAll('.magnetic-lift').forEach(button => {
+            button.addEventListener('mousemove', (e) => {
+                const rect = button.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                button.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px) scale(1.02)`;
+            });
+            button.addEventListener('mouseleave', () => {
+                button.style.transform = 'translate(0, 0) scale(1)';
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,159 @@
+const mongoose = require("mongoose");
+
+const allowedSports = ["Football", "Cricket", "Badminton", "Volleyball", "Basketball"];
+const allowedAmenities = ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Seating Area"];
+
+const turfSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Turf name is required"],
+      trim: true,
+      index: true,
+    },
+    description: {
+      type: String,
+      required: [true, "Turf description is required"],
+      trim: true,
+    },
+    location: {
+      type: String,
+      required: [true, "Location is required"],
+      trim: true,
+    },
+    address: {
+      type: String,
+      required: [true, "Address is required"],
+      trim: true,
+    },
+    city: {
+      type: String,
+      required: [true, "City is required"],
+      trim: true,
+      index: true,
+    },
+    state: {
+      type: String,
+      required: [true, "State is required"],
+      trim: true,
+    },
+    sportsSupported: [
+      {
+        type: String,
+        enum: allowedSports,
+        required: true,
+      },
+    ],
+    pricePerHour: {
+      type: Number,
+      required: [true, "Price per hour is required"],
+      min: [0, "Price must be positive"],
+    },
+    images: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    amenities: [
+      {
+        type: String,
+        enum: allowedAmenities,
+      },
+    ],
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    totalReviews: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    isApproved: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    schedule: {
+      slotMinutes: {
+        type: Number,
+        default: 60,
+      },
+      weeklyAvailability: {
+        monday: { type: [String], default: ["06:00-23:00"] },
+        tuesday: { type: [String], default: ["06:00-23:00"] },
+        wednesday: { type: [String], default: ["06:00-23:00"] },
+        thursday: { type: [String], default: ["06:00-23:00"] },
+        friday: { type: [String], default: ["06:00-23:00"] },
+        saturday: { type: [String], default: ["06:00-23:00"] },
+        sunday: { type: [String], default: ["06:00-23:00"] },
+      },
+      blackoutDates: {
+        type: [Date],
+        default: [],
+      },
+    },
+  },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
+);
+
+turfSchema.index({
+  name: "text",
+  city: "text",
+  sportsSupported: "text",
+  description: "text",
+});
+
+turfSchema.virtual("sport").get(function getPrimarySport() {
+  return this.sportsSupported?.[0] || "";
+});
+
+turfSchema.virtual("price").get(function getPrice() {
+  return this.pricePerHour;
+});
+
+turfSchema.virtual("gallery").get(function getGallery() {
+  return this.images || [];
+});
+
+turfSchema.virtual("reviews").get(function getReviewCount() {
+  return this.totalReviews;
+});
+
+turfSchema.virtual("status").get(function getStatus() {
+  return this.isApproved ? "published" : "review";
+});
+
+turfSchema.methods.toJSON = function toJSON() {
+  const turf = this.toObject({ virtuals: true });
+  turf.locationDetails = {
+    address: turf.address,
+    city: turf.city,
+    state: turf.state,
+  };
+  turf.pricing = {
+    baseHourly: {
+      amount: turf.pricePerHour,
+      currency: "INR",
+    },
+  };
+  delete turf.__v;
+  return turf;
+};
+
+module.exports = mongoose.model("Turf", turfSchema);
+module.exports.allowedSports = allowedSports;
+module.exports.allowedAmenities = allowedAmenities;

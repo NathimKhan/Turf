@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>TurfX | Elite Athletic Performance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#004e5c",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed": "#6bff8f",
+                    "surface-container-highest": "#e1e2ed",
+                    "surface-container": "#ededf9",
+                    "surface-container-high": "#e7e7f3",
+                    "on-primary-container": "#eeefff",
+                    "inverse-on-surface": "#f0f0fb",
+                    "surface": "#faf8ff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "inverse-surface": "#2e3039",
+                    "surface-variant": "#e1e2ed",
+                    "background": "#faf8ff",
+                    "inverse-primary": "#b4c5ff",
+                    "tertiary": "#006229",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "tertiary-container": "#007e37",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "secondary-container": "#57dffe",
+                    "on-secondary-fixed": "#001f26",
+                    "on-tertiary-container": "#c1ffc5",
+                    "on-secondary-container": "#006172",
+                    "secondary": "#00687a",
+                    "surface-container-low": "#f3f3fe",
+                    "on-tertiary-fixed": "#002109",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "outline": "#737686",
+                    "on-background": "#191b23",
+                    "primary-container": "#2563eb",
+                    "on-surface": "#191b23",
+                    "surface-tint": "#0053db",
+                    "on-primary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#acedff",
+                    "on-surface-variant": "#434655",
+                    "surface-bright": "#faf8ff",
+                    "primary": "#004ac6",
+                    "secondary-fixed-dim": "#4cd7f6",
+                    "outline-variant": "#c3c6d7",
+                    "primary-fixed": "#dbe1ff",
+                    "on-primary-fixed": "#00174b",
+                    "surface-dim": "#d9d9e5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-lg": "32px",
+                    "base": "8px",
+                    "stack-sm": "8px",
+                    "container-max": "1280px",
+                    "stack-md": "16px",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "margin-desktop": "40px",
+                    "section-gap": "80px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-2xl-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-2xl": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-2xl-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-card { backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.7); }
+        .kinetic-tap:active { transform: scale(0.96); transition: transform 0.1s ease-out; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm flex items-center justify-between px-margin-mobile h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional athlete with a determined expression, wearing premium athletic performance gear. The lighting is dramatic, high-contrast studio lighting that emphasizes muscle definition and focus. The background is a clean, minimalist dark grey that makes the warm skin tones and the sharp blue of the athletic wear stand out, aligning with the TurfX premium athletic brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6LIt6REXWQU8HdQ-wcRgNOz5WLWT7swAyL8A2H7GeZVLrMym1XL-VJExYD-EXneFXTmBwdmRdk1_OvuIOl2RyponBP6sVAg3mXBQfYhTmCkkAfqGOsaJ9icS2FLHOIA8zmwIk1bNesrtES2n8TZRhJEH-Znlzyq2_RxNO0uEulZE--1F1jIMsdbBzZYTYQtGSIJwuIlltbsqyxdpGj7ZJa8kN38Ddhv2j85Dmy4gcRiEMFBsQtJb6BWOlM2vDw6iuZ-latIsXD9zR"/>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-extrabold tracking-tighter text-primary">TurfX</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors kinetic-tap">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="pt-20 space-y-stack-lg">
+<!-- Cinematic Hero Banner -->
+<section class="px-margin-mobile">
+<div class="relative w-full aspect-[16/10] rounded-xl overflow-hidden shadow-sm group">
+<img alt="Elite Training" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A cinematic action shot of an elite athlete performing high-intensity functional training in a modern, architecturally precise sports facility. Intense rays of morning sunlight cut through the large industrial windows, creating sharp shadows and highlighting a palette of deep blues and electric cyans. The atmosphere is energetic and focused, capturing the flow state of professional performance with a high-end, editorial aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaLjoQKrWIMsODh1UUOlq5vzCfFOwX60vC3XQA5SkSnEG3m3nuqT4PoSBJORxxNvqYs_S8vuZRWF-bJ_UT0KaH9r3PaGgYVFyX-3TpYt_gN2d_LuiH76Dzpm_AXNe0pAMqq9zmUfSD6kMQIDUe5A4icAEvDl_q63obuyW_8pVVW42h2cBO3cM0UtRZymZyjTw6fA8flnNZbolCrQY7uqOr1UYBO551M-8pnv6YlyFMlUUc0f7RufmiB3azhr9IRKPP_p89dTidnqD-"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<span class="inline-block px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm mb-3">ELITE TRAINING</span>
+<h2 class="text-white font-headline-xl text-headline-xl leading-tight mb-2">Master Your Flow State</h2>
+<p class="text-white/80 font-body-md text-body-md mb-4 max-w-[80%]">Join pro-led sessions designed for peak performance.</p>
+<button class="bg-primary-container text-on-primary-container px-6 py-3 rounded-lg font-label-md text-label-md flex items-center gap-2 kinetic-tap shadow-lg">
+                        Book a Session
+                        <span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Recent Bookings Quick Access -->
+<section class="px-margin-mobile">
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="history">history</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Recent: The Arena</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Yesterday, 18:00 • Pitch 4</p>
+</div>
+</div>
+<button class="text-primary font-label-md text-label-md flex items-center gap-1 kinetic-tap">
+                    Rebook
+                    <span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Featured Venues (Horizontal Scroll) -->
+<section class="space-y-4">
+<div class="px-margin-mobile flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Featured Venues</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Elite stadiums at your fingertips</p>
+</div>
+<button class="text-primary font-label-md text-label-md">View all</button>
+</div>
+<div class="flex overflow-x-auto no-scrollbar gap-4 px-margin-mobile pb-4">
+<!-- Venue Card 1 -->
+<div class="flex-none w-72 group kinetic-tap">
+<div class="relative h-48 rounded-xl overflow-hidden mb-3">
+<img alt="Olympic Stadium" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="High-resolution architectural photography of a modern, world-class football stadium at dusk. The vibrant green turf is meticulously manicured, and the stadium's structural elements are illuminated by sharp, cool LED floodlights. The sky is a deep twilight indigo, providing a high-contrast background for the pristine white precision lines of the pitch and the premium architectural design of the stands." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOyInUSKyrc5B_nXakdbxrSXYhWbZ6Nw9dca5QEYAq_-jpcu6t6gL9shKlHWds47CoC9vlPa0or_17K0emcBDlrtGUjHz6iV5q1AnfjGxdA8qvCNa232J5AKOmAY6uVMzioQ-Uq52N4ah7Hq_kf110mdEnzq1zpmPj5pFOjn4CaE9dBJhhZtYm0kBq8NS5RhLP0uDFYOjHddLgU4fPWgma1A-m-YSbZ99TPd7TZI-tZGHnNbCkTz9EMHOXk8t9bpFnn18o-kOwB52y"/>
+<div class="absolute top-3 right-3 glass-card px-2 py-1 rounded-full flex items-center gap-1 border border-white/20">
+<span class="material-symbols-outlined text-primary text-[14px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm text-on-surface">4.9</span>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">The Grand Stadium</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+                                Central District
+                            </p>
+</div>
+<p class="font-label-md text-label-md text-primary">$45<span class="text-on-surface-variant font-normal">/hr</span></p>
+</div>
+</div>
+<!-- Venue Card 2 -->
+<div class="flex-none w-72 group kinetic-tap">
+<div class="relative h-48 rounded-xl overflow-hidden mb-3">
+<img alt="Skyline Pitch" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A breathtaking view of an urban rooftop soccer pitch surrounded by a metropolis skyline during the golden hour. The sunlight reflects off the surrounding glass skyscrapers, casting a warm, heroic glow over the synthetic turf. The design system's aesthetic of 'Premium Athleticism' is captured through the blend of architectural precision and the high-energy potential of the urban sports setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDW-ZBzGKOuwK2KsDRWgacn5OtEfgRXF7IhQYhpRFSIkzOMHMtjx6oSBpt7V4bvPChKUaWRcZdG5pJWFG9bfqdAj8fzaje3wQRZd-fRpTrYuqWdC2OCl3AEQHP3b7yOPPZSdQpOcmE0Zzr_J-IZpWJJY_WEPdmYhcaoXon8bMCOchXDiAP1x_OHLQAdHK-nfPqSyFIBOVrTVQsTl-IZ9ax9XsqL17MOWwZihwXfKRpXz2UUAWOsu6nguQA9O9IFlatrvvhOm5QBN-o4"/>
+<div class="absolute top-3 right-3 glass-card px-2 py-1 rounded-full flex items-center gap-1 border border-white/20">
+<span class="material-symbols-outlined text-primary text-[14px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm text-on-surface">4.7</span>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Skyline Rooftop</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+                                East Heights
+                            </p>
+</div>
+<p class="font-label-md text-label-md text-primary">$60<span class="text-on-surface-variant font-normal">/hr</span></p>
+</div>
+</div>
+</div>
+</section>
+<!-- Upcoming Tournaments -->
+<section class="px-margin-mobile pb-8">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-4">Upcoming Tournaments</h2>
+<div class="space-y-3">
+<!-- Tournament Card 1 -->
+<div class="relative p-6 rounded-2xl overflow-hidden border border-outline-variant/20 bg-white group kinetic-tap">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/10 transition-colors"></div>
+<div class="relative flex items-center gap-5">
+<div class="flex flex-col items-center justify-center w-14 h-14 bg-surface-container-high rounded-xl">
+<span class="font-label-md text-label-md text-primary">MAY</span>
+<span class="font-headline-lg text-headline-lg text-on-surface -mt-1">24</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Summer Kick-off Cup</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">5-a-side • 16 Teams • $500 Prize</p>
+<div class="flex items-center gap-2 mt-2">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
+<img alt="Player" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuKr0ngE6isVzMTRhefpxML5igNIDvlexWtwb_hU_U9in9mcbsFcjTbUE7R1eT9R323_f4OiWGNJ4D_CBetVhGsXzKllusC0qQID6rGtf4wYfwO8qLc_-ay23csVdDvBWnzpvPb2NuiOMDkN6o_QiQexeCOuvj7sJs5Be0eG_cWQBADl3IQW2iKDMCPdt-261EVPJq4HNeVMr0NRVYpBoLtj29dUsNE5ANBOjtQPQNjfwUZVzOOXzS5uaQN2hBFWGO5jM1uY1g9cuX"/>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
+<img alt="Player" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhb-70MCNyV81Ok6yXK9Y8GRv1mHLmNAzLay51GDFY1LN2jqMZ7cAWSUlybYYWF1wE9-W-B5qOOWeh_dGWdeLybRt3DZo7nEPiDi1lgxXVjPIZXNq57CXl8E6R-4YCbXX6WkPinBz2R9F9Oy6ZScLeps79zi8SYXgBFVCynp2lDzxzllpQrj3HG3mpibA5yEzyNtGVBS8BMcAi8R0PE2t8sdSeiyJeVi35r-N112YLvwky77hEvojsGHeR21qOVC7DejKK0Ca-5elj"/>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-primary text-white text-[8px] flex items-center justify-center font-bold">
+                                        +12
+                                    </div>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary">12 spots left</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Tournament Card 2 -->
+<div class="relative p-6 rounded-2xl overflow-hidden border border-outline-variant/20 bg-white group kinetic-tap">
+<div class="relative flex items-center gap-5">
+<div class="flex flex-col items-center justify-center w-14 h-14 bg-surface-container-high rounded-xl">
+<span class="font-label-md text-label-md text-primary">JUN</span>
+<span class="font-headline-lg text-headline-lg text-on-surface -mt-1">08</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Pro Elite Invitational</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Full Pitch • Invite Only</p>
+<div class="flex items-center gap-2 mt-2">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-tertiary/10 text-tertiary rounded font-label-sm text-[10px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[12px]" data-icon="verified">verified</span>
+                                    Verified
+                                </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-white/80 backdrop-blur-2xl border-t border-outline-variant/20 shadow-[0_-4px_12px_rgba(0,0,0,0.04)] flex justify-around items-center pt-3 pb-8 px-2">
+<div class="flex flex-col items-center gap-1 text-primary scale-105 transition-transform font-bold">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-label-sm text-label-sm">Search</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span class="font-label-sm text-label-sm">Bookings</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</div>
+</nav>
+<!-- FAB Contextual (Book a Walk/Session) -->
+<div class="fixed bottom-24 right-margin-mobile z-40">
+<button class="bg-primary-container text-on-primary-container w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center kinetic-tap">
+<span class="material-symbols-outlined text-[28px]" data-icon="add">add</span>
+</button>
+</div>
+<script>
+        // Micro-interactions and effects
+        document.querySelectorAll('.kinetic-tap').forEach(button => {
+            button.addEventListener('touchstart', () => {
+                button.classList.add('scale-95');
+            });
+            button.addEventListener('touchend', () => {
+                button.classList.remove('scale-95');
+            });
+        });
+
+        // Sticky header transition on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-md');
+            } else {
+                header.classList.remove('shadow-md');
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TurfX | Notification Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .kinetic-hover {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .kinetic-hover:hover {
+            transform: scale(1.02);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-fixed-dim": "#4cd7f6",
+                      "on-tertiary-container": "#c1ffc5",
+                      "inverse-on-surface": "#f0f0fb",
+                      "surface-bright": "#faf8ff",
+                      "secondary-fixed": "#acedff",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-low": "#f3f3fe",
+                      "primary-fixed": "#dbe1ff",
+                      "on-background": "#191b23",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "primary": "#004ac6",
+                      "on-secondary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "surface-tint": "#0053db",
+                      "on-primary-fixed": "#00174b",
+                      "inverse-surface": "#2e3039",
+                      "background": "#faf8ff",
+                      "tertiary-fixed": "#6bff8f",
+                      "tertiary-container": "#007e37",
+                      "surface": "#faf8ff",
+                      "surface-container-high": "#e7e7f3",
+                      "on-secondary-fixed-variant": "#004e5c",
+                      "secondary": "#00687a",
+                      "on-tertiary-fixed-variant": "#005321",
+                      "secondary-container": "#57dffe",
+                      "outline": "#737686",
+                      "on-surface-variant": "#434655",
+                      "on-surface": "#191b23",
+                      "on-error": "#ffffff",
+                      "primary-container": "#2563eb",
+                      "on-tertiary-fixed": "#002109",
+                      "on-secondary-fixed": "#001f26",
+                      "on-primary-container": "#eeefff",
+                      "error": "#ba1a1a",
+                      "tertiary": "#006229",
+                      "surface-container-highest": "#e1e2ed",
+                      "on-secondary-container": "#006172",
+                      "outline-variant": "#c3c6d7",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "on-error-container": "#93000a",
+                      "surface-dim": "#d9d9e5",
+                      "surface-container": "#ededf9",
+                      "inverse-primary": "#b4c5ff",
+                      "tertiary-fixed-dim": "#4ae176",
+                      "error-container": "#ffdad6",
+                      "surface-variant": "#e1e2ed"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-md": "16px",
+                      "section-gap": "80px",
+                      "gutter": "24px",
+                      "margin-desktop": "40px",
+                      "stack-sm": "8px",
+                      "base": "8px",
+                      "container-max": "1280px",
+                      "margin-mobile": "16px",
+                      "stack-lg": "32px"
+              },
+              "fontFamily": {
+                      "headline-2xl": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-xl": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                      "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+<!-- Persistent SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-dim border-r border-outline-variant/20 flex flex-col py-8 z-50">
+<div class="px-6 mb-10">
+<h1 class="font-headline-lg text-headline-lg font-extrabold text-primary italic tracking-tighter">TurfX</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mt-1">Elite Performance</p>
+</div>
+<nav class="flex-1 space-y-1 px-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-300 active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">event_available</span>
+<span class="font-label-md text-label-md">Bookings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-300 active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">emoji_events</span>
+<span class="font-label-md text-label-md">Tournaments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-300 active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">card_membership</span>
+<span class="font-label-md text-label-md">Memberships</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-300 active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">account_balance_wallet</span>
+<span class="font-label-md text-label-md">Wallet</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-300 active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">campaign</span>
+<span class="font-label-md text-label-md">Promotions</span>
+</a>
+</nav>
+<div class="px-4 mt-auto pt-8 border-t border-outline-variant/20">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all mb-1" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined text-xl">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 backdrop-blur-xl bg-surface/70 border-b border-outline-variant/30 shadow-sm z-40 flex justify-between items-center px-margin-desktop py-4">
+<h2 class="font-headline-lg text-headline-lg font-bold text-primary">Notifications</h2>
+<div class="flex items-center gap-6">
+<button class="font-label-md text-label-md text-primary hover:text-on-primary-fixed-variant transition-colors flex items-center gap-2 px-4 py-2 rounded-full hover:bg-primary/5">
+<span class="material-symbols-outlined text-lg">done_all</span>
+                    Mark all as read
+                </button>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 p-0.5">
+<img alt="Athlete Profile" class="w-full h-full object-cover rounded-full" data-alt="A professional close-up portrait of a determined young athlete in modern sportswear. The lighting is dramatic and focused, emphasizing strength and focus, set against a clean, minimalist architectural background with subtle hints of blue and white tones to match a premium athletic brand aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcH8cjB14LEoYUxszg-lMG01WO0CzI1VTRYpmUJ7tbMtaIDpkZl5HYZ-IOHVNbAlM-U2isvgANITOQxFFh0TRHZYWdo7UWc6FOLapIiAMgsEv2HuiqNjMraCkvLW7ho9QI4Y2kzeK9Euzj6TCfP3c1V78d6eq-n_8DkI2vj5QzhXEWkWlsNRHfeIpzEFsut-hant-T8GyDf3NO56N5vqSaw_bfa9kuyjvFAxJ8k214JIt_Bc-2qXgavgjQCB1MYOrjI73RMHVmdfP1"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Notification Center Content -->
+<div class="px-margin-desktop py-stack-lg max-w-5xl mx-auto w-full">
+<!-- Tabbed Filtering System -->
+<div class="flex items-center gap-2 mb-stack-lg overflow-x-auto pb-2 scrollbar-hide">
+<button class="px-6 py-2.5 rounded-full font-label-md text-label-md bg-primary text-on-primary shadow-lg shadow-primary/20">All</button>
+<button class="px-6 py-2.5 rounded-full font-label-md text-label-md bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors">Unread</button>
+<button class="px-6 py-2.5 rounded-full font-label-md text-label-md bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors">Bookings</button>
+<button class="px-6 py-2.5 rounded-full font-label-md text-label-md bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors">Competitive</button>
+<button class="px-6 py-2.5 rounded-full font-label-md text-label-md bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors">Rewards</button>
+</div>
+<!-- Notifications List -->
+<div class="space-y-4">
+<!-- Notification 1: Booking Confirmed -->
+<div class="glass-card kinetic-hover border border-outline-variant/30 rounded-xl p-5 flex gap-5 items-start relative overflow-hidden group">
+<!-- Unread Indicator -->
+<div class="absolute top-5 left-0 w-1 h-12 bg-primary rounded-r-full"></div>
+<div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">sports_soccer</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline-lg text-lg text-on-surface font-bold">Booking Confirmed</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant opacity-60">2m ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 leading-relaxed">
+                            Your pitch at <span class="text-on-surface font-semibold">Emerald Arena</span> is ready for Tomorrow at 19:00. Don't forget to check-in 15 mins early.
+                        </p>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-on-primary-fixed-variant transition-all">View Match</button>
+<button class="px-4 py-2 border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container-highest transition-all">Directions</button>
+</div>
+</div>
+<div class="w-2.5 h-2.5 bg-primary rounded-full mt-2 self-start flex-shrink-0"></div>
+</div>
+<!-- Notification 2: Tournament Alert -->
+<div class="glass-card kinetic-hover border border-outline-variant/30 rounded-xl p-5 flex gap-5 items-start relative overflow-hidden group bg-surface-container-low/40">
+<div class="w-14 h-14 rounded-2xl bg-tertiary-container/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-tertiary text-3xl" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline-lg text-lg text-on-surface font-bold">Tournament Alert</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant opacity-60">45m ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 leading-relaxed">
+                            Fall Football League brackets are now live! You've been seeded in <span class="text-tertiary font-bold italic">Gold Division B</span>.
+                        </p>
+<button class="px-4 py-2 bg-tertiary text-on-tertiary font-label-md text-label-md rounded-lg hover:opacity-90 transition-all">View Brackets</button>
+</div>
+</div>
+<!-- Notification 3: Reward Unlocked -->
+<div class="glass-card kinetic-hover border border-outline-variant/30 rounded-xl p-5 flex gap-5 items-start relative overflow-hidden group bg-surface-container-low/40">
+<div class="w-14 h-14 rounded-2xl bg-secondary-container/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline-lg text-lg text-on-surface font-bold">Reward Unlocked</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant opacity-60">2h ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 leading-relaxed">
+                            You've earned the <span class="text-secondary font-semibold">'Early Bird'</span> badge for completing 5 morning sessions in a row!
+                        </p>
+<button class="px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg hover:opacity-90 transition-all">Claim Reward</button>
+</div>
+</div>
+<!-- Notification 4: Wallet Update -->
+<div class="glass-card kinetic-hover border border-outline-variant/30 rounded-xl p-5 flex gap-5 items-start relative overflow-hidden group">
+<!-- Unread Indicator -->
+<div class="absolute top-5 left-0 w-1 h-12 bg-primary rounded-r-full"></div>
+<div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline-lg text-lg text-on-surface font-bold">Wallet Update</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant opacity-60">5h ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 leading-relaxed">
+<span class="text-primary font-bold">$50.00</span> successfully added to your Turf Wallet via Apple Pay.
+                        </p>
+<button class="px-4 py-2 border border-primary text-primary font-label-md text-label-md rounded-lg hover:bg-primary/5 transition-all">View Balance</button>
+</div>
+<div class="w-2.5 h-2.5 bg-primary rounded-full mt-2 self-start flex-shrink-0"></div>
+</div>
+<!-- Notification 5: Promotion -->
+<div class="glass-card kinetic-hover border border-outline-variant/30 rounded-xl p-5 flex gap-5 items-start relative overflow-hidden group bg-surface-container-low/40">
+<div class="w-14 h-14 rounded-2xl bg-error/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-error text-3xl" style="font-variation-settings: 'FILL' 1;">campaign</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline-lg text-lg text-on-surface font-bold">Flash Sale: 20% Off</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant opacity-60">Yesterday</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 leading-relaxed">
+                            Book any indoor court this weekend and get 20% back in TurfX credits. Use code: <span class="bg-error/10 text-error px-2 py-0.5 rounded font-mono font-bold">WEEKEND20</span>.
+                        </p>
+<button class="px-4 py-2 bg-error text-on-error font-label-md text-label-md rounded-lg hover:opacity-90 transition-all">Book Now</button>
+</div>
+</div>
+</div>
+<!-- Yesterday Section Divider -->
+<div class="flex items-center gap-4 my-10">
+<div class="h-px bg-outline-variant/30 flex-1"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest bg-surface px-4">Earlier this week</span>
+<div class="h-px bg-outline-variant/30 flex-1"></div>
+</div>
+<!-- Older Notification -->
+<div class="glass-card kinetic-hover border border-outline-variant/30 rounded-xl p-5 flex gap-5 items-start relative overflow-hidden group bg-surface-container-low/40">
+<div class="w-14 h-14 rounded-2xl bg-on-surface-variant/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-on-surface-variant text-3xl">sports_score</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline-lg text-lg text-on-surface font-bold">Session Review</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant opacity-60">3 days ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 leading-relaxed">
+                        How was your game at the South Plaza? Leave a review and help the community.
+                    </p>
+<button class="px-4 py-2 border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container-highest transition-all">Write Review</button>
+</div>
+</div>
+</div>
+<!-- Footer / Performance Stats -->
+<footer class="mt-auto px-margin-desktop py-8 border-t border-outline-variant/20 flex flex-col md:flex-row justify-between items-center text-on-surface-variant gap-4">
+<div class="flex items-center gap-4">
+<div class="flex -space-x-2">
+<img class="w-8 h-8 rounded-full border-2 border-surface" data-alt="Close-up profile of a female athlete, focused and ready for action, with soft natural lighting and a clean, high-performance aesthetic background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQWwtSaRZJBkfMulMWSJIxGhtXfzGducgsWrNBFqmfwnaOUf6HqmGLfcYeZweIUJyG_VoDdcu9lcb2-aVw38P6QehKxxlw_jI48OavDU1Zzx6s3OrQIVG7sTJspIjuQxSGzFDfwryNlEvBxgQ6wRtt-0ipaRxD4BtfMfS8OBmVuh39AqqU74dVNWFpMK0tG-qGB5AI4knGlu2MxHw8RV9xtNf4H7fMEP8hjKuhBcFYyRyNXB3y2WApmcfy0YLpmkRVWVsIDqa66YDX"/>
+<img class="w-8 h-8 rounded-full border-2 border-surface" data-alt="Portrait of a male athlete in professional training gear, set against a blurred modern gym environment with blue accent lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCH_arMfVMmOfCtqX_fsh2zQmu3Jpj6gt-q9jm7EIVPynI-Agj0V4JxXc6EG2aCy2k8JxvuI_XB6lMbklO5tW3MdoxTmC9GvxVT70fuHCf9sAgk2W0C_D7Vu5ct_j23nO3f45MMIByIVgicaFsxBRldLYDfxI1AIk2mLll6KPB-hCn8CvXZbNTHqKwNdSn2qXt--kUM8cBIf9pHKToRjcpCLbTqQ6leEiRftshChpCBvK56duySB6PJfWBpCmLiUnpiNd5DPX20bL94"/>
+<img class="w-8 h-8 rounded-full border-2 border-surface" data-alt="Strong and confident athlete portrait with high contrast lighting, showcasing elite performance branding and professional athletic style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC72GGqr7rQAl_qwxfkNoGyplIUDHG_YXqpTVsgKyzclMrHdG73J8ZzNb9TZ9JWYa5861DHVngQrmNT7KBR9uOXrUomK-tAxs5Jg-wM5DjKbYzA5gMkS8-KEAbNjOkIKu2D9cm95d-rnP2ffsqnyIw4ml691nOuKu9CeZszaY3Euag0YompD30Iqp6-PC1GoVGOSxNOztOpYf5rmGTf_9C2KJRrcPgP7YROZ4XJq5j9bDtdGETKFadcQTCRtmJPiaq7Ed7WQZc1JzAp"/>
+</div>
+<p class="font-label-sm text-label-sm">Joined by 12,400+ athletes this week</p>
+</div>
+<p class="font-label-sm text-label-sm">© 2024 TurfX Elite. All rights reserved.</p>
+</footer>
+</main>
+<!-- Floating Action Button - Only for Relevant Task Screens -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-50 group">
+<span class="material-symbols-outlined text-3xl group-hover:rotate-12 transition-transform">add</span>
+<div class="absolute right-16 bg-inverse-surface text-inverse-on-surface px-4 py-2 rounded-lg font-label-md text-label-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">
+            Book a Field
+        </div>
+</button>
+<script>
+        // Simple Interaction logic for tabs
+        const tabs = document.querySelectorAll('.filter-tabs button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('bg-primary', 'text-on-primary', 'shadow-lg', 'shadow-primary/20');
+                    t.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+                });
+                tab.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+                tab.classList.add('bg-primary', 'text-on-primary', 'shadow-lg', 'shadow-primary/20');
+            });
+        });
+
+        // "Mark all as read" micro-interaction
+        document.querySelector('button:contains("Mark all as read")')?.addEventListener('click', function() {
+            const indicators = document.querySelectorAll('.bg-primary.w-1.h-12, .bg-primary.w-2\\.5.h-2\\.5');
+            indicators.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transition = 'opacity 0.5s ease';
+            });
+            const unreadCards = document.querySelectorAll('.glass-card.relative');
+            unreadCards.forEach(card => {
+                card.classList.add('bg-surface-container-low/40');
+            });
+            this.innerHTML = '<span class="material-symbols-outlined text-lg">check_circle</span> All Read';
+            this.classList.add('text-on-surface-variant');
+        });
+
+        // Add contains polyfill or use a direct selector if text is stable
+        document.querySelectorAll('button').forEach(btn => {
+            if(btn.innerText.includes('Mark all as read')) {
+                btn.addEventListener('click', function() {
+                    const dots = document.querySelectorAll('.bg-primary.rounded-full.mt-2');
+                    const bars = document.querySelectorAll('.bg-primary.rounded-r-full');
+                    dots.forEach(d => d.remove());
+                    bars.forEach(b => b.remove());
+                    this.innerHTML = '<span class="material-symbols-outlined text-lg">done_all</span> All read';
+                    this.disabled = true;
+                    this.classList.add('opacity-50', 'cursor-not-allowed');
+                });
+            }
+        });
+    </script>
+</body></html>

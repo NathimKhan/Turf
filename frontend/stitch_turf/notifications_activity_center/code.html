@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>TurfX Notifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ios-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#004e5c",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed": "#6bff8f",
+                    "surface-container-highest": "#e1e2ed",
+                    "surface-container": "#ededf9",
+                    "surface-container-high": "#e7e7f3",
+                    "on-primary-container": "#eeefff",
+                    "inverse-on-surface": "#f0f0fb",
+                    "surface": "#faf8ff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "inverse-surface": "#2e3039",
+                    "surface-variant": "#e1e2ed",
+                    "background": "#faf8ff",
+                    "inverse-primary": "#b4c5ff",
+                    "tertiary": "#006229",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "tertiary-container": "#007e37",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "secondary-container": "#57dffe",
+                    "on-secondary-fixed": "#001f26",
+                    "on-tertiary-container": "#c1ffc5",
+                    "on-secondary-container": "#006172",
+                    "secondary": "#00687a",
+                    "surface-container-low": "#f3f3fe",
+                    "on-tertiary-fixed": "#002109",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "outline": "#737686",
+                    "on-background": "#191b23",
+                    "primary-container": "#2563eb",
+                    "on-surface": "#191b23",
+                    "surface-tint": "#0053db",
+                    "on-primary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#acedff",
+                    "on-surface-variant": "#434655",
+                    "surface-bright": "#faf8ff",
+                    "primary": "#004ac6",
+                    "secondary-fixed-dim": "#4cd7f6",
+                    "outline-variant": "#c3c6d7",
+                    "primary-fixed": "#dbe1ff",
+                    "on-primary-fixed": "#00174b",
+                    "surface-dim": "#d9d9e5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-lg": "32px",
+                    "base": "8px",
+                    "stack-sm": "8px",
+                    "container-max": "1280px",
+                    "stack-md": "16px",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "margin-desktop": "40px",
+                    "section-gap": "80px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-2xl-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-2xl": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                    "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                    "headline-2xl-mobile": ["36px", { "lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                    "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                    "headline-2xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                    "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                    "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm flex items-center justify-between px-margin-mobile h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/20">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a modern, athletic individual with soft lighting and a clean, high-end aesthetic. The background is a soft, neutral grey to maintain a light-mode feel. The subject exudes confidence and energy, aligned with a premium athletic brand identity like TurfX, using natural textures and sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSavUhmj-8uVdakunHfS_jg2xhtagKkU9IWkRhWTWBydd2Ive06xojGknZbg7uT8u5_YeDkoO2CXJa_KT1V5k_jC4i6Dx5l_PPn5733tnHdGDDEgpoUMlI6DQ0jaY1K1DrqivevrvWS6wNeyv4QzRx6t16zzdBttuVhkJR6Qn1Xq-hAO6HhuHDoZqUfy1il-2T7vOek7F7n1iV89TYi7J7Bk7Ru7vs57BGz5hpUU7E5A-8pxq4malraGCxDtdGKgDkwhVVq7NT0nkf"/>
+</div>
+<h1 class="font-headline-lg text-headline-lg-mobile font-extrabold tracking-tighter text-primary">Notifications</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-primary">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<main class="pt-20 px-margin-mobile space-y-stack-lg">
+<!-- Category: Booking Updates -->
+<section class="space-y-stack-md">
+<div class="flex items-center justify-between px-1">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Booking Updates</h2>
+<span class="font-label-sm text-label-sm text-primary">Mark all as read</span>
+</div>
+<div class="space-y-stack-sm">
+<!-- Notification Card 1 -->
+<div class="group bg-white rounded-xl p-4 border border-outline-variant/30 shadow-[0_4px_12px_rgba(0,0,0,0.02)] active:scale-95 transition-all duration-200">
+<div class="flex gap-4">
+<div class="w-12 h-12 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container shrink-0">
+<span class="material-symbols-outlined text-3xl" data-icon="event_available">event_available</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-on-surface font-bold">Booking Confirmed</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant/60">2m ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-tight">Your reservation for <span class="text-primary font-semibold">Eastside Turf - Pitch 4</span> at 7:00 PM tonight is ready.</p>
+</div>
+</div>
+</div>
+<!-- Notification Card 2 -->
+<div class="group bg-white rounded-xl p-4 border border-outline-variant/30 shadow-[0_4px_12px_rgba(0,0,0,0.02)] active:scale-95 transition-all duration-200 opacity-80">
+<div class="flex gap-4">
+<div class="w-12 h-12 rounded-lg bg-secondary-container/20 flex items-center justify-center text-on-secondary-container shrink-0">
+<span class="material-symbols-outlined text-3xl" data-icon="schedule">schedule</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-on-surface font-bold">Time Change Request</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant/60">1h ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-tight">The host of Sunday Morning League has requested a move to 10:30 AM.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Category: New Tournaments -->
+<section class="space-y-stack-md">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest px-1">New Tournaments</h2>
+<div class="grid grid-cols-1 gap-stack-sm">
+<!-- Rich Tournament Card -->
+<div class="relative overflow-hidden rounded-xl border border-outline-variant/30 shadow-sm group">
+<img alt="Football Tournament" class="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A wide-angle, high-action photograph of a vibrant green football pitch at night under bright stadium lights. The atmosphere is electric with a slight lens flare and misty air. The color palette emphasizes the lush green of the turf and the deep blue of the night sky, creating a cinematic, high-performance athletic vibe typical of a professional sports tournament." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNw2poh0R20Djffg6VEs-JbeLxmz3ecRhu0UsZgtnKvcBTQdrWzwHKPo1idBnKLvY9-3RUvQAMFaykyqg96-AMd_sSbi8OdTmyYk332c-xJqP5b2uhE6B-u5mwVWQOSVg0-t6hOKmn1ymyd_6DxD3taQaojmYautHutDEjyFBU8hEQThPpJhjk9XPQt5VErnk3MFWgQmJWYFRx5qTQTz7TAnaTm_QFE2Jt2CfiISQeyJXREfKQv-T9R1bHmQH36gQKMxkLDBxFGeJB"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 text-white">
+<div class="flex justify-between items-end">
+<div>
+<span class="bg-tertiary text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-1 inline-block">Trending</span>
+<h3 class="font-headline-lg text-headline-lg-mobile text-white leading-none">Summer Heat Cup</h3>
+</div>
+<button class="bg-white text-primary px-4 py-2 rounded-full font-label-md text-label-md font-bold shadow-lg">Join Now</button>
+</div>
+</div>
+</div>
+<div class="group bg-white rounded-xl p-4 border border-outline-variant/30 shadow-[0_4px_12px_rgba(0,0,0,0.02)] active:scale-95 transition-all duration-200">
+<div class="flex gap-4">
+<div class="w-12 h-12 rounded-lg bg-tertiary-fixed/30 flex items-center justify-center text-tertiary shrink-0">
+<span class="material-symbols-outlined text-3xl" data-icon="trophy">trophy</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-on-surface font-bold">Registration Open</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant/60">3h ago</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Early bird slots are now open for the <span class="font-semibold text-on-surface">City Pro Series</span>.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Category: Rewards -->
+<section class="space-y-stack-md">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest px-1">Rewards</h2>
+<div class="space-y-stack-sm">
+<!-- Reward Card -->
+<div class="group relative bg-gradient-to-br from-primary-container to-primary text-white rounded-xl p-5 shadow-lg overflow-hidden active:scale-95 transition-transform duration-200">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="material-symbols-outlined text-8xl" data-icon="stars">stars</span>
+</div>
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-2">
+<div class="p-2 bg-white/20 rounded-full">
+<span class="material-symbols-outlined text-white" data-icon="account_balance_wallet">account_balance_wallet</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg-mobile leading-none">500 Credits Added</h3>
+</div>
+<p class="font-body-md text-body-md text-white/90">Thanks for being a Pro member! We've added bonus credits to your TurfX wallet for this month.</p>
+<div class="mt-4 pt-4 border-t border-white/20 flex justify-between items-center">
+<span class="font-label-sm text-label-sm">Expires in 12 days</span>
+<button class="font-label-md text-label-md font-bold underline decoration-2 underline-offset-4">View Wallet</button>
+</div>
+</div>
+</div>
+<!-- Simple Reward Notification -->
+<div class="group bg-white rounded-xl p-4 border border-outline-variant/30 shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
+<div class="flex gap-4">
+<div class="w-12 h-12 rounded-lg bg-on-secondary-fixed/10 flex items-center justify-center text-on-secondary-container shrink-0">
+<span class="material-symbols-outlined text-3xl" data-icon="redeem">redeem</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-on-surface font-bold">New Perk Unlocked</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant/60">Yesterday</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-tight">You've reached Level 5! Enjoy <span class="text-tertiary font-bold">10% off</span> all weekday pitch bookings.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-white/80 backdrop-blur-2xl border-t border-outline-variant/20 shadow-[0_-4px_12px_rgba(0,0,0,0.04)] pb-safe">
+<div class="flex justify-around items-center pt-3 pb-2 px-2 w-full">
+<a class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-label-sm text-label-sm">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span class="font-label-sm text-label-sm">Bookings</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<!-- Active State determined as Profile for notification context or Profile context -->
+<a class="flex flex-col items-center gap-1 text-primary scale-105 transition-transform font-bold" href="#">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</div>
+</nav>
+<script>
+        // Micro-interaction for notification items
+        document.querySelectorAll('.group.active\\:scale-95').forEach(card => {
+            card.addEventListener('touchstart', () => {
+                card.style.transform = 'scale(0.97)';
+            });
+            card.addEventListener('touchend', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+
+        // Pull to refresh simulation (visual only)
+        let touchstartY = 0;
+        document.addEventListener('touchstart', e => {
+            touchstartY = e.touches[0].screenY;
+        });
+        document.addEventListener('touchmove', e => {
+            const touchmoveY = e.touches[0].screenY;
+            if (window.scrollY === 0 && touchmoveY > touchstartY + 100) {
+                // Potential pull to refresh indicator logic could go here
+            }
+        });
+    </script>
+</body></html>

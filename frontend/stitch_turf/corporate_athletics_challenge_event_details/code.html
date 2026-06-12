@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Corporate Athletics Challenge | TurfX</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .stadium-glow {
+            box-shadow: 0 0 80px -20px rgba(37, 99, 235, 0.15);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #004ac6 0%, #00687a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "surface-container-highest": "#e1e2ed",
+                        "on-tertiary-fixed": "#002109",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#004ac6",
+                        "on-secondary-container": "#006172",
+                        "surface-tint": "#0053db",
+                        "secondary-container": "#57dffe",
+                        "on-background": "#191b23",
+                        "surface-container-low": "#f3f3fe",
+                        "primary-container": "#2563eb",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-surface-variant": "#434655",
+                        "surface-bright": "#faf8ff",
+                        "inverse-primary": "#b4c5ff",
+                        "outline": "#737686",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "surface-dim": "#d9d9e5",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#007e37",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e7e7f3",
+                        "background": "#faf8ff",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#acedff",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#faf8ff",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "tertiary": "#006229",
+                        "on-tertiary-container": "#c1ffc5",
+                        "on-secondary-fixed": "#001f26",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-variant": "#e1e2ed",
+                        "secondary-fixed-dim": "#4cd7f6",
+                        "on-primary-fixed": "#00174b",
+                        "inverse-on-surface": "#f0f0fb",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "outline-variant": "#c3c6d7",
+                        "tertiary-fixed": "#6bff8f",
+                        "secondary": "#00687a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "80px",
+                        "gutter": "24px",
+                        "base": "8px",
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "margin-desktop": "40px",
+                        "container-max": "1280px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-2xl": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "headline-2xl-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-2xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-2xl-mobile": ["36px", { "lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm h-20">
+<div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-full">
+<div class="flex items-center gap-stack-lg">
+<span class="font-headline-lg text-headline-lg font-extrabold tracking-tighter text-primary">TurfX</span>
+<div class="hidden md:flex items-center gap-gutter ml-8">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Discover</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Festivals</a>
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-1" href="#">Corporate</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Elite</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Schedule</a>
+</div>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="font-label-md text-label-md text-on-surface-variant hover:opacity-80 transition-opacity">Sign In</button>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-full font-label-md text-label-md hover:opacity-90 active:scale-[0.98] transition-all shadow-md">Register</button>
+</div>
+</div>
+</nav>
+<main class="pt-20">
+<!-- Hero Section -->
+<section class="relative h-[716px] w-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A cinematic, low-angle shot of a premium, brightly lit athletic stadium at twilight. High-performance athletes are captured in sharp, mid-action poses across a lush green turf, with dramatic stadium floodlights casting long, powerful shadows and creating a vivid, energetic atmosphere. The lighting uses cool blues and vibrant whites to evoke a sense of high-stakes corporate competition and elite athleticism." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmDKDpQlxbFtagRCnv-4GVxhhZW-xf8zgOp08AdX_bc2nspPZ9Whynmr4BeYbrUraZNK38trwDPLbRvNoFR3c_S3FZcmb5C3g5izH4CKocoaVwtS01QQWjAJ9hBLw72rWtZzRWA-8cFJUMP4I7goHueCxXeznGjzARCk5CCoeW4wgFBhQuMoZN5Qm_02jkdiHQjBOgKrhm_ZHN5RaXOLypqXNuQtPObd5dtVvFBZFVm5yd9JbbAL17Xca5A-PqAGPtTXPDIBeqY7IQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent"></div>
+<div class="absolute inset-0 flex flex-col justify-end px-margin-desktop max-w-container-max mx-auto pb-stack-lg">
+<div class="max-w-3xl">
+<div class="inline-flex items-center gap-2 bg-primary/10 backdrop-blur-md px-4 py-2 rounded-full border border-primary/20 mb-stack-md">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+<span class="text-primary font-label-md text-label-md uppercase tracking-wider">Flagship Event 2024</span>
+</div>
+<h1 class="font-headline-2xl text-headline-2xl md:text-headline-2xl text-on-surface mb-stack-md">Corporate Athletics Challenge</h1>
+<div class="flex flex-wrap items-center gap-gutter text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-label-md">Oct 14-16, 2024</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined">location_on</span>
+<span class="font-label-md">Olympic Park Stadium, London</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md">500+ Corporations</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Layout Container -->
+<div class="px-margin-desktop max-w-container-max mx-auto py-stack-lg flex flex-col lg:flex-row gap-gutter relative">
+<!-- Left Column: Content -->
+<div class="flex-1 space-y-section-gap">
+<!-- Event Overview -->
+<section class="scroll-mt-32" id="overview">
+<h2 class="font-headline-xl text-headline-xl text-on-surface mb-stack-lg">Event Overview</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="space-y-stack-md">
+<p class="text-body-lg text-on-surface-variant leading-relaxed">
+                                The TurfX Corporate Athletics Challenge is the world's most prestigious sporting event for the business community. We blend professional-grade competition with high-level networking, creating a "flow state" environment where physical excellence meets architectural precision.
+                            </p>
+<div class="p-6 bg-secondary-container/20 rounded-xl border border-secondary/10">
+<h3 class="font-headline-lg text-headline-lg text-secondary mb-2">The Grand Prize</h3>
+<p class="text-body-md text-on-secondary-container">A $50,000 charitable donation in your company's name and the prestigious TurfX Crystal Trophy, awarded at the Gala Dinner.</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 bg-surface-container rounded-xl border border-outline-variant/30 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary text-[32px] mb-2">sports_score</span>
+<span class="font-headline-lg text-headline-lg text-primary">12</span>
+<span class="text-label-sm text-on-surface-variant">Disciplines</span>
+</div>
+<div class="p-4 bg-surface-container rounded-xl border border-outline-variant/30 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary text-[32px] mb-2">timer</span>
+<span class="font-headline-lg text-headline-lg text-primary">48h</span>
+<span class="text-label-sm text-on-surface-variant">Competition</span>
+</div>
+<div class="p-4 bg-surface-container rounded-xl border border-outline-variant/30 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary text-[32px] mb-2">handshake</span>
+<span class="font-headline-lg text-headline-lg text-primary">1k+</span>
+<span class="text-label-sm text-on-surface-variant">Networking</span>
+</div>
+<div class="p-4 bg-surface-container rounded-xl border border-outline-variant/30 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary text-[32px] mb-2">workspace_premium</span>
+<span class="font-headline-lg text-headline-lg text-primary">Gold</span>
+<span class="text-label-sm text-on-surface-variant">Standard</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Schedule -->
+<section class="scroll-mt-32" id="schedule">
+<div class="flex items-center justify-between mb-stack-lg">
+<h2 class="font-headline-xl text-headline-xl text-on-surface">The Schedule</h2>
+<div class="flex gap-2 p-1 bg-surface-container-high rounded-full">
+<button class="px-4 py-1.5 rounded-full bg-primary text-on-primary text-label-md font-label-md shadow-sm">Day 01</button>
+<button class="px-4 py-1.5 rounded-full text-on-surface-variant hover:bg-surface-variant text-label-md font-label-md">Day 02</button>
+<button class="px-4 py-1.5 rounded-full text-on-surface-variant hover:bg-surface-variant text-label-md font-label-md">Day 03</button>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Slot 1 -->
+<div class="group flex items-center p-6 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+<div class="w-24 flex-shrink-0">
+<span class="font-headline-lg text-headline-lg text-primary">08:00</span>
+<span class="block text-label-sm text-on-surface-variant">AM</span>
+</div>
+<div class="flex-1 border-l-2 border-primary/20 pl-6 ml-6">
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Opening Ceremony &amp; Torch Relay</h4>
+<p class="text-body-md text-on-surface-variant">Stadium Main Ground • Welcoming the participating 500 companies.</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward_ios</span>
+</div>
+<!-- Slot 2 -->
+<div class="group flex items-center p-6 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+<div class="w-24 flex-shrink-0">
+<span class="font-headline-lg text-headline-lg text-primary">10:30</span>
+<span class="block text-label-sm text-on-surface-variant">AM</span>
+</div>
+<div class="flex-1 border-l-2 border-primary/20 pl-6 ml-6">
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Sprint Decathlon Qualifiers</h4>
+<p class="text-body-md text-on-surface-variant">Track A • Preliminary heats for the 100m and 400m corporate relay.</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward_ios</span>
+</div>
+<!-- Slot 3 -->
+<div class="group flex items-center p-6 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+<div class="w-24 flex-shrink-0">
+<span class="font-headline-lg text-headline-lg text-primary">01:30</span>
+<span class="block text-label-sm text-on-surface-variant">PM</span>
+</div>
+<div class="flex-1 border-l-2 border-primary/20 pl-6 ml-6">
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Power Lunch &amp; Keynote</h4>
+<p class="text-body-md text-on-surface-variant">VIP Pavilion • 'The Athlete CEO' by Guest Speaker Dame Sarah Gilbert.</p>
+</div>
+<div class="bg-tertiary-container/10 text-tertiary px-3 py-1 rounded text-label-sm font-bold uppercase">Networking</div>
+</div>
+</div>
+</section>
+<!-- Guest List -->
+<section class="scroll-mt-32" id="guests">
+<h2 class="font-headline-xl text-headline-xl text-on-surface mb-stack-lg">VIP Guests &amp; Speakers</h2>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-gutter">
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-4 border border-outline-variant/30">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105" data-alt="A professional headshot of a female athlete and keynote speaker, looking confident and focused. The lighting is sophisticated, with a soft studio glow that highlights her features. She is dressed in a sleek, premium athletic blazer. The background is a clean, minimalist off-white, maintaining the high-end, corporate athletic aesthetic of the brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuApm-6KsIKafDx0_XKTlFxRb7v6tYUZ89_B8cT7oXAu0uqAOZEnNkuhuBYlfVLcyMh7huOtMI_iAGMz7lCtsyidbPBReQxhkJMSIt8O67WDhjzNuv_LWe8shEIflSvXDCuXSwOvcPQKdaToVsZ37FNI9I8Iv3uqSNDeU1fm9LpKCHiUzq87B2-owL0K5hesgmPSH7sTjJkOs95EiAjMZN2Uv-p097wz_NyWuqcaVTQpxIPP-M63v6DfmJQHQKDeHr-hmQCkQJQ2-rWf"/>
+<div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-on-surface to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<p class="text-surface text-label-sm">Olympic Gold Medalist</p>
+</div>
+</div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Alexandria Voss</h4>
+<p class="text-label-md text-primary">Opening Keynote</p>
+</div>
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-4 border border-outline-variant/30">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105" data-alt="A professional headshot of a male sports psychologist and performance coach. He has a calm, intelligent expression, wearing modern business-casual attire. The image is styled with high-key lighting and a subtle blue tint in the shadows to align with the TurfX color palette. The composition is centered and authoritative." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvO0h0dDQDdYfZDilFOfeWDXuWrUKXNekfli4WZlaweNhZ7gEoUA8n2mHbCfV5TyC_VaidUgl_3o79YEc3XmKQHIMcDIuZSmdMSfczXWdToOAarlkey6U1CSzTUBV3dzvjh-0mFd9-G3_NsgJ3SP5RVdZhQQj9HAfIgItNh_2RqsciqkOAhQv82URQxjlBCxAEgRY26RHXnthSkLqvd0XEQGYglKsmazwlug88m_HzM1wbx2Vw14aV5wp18e_IQfnzJ6duJEnuFC3z"/>
+<div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-on-surface to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<p class="text-surface text-label-sm">Performance Specialist</p>
+</div>
+</div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Dr. Marcus Thorne</h4>
+<p class="text-label-md text-primary">Mindset Coach</p>
+</div>
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-4 border border-outline-variant/30">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105" data-alt="A high-contrast, modern portrait of a female venture capitalist and marathon runner. She exudes energy and focus, captured in a bright, airy studio space. The visual style is crisp and clean, utilizing a professional color palette of deep blues and whites. The lighting is directional, creating depth and a premium athletic feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnNTVEnxCPLdok4_f2mj87RUeaLWtomMpyLDp-fq-5qZLcPdIIwFi-jYKscfuJhsRDwW4zm1ZfzdCdnROdJ7Cvm34lX3PekMi-ZYxZCuStJ_ol4OtwCcpL6ghX3EnplrpmSKJViLtt8H_tSQS2qtfTz27lhdV2daA7tqWpaWt4H5ytgLneVL9wh3KRTRHLKjkV8E-ogAil_7rWlfe3Wh3ZzutIaHJ4xf85XhVkktxzLJ3J6A1iO4clKSl1qspq899EO68lQu9EL5R0"/>
+<div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-on-surface to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<p class="text-surface text-label-sm">CEO of VentureAthletics</p>
+</div>
+</div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Elena Rodriguez</h4>
+<p class="text-label-md text-primary">Panel Moderator</p>
+</div>
+</div>
+</section>
+<!-- Venue Photos -->
+<section class="scroll-mt-32" id="venue">
+<h2 class="font-headline-xl text-headline-xl text-on-surface mb-stack-lg">The Arena</h2>
+<div class="grid grid-cols-12 grid-rows-2 gap-4 h-[600px]">
+<div class="col-span-8 row-span-2 relative rounded-3xl overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A breathtaking, wide-angle interior view of a modern Olympic-sized stadium during a night event. The track is illuminated by vibrant cyan and white floodlights, creating a hyper-modern, high-tech athletic atmosphere. The seating is tiered and architectural, with a focus on symmetry and precision. The overall mood is energetic, premium, and futuristic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWeBqP-d4Dc_HrBApojuoR9pxUpmjvWj2qD43NySwRWCViFDoau-AYLDl0qMrMhWCbW8p7rz1XsiQX9POYnYNGcmPTaYGGuUAodC7FAHMGWjdzO9WXpI0HU-8jrNEyfLVKnIVt1E0KcbRtaovPDAAAKOY-w2R8bpRfcv-VM-7lVhm_PaomhL8_EfLRMCBSuPU6EmgGy_dNoKIbUsC7tNtAJfXzq_DrON4Cx8o62Q_9gwFZZM_e4BV2mQL0JNDPu656G3kg8SYeRsV-"/>
+</div>
+<div class="col-span-4 relative rounded-3xl overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A high-end, glass-walled gym interior within a luxury stadium complex. The equipment is professional-grade and minimalist, reflecting the architectural precision of the TurfX brand. Soft morning light floods the space, creating a serene but motivating environment. The color palette is composed of cool grays and crisp whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhz5z4s2nsWEaRWdke6lUOtVk4sAVXOVYx8k09coKvMJmajCPDkPaqy-3ETyCiMhYDypPWQkl7bLpCR4HvoMpyqCMBz2rHiU1vBQICoJpUIACJ1xu0b70ZsDv5YhYh4dc9VD3Xl4gsYrRgFCzjxQNBIEaCJ2Jm6Csgpo5zkcPfJWkEgKvwJk9yV_JCodaeywC-FG9ISiv8W6WLcZoa87uZLiwXLjaSiQeshOsvCLgelkD0zgWnnHaEraCD8wbYY1ZMt_QLAkT5Gym8"/>
+</div>
+<div class="col-span-4 relative rounded-3xl overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A focused, close-up shot of a pristine soccer pitch with perfect white lines and emerald green grass. The morning dew glistens under the stadium lights, emphasizing the meticulous care and 'Gold Standard' of the venue. The shot is low and sharp, conveying a sense of readiness and athletic intensity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIBcmxGIWXSQI6Fk7ICxwnIWO90Wrl1zUpFZi6sShxdQNSiDjD8xPXS3WTMf1AbnGwgrna3Fu44HRNOcCtEYoUY0_axAqU3Ca1p8tcMv27SQrbpWZHocC2TU12qtsYrDQVph_uWidoSibfk7haoQMapPC_R2OkDwiHAewNCprZN1TGmAzeOZJvIG5yLsF9_Ez0yCVei8Y7T4QmYmmS0hWHAazmm5UoYlDCP9_gMGhPkgDx93eilUzCjj1w1DHeRtlN2D26TGCaXIxR"/>
+</div>
+</div>
+</section>
+<!-- Corporate Partners -->
+<section class="py-stack-lg border-y border-outline-variant/20" id="partners">
+<p class="text-label-md text-center text-on-surface-variant uppercase tracking-widest mb-stack-lg">Powered by Industry Leaders</p>
+<div class="flex flex-wrap justify-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
+<span class="font-headline-lg font-black tracking-tighter">EQUINOX</span>
+<span class="font-headline-lg font-black tracking-tighter">RED BULL</span>
+<span class="font-headline-lg font-black tracking-tighter">TECHSTARS</span>
+<span class="font-headline-lg font-black tracking-tighter">GOLDMAN SACHS</span>
+<span class="font-headline-lg font-black tracking-tighter">ADIDAS</span>
+</div>
+</section>
+</div>
+<!-- Right Column: Registration Card -->
+<aside class="lg:w-[400px] flex-shrink-0">
+<div class="sticky top-28 p-8 bg-surface-container-lowest rounded-3xl border border-outline-variant/30 shadow-xl stadium-glow">
+<h3 class="font-headline-xl text-headline-xl text-on-surface mb-stack-md">Secure Your Spot</h3>
+<div class="space-y-4 mb-stack-lg">
+<!-- Early Bird -->
+<label class="relative flex items-center p-4 rounded-2xl border-2 border-primary bg-primary/5 cursor-pointer group transition-all">
+<input checked="" class="sr-only" name="ticket" type="radio"/>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-md text-primary">Early Bird</span>
+<span class="bg-primary text-on-primary text-[10px] px-2 py-0.5 rounded-full">Ends Friday</span>
+</div>
+<span class="font-headline-lg text-on-surface">$299</span>
+</div>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</label>
+<!-- General -->
+<label class="relative flex items-center p-4 rounded-2xl border border-outline-variant/30 hover:border-primary/50 cursor-pointer group transition-all">
+<input class="sr-only" name="ticket" type="radio"/>
+<div class="flex-1">
+<span class="font-label-md text-on-surface-variant">General Admission</span>
+<div class="font-headline-lg text-on-surface">$450</div>
+</div>
+<div class="w-6 h-6 border-2 border-outline-variant rounded-full group-hover:border-primary"></div>
+</label>
+<!-- VIP -->
+<label class="relative flex items-center p-4 rounded-2xl border border-outline-variant/30 hover:border-primary/50 cursor-pointer group transition-all">
+<input class="sr-only" name="ticket" type="radio"/>
+<div class="flex-1">
+<span class="font-label-md text-on-surface-variant">Elite VIP Access</span>
+<div class="font-headline-lg text-on-surface">$899</div>
+</div>
+<div class="w-6 h-6 border-2 border-outline-variant rounded-full group-hover:border-primary"></div>
+</label>
+</div>
+<ul class="space-y-3 mb-stack-lg">
+<li class="flex items-center gap-2 text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check</span>
+                            Entry to all 12 events
+                        </li>
+<li class="flex items-center gap-2 text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check</span>
+                            Official TurfX Kit Bag
+                        </li>
+<li class="flex items-center gap-2 text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check</span>
+                            Catered lunch &amp; networking
+                        </li>
+</ul>
+<button class="w-full bg-primary text-on-primary py-4 rounded-2xl font-headline-lg text-headline-lg hover:brightness-110 active:scale-[0.98] transition-all shadow-lg mb-4">
+                        Register Now
+                    </button>
+<p class="text-center text-label-sm text-outline">Risk-free: Full refund up to 30 days before.</p>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant w-full py-stack-lg mt-section-gap">
+<div class="flex flex-col md:flex-row justify-between items-start px-margin-desktop max-w-container-max mx-auto gap-gutter">
+<div class="space-y-4 max-w-xs">
+<span class="font-headline-xl text-headline-xl font-black text-on-surface">TurfX</span>
+<p class="text-body-md text-on-surface-variant">Empowering corporate teams through the spirit of professional athleticism and elite performance architecture.</p>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-stack-lg w-full md:w-auto">
+<div class="space-y-4">
+<h5 class="font-label-md text-primary font-bold">Event</h5>
+<nav class="flex flex-col gap-2">
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Partner with Us</a>
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Event Guidelines</a>
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Community Hub</a>
+</nav>
+</div>
+<div class="space-y-4">
+<h5 class="font-label-md text-primary font-bold">Legal</h5>
+<nav class="flex flex-col gap-2">
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+</nav>
+</div>
+<div class="space-y-4">
+<h5 class="font-label-md text-primary font-bold">Support</h5>
+<nav class="flex flex-col gap-2">
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a>
+</nav>
+</div>
+</div>
+</div>
+<div class="px-margin-desktop max-w-container-max mx-auto mt-stack-lg pt-stack-md border-t border-outline-variant/30">
+<p class="text-label-sm text-on-surface-variant">© 2024 TurfX Events. All rights reserved.</p>
+</div>
+</footer>
+<script>
+        // Micro-interactions for ticket selection
+        const radioLabels = document.querySelectorAll('label[class*="cursor-pointer"]');
+        radioLabels.forEach(label => {
+            label.addEventListener('click', () => {
+                radioLabels.forEach(l => {
+                    l.classList.remove('border-primary', 'bg-primary/5');
+                    l.classList.add('border-outline-variant/30');
+                    const icon = l.querySelector('.material-symbols-outlined');
+                    if (icon) {
+                        icon.textContent = '';
+                        icon.classList.remove('text-primary');
+                    }
+                    const check = l.querySelector('.w-6.h-6');
+                    if (check) check.classList.remove('hidden');
+                });
+                label.classList.add('border-primary', 'bg-primary/5');
+                label.classList.remove('border-outline-variant/30');
+            });
+        });
+
+        // Simple scroll parallax for hero
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const heroImg = document.querySelector('section img');
+            if (heroImg) {
+                heroImg.style.transform = `translateY(${scrolled * 0.3}px)`;
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,192 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { useAuth } from "../../store/authContext.js";
+import { roleHome } from "../../constants/auth.js";
+import { Button } from "../../components/ui/button.jsx";
+import { Card, CardContent } from "../../components/ui/card.jsx";
+import { Input } from "../../components/ui/input.jsx";
+
+const loginSchema = z.object({
+  email: z.string().email("Use a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+const registerSchema = loginSchema.extend({
+  name: z.string().min(2, "Name is required"),
+  role: z.enum(["user", "owner"]),
+});
+
+const forgotSchema = z.object({
+  email: z.string().email("Use a valid email"),
+});
+
+function Field({ label, error, ...props }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-bold text-ink">{label}</span>
+      <Input className="mt-2" {...props} />
+      {error && <span className="mt-1 block text-xs font-bold text-danger">{error.message}</span>}
+    </label>
+  );
+}
+
+function AuthCard({ title, subtitle, mode }) {
+  const schema = mode === "register" ? registerSchema : mode === "forgot" ? forgotSchema : loginSchema;
+  const { demoLoginOptions, login, register: registerAccount } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState("success");
+  const {
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+    reset,
+  } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues:
+      mode === "register"
+        ? { email: "", name: "", password: "", role: "user" }
+        : { email: "user1@turfx.com", password: "User@123" },
+  });
+
+  function destinationFor(user) {
+    const requestedRoute = location.state?.from;
+    if (requestedRoute?.pathname) {
+      return `${requestedRoute.pathname}${requestedRoute.search || ""}${requestedRoute.hash || ""}`;
+    }
+    return roleHome[user.role] || "/dashboard";
+  }
+
+  async function handleDemoLogin(option) {
+    reset({ email: option.email, password: option.password });
+    setMessage("");
+
+    try {
+      const session = await login({ email: option.email, password: option.password });
+      navigate(destinationFor(session.user), { replace: true });
+    } catch (error) {
+      setMessageTone("error");
+      setMessage(typeof error === "string" ? error : error.message);
+    }
+  }
+
+  async function onSubmit(values) {
+    if (mode === "forgot") {
+      setMessageTone("success");
+      setMessage("Reset link queued for secure delivery.");
+      return;
+    }
+
+    try {
+      const session =
+        mode === "register"
+          ? await registerAccount(values)
+          : await login({ email: values.email, password: values.password });
+
+      navigate(destinationFor(session.user), { replace: true });
+    } catch (error) {
+      setMessageTone("error");
+      setMessage(typeof error === "string" ? error : error.message);
+    }
+  }
+
+  return (
+    <Card className="mt-8">
+      <CardContent className="p-7">
+        <p className="muted-label text-primary">TURFX account</p>
+        <h1 className="mt-3 text-3xl font-black tracking-normal">{title}</h1>
+        <p className="mt-2 text-sm text-ink-muted">{subtitle}</p>
+        {mode === "login" && (
+          <div className="mt-6">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {demoLoginOptions.map((option) => (
+                <Button
+                  className="min-w-0 w-full px-2"
+                  key={option.role}
+                  onClick={() => handleDemoLogin(option)}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+            <div className="mt-3 space-y-1 text-xs leading-5 text-ink-muted sm:text-center">
+              <p><span className="font-bold text-ink">Platform Owner</span> = Website Administrator</p>
+              <p><span className="font-bold text-ink">Turf Owner</span> = Venue Manager</p>
+              <p><span className="font-bold text-ink">User</span> = Customer / Player</p>
+            </div>
+          </div>
+        )}
+        <form className="mt-7 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+          {mode === "register" && <Field error={errors.name} label="Full name" placeholder="Alex Thompson" {...register("name")} />}
+          <Field error={errors.email} label="Email" placeholder="alex@turfx.app" type="email" {...register("email")} />
+          {mode !== "forgot" && (
+            <Field error={errors.password} label="Password" placeholder="********" type="password" {...register("password")} />
+          )}
+          {mode === "register" && (
+            <label className="block">
+              <span className="text-sm font-bold text-ink">Account type</span>
+              <select className="focus-ring mt-2 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm" {...register("role")}>
+                <option value="user">User (Customer / Player)</option>
+                <option value="owner">Turf Owner (Venue Owner)</option>
+              </select>
+            </label>
+          )}
+          <Button className="w-full" disabled={isSubmitting} type="submit">
+            {isSubmitting ? "Please wait..." : mode === "register" ? "Create Account" : mode === "forgot" ? "Send Reset Link" : "Sign In"}
+          </Button>
+        </form>
+        {message && (
+          <p
+            className={`mt-4 rounded-lg px-3 py-2 text-sm font-bold ${
+              messageTone === "error" ? "bg-red-50 text-danger" : "bg-accent-soft text-accent-deep"
+            }`}
+          >
+            {message}
+          </p>
+        )}
+        <div className="mt-5 text-center text-sm text-ink-muted">
+          {mode === "login" && (
+            <>
+              <Link className="font-bold text-primary" to="/forgot-password">
+                Forgot password?
+              </Link>
+              <span className="mx-2">/</span>
+              <Link className="font-bold text-primary" to="/register">
+                Register
+              </Link>
+            </>
+          )}
+          {mode === "register" && (
+            <Link className="font-bold text-primary" to="/login">
+              Already have an account? Sign in
+            </Link>
+          )}
+          {mode === "forgot" && (
+            <Link className="font-bold text-primary" to="/login">
+              Back to sign in
+            </Link>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function LoginPage() {
+  return <AuthCard mode="login" subtitle="Choose your TURFX workspace or sign in with your account credentials." title="Welcome back" />;
+}
+
+export function RegisterPage() {
+  return <AuthCard mode="register" subtitle="Create a player account or register as a TURFX venue partner." title="Join TURFX" />;
+}
+
+export function ForgotPasswordPage() {
+  return <AuthCard mode="forgot" subtitle="We will send a secure recovery link to your registered email." title="Reset password" />;
+}

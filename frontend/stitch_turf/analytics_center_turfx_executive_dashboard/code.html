@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TurfX Analytics Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#001f26",
+                    "background": "#faf8ff",
+                    "on-secondary-container": "#006172",
+                    "on-tertiary-fixed": "#002109",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "on-primary-container": "#eeefff",
+                    "on-background": "#191b23",
+                    "inverse-primary": "#b4c5ff",
+                    "surface": "#faf8ff",
+                    "tertiary-container": "#007e37",
+                    "on-surface-variant": "#434655",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container-highest": "#e1e2ed",
+                    "tertiary-fixed": "#6bff8f",
+                    "secondary-fixed": "#acedff",
+                    "surface-variant": "#e1e2ed",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed": "#00174b",
+                    "primary-container": "#2563eb",
+                    "surface-container": "#ededf9",
+                    "on-primary": "#ffffff",
+                    "surface-container-low": "#f3f3fe",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface-dim": "#d9d9e5",
+                    "on-tertiary-container": "#c1ffc5",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#57dffe",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "on-error": "#ffffff",
+                    "secondary-fixed-dim": "#4cd7f6",
+                    "secondary": "#00687a",
+                    "outline": "#737686",
+                    "primary": "#004ac6",
+                    "surface-container-high": "#e7e7f3",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#faf8ff",
+                    "on-surface": "#191b23",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "error": "#ba1a1a",
+                    "tertiary": "#006229",
+                    "inverse-surface": "#2e3039",
+                    "inverse-on-surface": "#f0f0fb",
+                    "surface-tint": "#0053db",
+                    "on-secondary-fixed-variant": "#004e5c",
+                    "on-secondary": "#ffffff",
+                    "outline-variant": "#c3c6d7"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-md": "16px",
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "stack-sm": "8px",
+                    "base": "8px",
+                    "margin-mobile": "16px",
+                    "stack-lg": "32px",
+                    "section-gap": "80px",
+                    "margin-desktop": "40px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-2xl": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-2xl-mobile": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-2xl-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .chart-path {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: dash 3s ease-in-out forwards;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: 0; }
+        }
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid #E2E8F0;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md">
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="hidden md:flex flex-col h-full w-64 border-r border-outline-variant bg-surface p-gutter">
+<div class="mb-stack-lg">
+<h1 class="font-headline-lg text-headline-lg font-extrabold text-primary tracking-tight">Kinetic Analytics</h1>
+<p class="text-on-surface-variant font-label-sm">Elite Performance</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="stadium">stadium</span>
+<span class="font-body-md">Venues</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-body-md">Customers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-primary font-bold bg-secondary-container/10 rounded-lg transition-all duration-200 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-body-md">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto pt-stack-md border-t border-outline-variant">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded-lg font-label-md flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+                    New Booking
+                </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-16 sticky top-0 bg-surface/70 backdrop-blur-xl border-b border-outline-variant z-40">
+<h2 class="font-headline-lg text-headline-lg font-black text-primary">Executive Overview</h2>
+<div class="flex items-center gap-stack-md">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-full text-label-sm w-64 focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Search analytics..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border border-outline-variant">
+<img alt="User Avatar" class="h-full w-full object-cover" data-alt="A professional headshot of a modern executive with a friendly expression. The background is a clean, out-of-focus high-end athletic facility. Lighting is soft and cinematic, emphasizing a premium and trustworthy persona within a minimalist light-mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrGp8O1dtf09gFYdLPAcpLRTCBAbWCbWEgPB0waMbkdeiBTqJp7KojFI1o5gXpCbeDXcDRBcJu-zIw3TPyc11sOKznFGbR26LKjZFgWmjpcFDDkGuX4i2kheAuCxGgSwxZfjNnHEaUJc7TJmpmAvicH0Qu_GnxR054rLciVHpBJiEwRC1X5kVdkzqWm0YIkzKSF4NxSBIyeb7Jo5rYVA70oXtVq0Sm1Dmb3FaIb-i8m-qxY_WnYOL4TGL75UdISzM3_h_yXp9PO4BE"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto w-full">
+<!-- KPI Row -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- KPI Card 1: Revenue -->
+<div class="glass-panel p-stack-md rounded-xl fade-in-up stagger-1">
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-sm font-label-md text-on-surface-variant uppercase tracking-wider">Total Revenue</span>
+<span class="text-tertiary font-label-sm flex items-center bg-tertiary-container/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                                12%
+                            </span>
+</div>
+<div class="font-headline-xl text-headline-xl mb-4">$142.5k</div>
+<div class="h-12 w-full">
+<svg class="w-full h-full" viewbox="0 0 100 30">
+<path class="text-primary chart-path" d="M0 25 Q 10 20, 20 22 T 40 15 T 60 18 T 80 5 T 100 8" fill="none" stroke="currentColor" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<!-- KPI Card 2: Occupancy -->
+<div class="glass-panel p-stack-md rounded-xl fade-in-up stagger-2">
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-sm font-label-md text-on-surface-variant uppercase tracking-wider">Occupancy Rate</span>
+<span class="text-tertiary font-label-sm flex items-center bg-tertiary-container/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                                5%
+                            </span>
+</div>
+<div class="font-headline-xl text-headline-xl mb-4">84%</div>
+<div class="h-12 w-full">
+<svg class="w-full h-full" viewbox="0 0 100 30">
+<path class="text-secondary chart-path" d="M0 20 Q 20 18, 40 22 T 70 12 T 100 5" fill="none" stroke="currentColor" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<!-- KPI Card 3: Bookings -->
+<div class="glass-panel p-stack-md rounded-xl fade-in-up stagger-3">
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-sm font-label-md text-on-surface-variant uppercase tracking-wider">Total Bookings</span>
+<span class="text-tertiary font-label-sm flex items-center bg-tertiary-container/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                                8%
+                            </span>
+</div>
+<div class="font-headline-xl text-headline-xl mb-4">1,240</div>
+<div class="h-12 w-full">
+<svg class="w-full h-full" viewbox="0 0 100 30">
+<path class="text-tertiary chart-path" d="M0 28 L 20 22 L 40 25 L 60 15 L 80 10 L 100 2" fill="none" stroke="currentColor" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<!-- KPI Card 4: Retention -->
+<div class="glass-panel p-stack-md rounded-xl fade-in-up stagger-4">
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-sm font-label-md text-on-surface-variant uppercase tracking-wider">Retention</span>
+<span class="text-outline font-label-sm flex items-center bg-surface-container-high px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px]" data-icon="remove">remove</span>
+                                0%
+                            </span>
+</div>
+<div class="font-headline-xl text-headline-xl mb-4">72%</div>
+<div class="h-12 w-full">
+<svg class="w-full h-full" viewbox="0 0 100 30">
+<path class="text-outline chart-path" d="M0 15 H 30 L 50 15 L 70 15 H 100" fill="none" stroke="currentColor" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Main Charts Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Revenue Forecasting (Large) -->
+<div class="lg:col-span-2 glass-panel p-stack-lg rounded-xl fade-in-up stagger-1">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-stack-lg gap-4">
+<div>
+<h3 class="font-headline-lg text-headline-lg">Revenue Forecasting</h3>
+<p class="text-on-surface-variant text-body-md">Projected growth based on historical booking momentum.</p>
+</div>
+<div class="flex gap-2 bg-surface-container rounded-lg p-1">
+<button class="px-3 py-1 text-label-sm rounded-md bg-surface shadow-sm">Monthly</button>
+<button class="px-3 py-1 text-label-sm rounded-md text-on-surface-variant hover:bg-surface-container-high">Quarterly</button>
+</div>
+</div>
+<div class="h-[300px] relative w-full overflow-hidden">
+<svg class="w-full h-full overflow-visible" viewbox="0 0 800 300">
+<defs>
+<lineargradient id="revenue-grad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#2563EB" stop-opacity="0.1"></stop>
+<stop offset="100%" stop-color="#2563EB" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Grid Lines -->
+<line stroke="#E2E8F0" stroke-dasharray="4,4" stroke-width="1" x1="0" x2="800" y1="50" y2="50"></line>
+<line stroke="#E2E8F0" stroke-dasharray="4,4" stroke-width="1" x1="0" x2="800" y1="125" y2="125"></line>
+<line stroke="#E2E8F0" stroke-dasharray="4,4" stroke-width="1" x1="0" x2="800" y1="200" y2="200"></line>
+<line stroke="#E2E8F0" stroke-dasharray="4,4" stroke-width="1" x1="0" x2="800" y1="275" y2="275"></line>
+<!-- Historical Data -->
+<path class="chart-path" d="M 0 250 L 100 230 L 200 240 L 300 180 L 400 160 L 500 190" fill="none" stroke="#2563EB" stroke-linecap="round" stroke-width="3"></path>
+<!-- Forecast Data -->
+<path d="M 500 190 L 600 140 L 700 120 L 800 80" fill="none" stroke="#2563EB" stroke-dasharray="8,6" stroke-linecap="round" stroke-width="3"></path>
+<!-- Area Fill -->
+<path d="M 0 250 L 100 230 L 200 240 L 300 180 L 400 160 L 500 190 L 600 140 L 700 120 L 800 80 V 300 H 0 Z" fill="url(#revenue-grad)"></path>
+<!-- Interactive Dots -->
+<circle cx="500" cy="190" fill="#2563EB" r="6" stroke="white" stroke-width="2"></circle>
+</svg>
+<!-- Labels -->
+<div class="absolute bottom-0 w-full flex justify-between text-label-sm text-on-surface-variant">
+<span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span>
+</div>
+</div>
+</div>
+<!-- Sports Popularity (Side) -->
+<div class="glass-panel p-stack-lg rounded-xl fade-in-up stagger-2">
+<h3 class="font-headline-lg text-headline-lg mb-stack-md">Sports Popularity</h3>
+<div class="space-y-stack-md">
+<div class="space-y-2">
+<div class="flex justify-between text-label-sm font-label-md">
+<span>Football</span>
+<span>42%</span>
+</div>
+<div class="h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-0 transition-all duration-1000 ease-out" style="width: 42%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-sm font-label-md">
+<span>Padel</span>
+<span>28%</span>
+</div>
+<div class="h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-0 transition-all duration-1000 ease-out delay-100" style="width: 28%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-sm font-label-md">
+<span>Basketball</span>
+<span>18%</span>
+</div>
+<div class="h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-0 transition-all duration-1000 ease-out delay-200" style="width: 18%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-sm font-label-md">
+<span>Tennis</span>
+<span>12%</span>
+</div>
+<div class="h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-outline w-0 transition-all duration-1000 ease-out delay-300" style="width: 12%"></div>
+</div>
+</div>
+</div>
+<div class="mt-stack-lg p-stack-md bg-primary-container/10 border border-primary/20 rounded-lg">
+<p class="text-label-sm text-primary font-bold">Insight: Padel bookings up 14% this month.</p>
+</div>
+</div>
+<!-- Occupancy Heatmap (Full Width Below) -->
+<div class="lg:col-span-2 glass-panel p-stack-lg rounded-xl fade-in-up stagger-3">
+<div class="flex justify-between items-center mb-stack-lg">
+<div>
+<h3 class="font-headline-lg text-headline-lg">Occupancy Heatmap</h3>
+<p class="text-on-surface-variant text-body-md">Hourly breakdown of venue utilization.</p>
+</div>
+</div>
+<div class="overflow-x-auto">
+<div class="min-w-[600px]">
+<div class="grid grid-cols-8 gap-1">
+<!-- Header Row -->
+<div class="h-8"></div>
+<div class="text-center text-label-sm text-on-surface-variant font-label-md">Mon</div>
+<div class="text-center text-label-sm text-on-surface-variant font-label-md">Tue</div>
+<div class="text-center text-label-sm text-on-surface-variant font-label-md">Wed</div>
+<div class="text-center text-label-sm text-on-surface-variant font-label-md">Thu</div>
+<div class="text-center text-label-sm text-on-surface-variant font-label-md">Fri</div>
+<div class="text-center text-label-sm text-on-surface-variant font-label-md">Sat</div>
+<div class="text-center text-label-sm text-on-surface-variant font-label-md">Sun</div>
+<!-- Data Rows (Example 06:00 - 22:00) -->
+<script>
+                                        const hours = ["06:00", "09:00", "12:00", "15:00", "18:00", "21:00"];
+                                        const container = document.currentScript.parentElement;
+                                        hours.forEach(hour => {
+                                            const label = document.createElement('div');
+                                            label.className = "text-label-sm text-on-surface-variant flex items-center pr-2";
+                                            label.innerText = hour;
+                                            container.appendChild(label);
+                                            
+                                            for(let i=0; i<7; i++) {
+                                                const cell = document.createElement('div');
+                                                const opacity = Math.floor(Math.random() * 10) * 10;
+                                                cell.className = `h-10 rounded-sm bg-primary/${opacity + 5} border border-white/20 transition-all hover:ring-2 hover:ring-primary/40 cursor-pointer`;
+                                                container.appendChild(cell);
+                                            }
+                                        });
+                                    </script>
+</div>
+</div>
+</div>
+</div>
+<!-- Membership Growth (Area Chart) -->
+<div class="glass-panel p-stack-lg rounded-xl fade-in-up stagger-4">
+<h3 class="font-headline-lg text-headline-lg mb-stack-md">Membership Growth</h3>
+<p class="text-on-surface-variant text-label-sm mb-stack-md">Conversion of casual to Pro members.</p>
+<div class="h-[200px] w-full">
+<svg class="w-full h-full overflow-visible" viewbox="0 0 300 200">
+<defs>
+<lineargradient id="member-grad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#006229" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#006229" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path class="chart-path" d="M 0 180 Q 50 170, 100 150 T 200 80 T 300 20" fill="none" stroke="#006229" stroke-width="3"></path>
+<path d="M 0 180 Q 50 170, 100 150 T 200 80 T 300 20 V 200 H 0 Z" fill="url(#member-grad)"></path>
+</svg>
+</div>
+<div class="mt-stack-md flex items-center justify-between">
+<div>
+<span class="text-headline-lg font-bold">582</span>
+<span class="text-label-sm text-on-surface-variant block">Active Members</span>
+</div>
+<div class="text-right">
+<span class="text-tertiary font-bold">+22%</span>
+<span class="text-label-sm text-on-surface-variant block">vs Last Month</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Grid Extra Insights -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter pb-stack-lg">
+<div class="glass-panel p-stack-md rounded-xl flex items-center gap-4 fade-in-up">
+<div class="h-12 w-12 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="schedule">schedule</span>
+</div>
+<div>
+<div class="font-label-md text-label-md">Average Stay</div>
+<div class="font-headline-lg">1h 45m</div>
+</div>
+</div>
+<div class="glass-panel p-stack-md rounded-xl flex items-center gap-4 fade-in-up delay-75">
+<div class="h-12 w-12 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</div>
+<div>
+<div class="font-label-md text-label-md">CLV (Average)</div>
+<div class="font-headline-lg">$842.00</div>
+</div>
+</div>
+<div class="glass-panel p-stack-md rounded-xl flex items-center gap-4 fade-in-up delay-150">
+<div class="h-12 w-12 rounded-full bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-icon="reviews">reviews</span>
+</div>
+<div>
+<div class="font-label-md text-label-md">Sentiment Score</div>
+<div class="font-headline-lg">4.9/5.0</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Mobile BottomNavBar (Shared Component) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface/80 backdrop-blur-xl border-t border-outline-variant flex justify-around items-center px-4 z-50">
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="stadium">stadium</span>
+<span class="text-[10px] font-label-sm">Venues</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="text-[10px] font-label-sm">Customers</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="text-[10px] font-label-sm">Analytics</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for cards
+        document.querySelectorAll('.glass-panel').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px) scale(1.01)';
+                card.style.boxShadow = '0 10px 30px -10px rgba(0,0,0,0.1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) scale(1)';
+                card.style.boxShadow = 'none';
+            });
+            card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        });
+    </script>
+</body></html>

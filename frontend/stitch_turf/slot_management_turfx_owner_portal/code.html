@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TurfX Owner Portal - Venue Scheduling</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#2563eb",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#191b23",
+                        "tertiary": "#006229",
+                        "inverse-primary": "#b4c5ff",
+                        "on-secondary-container": "#006172",
+                        "inverse-on-surface": "#f0f0fb",
+                        "secondary": "#00687a",
+                        "on-surface-variant": "#434655",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#faf8ff",
+                        "surface-container": "#ededf9",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e1e2ed",
+                        "surface-container-low": "#f3f3fe",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#4cd7f6",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "primary-fixed": "#dbe1ff",
+                        "outline": "#737686",
+                        "on-tertiary-fixed": "#002109",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#00174b",
+                        "tertiary-container": "#007e37",
+                        "surface-dim": "#d9d9e5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#eeefff",
+                        "on-tertiary-container": "#c1ffc5",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "tertiary-fixed": "#6bff8f",
+                        "secondary-fixed": "#acedff",
+                        "outline-variant": "#c3c6d7",
+                        "on-secondary-fixed": "#001f26",
+                        "on-background": "#191b23",
+                        "surface": "#faf8ff",
+                        "background": "#faf8ff",
+                        "surface-tint": "#0053db",
+                        "primary": "#004ac6",
+                        "surface-variant": "#e1e2ed",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e7e7f3",
+                        "inverse-surface": "#2e3039",
+                        "secondary-container": "#57dffe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "section-gap": "80px",
+                        "margin-desktop": "40px",
+                        "stack-md": "16px",
+                        "margin-mobile": "16px",
+                        "container-max": "1280px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-2xl-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "headline-2xl": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-2xl-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            grid-auto-rows: minmax(64px, auto);
+        }
+        .time-border {
+            border-bottom: 1px solid rgba(195, 198, 215, 0.3);
+            border-right: 1px solid rgba(195, 198, 215, 0.3);
+        }
+        .drag-handle {
+            cursor: ns-resize;
+        }
+        .booking-card {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+        }
+        .booking-card:hover {
+            transform: scale(1.02);
+            z-index: 50;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .heatmap-cell-low { background-color: rgba(37, 99, 235, 0.05); }
+        .heatmap-cell-med { background-color: rgba(37, 99, 235, 0.15); }
+        .heatmap-cell-high { background-color: rgba(37, 99, 235, 0.3); }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c3c6d7; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Bar -->
+<header class="w-full sticky top-0 z-40 bg-surface/70 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm flex items-center justify-between px-margin-desktop h-16">
+<div class="flex items-center gap-stack-lg">
+<span class="font-headline-lg text-headline-lg font-black text-primary tracking-tight">TurfX Owner</span>
+<div class="hidden md:flex items-center gap-6 ml-8">
+<a class="font-body-md text-primary font-semibold border-b-2 border-primary py-4" href="#">Calendar</a>
+<a class="font-body-md text-on-surface-variant hover:bg-surface-container-high/50 transition-colors px-3 py-1 rounded-lg" href="#">Venues</a>
+<a class="font-body-md text-on-surface-variant hover:bg-surface-container-high/50 transition-colors px-3 py-1 rounded-lg" href="#">Analytics</a>
+</div>
+</div>
+<div class="flex items-center gap-stack-md">
+<div class="relative group">
+<span class="material-symbols-outlined text-on-surface-variant p-2 rounded-full hover:bg-surface-container-high cursor-pointer transition-colors">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant p-2 rounded-full hover:bg-surface-container-high cursor-pointer transition-colors">help</span>
+<span class="material-symbols-outlined text-on-surface-variant p-2 rounded-full hover:bg-surface-container-high cursor-pointer transition-colors">settings</span>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white font-bold ml-2">
+<img alt="Owner Profile Avatar" class="w-full h-full rounded-full border-2 border-surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArQBUhhP9OhE8sfOxSnNj_KiBbXXfslQDNpiEVpjsgIw6iRx0LNRwhEbNEQSA1l20ADWBSVTEe8YTbVRjz9XK44b_E9lx0Upu7LJHUAx_vPozFC7k0247gsInPAekDGPx1YiCvfnrlb_qlvvmMV6iBEqaVMhwTrPYAMjwymVDXK9GeV2H3NIM-ki5nzhV8L0hxovFUA_Unfg11i6HkN1ONhw-G89B74ldGndl_oshnw8zpI4puNAOKtcLdXSlo8duLEFpxYEHD5Dj1"/>
+</div>
+</div>
+</header>
+<div class="flex h-[calc(100vh-64px)] overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="h-full w-72 bg-surface-container-lowest border-r border-outline-variant/20 flex flex-col py-stack-lg px-4 hidden md:flex shrink-0">
+<div class="mb-stack-lg">
+<button class="w-full bg-primary text-on-primary rounded-xl py-3 px-4 font-label-md flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+                    Create Slot
+                </button>
+</div>
+<!-- Mini Calendar -->
+<div class="bg-surface rounded-xl p-4 border border-outline-variant/30 mb-stack-lg">
+<div class="flex items-center justify-between mb-4">
+<span class="font-label-md">October 2023</span>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">chevron_left</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">chevron_right</span>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-outline mb-2">
+<span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+</div>
+<div class="grid grid-cols-7 gap-1 text-center text-label-sm">
+<span class="p-1 text-outline-variant">27</span><span class="p-1 text-outline-variant">28</span><span class="p-1">1</span><span class="p-1">2</span><span class="p-1">3</span><span class="p-1">4</span><span class="p-1">5</span>
+<span class="p-1">6</span><span class="p-1">7</span><span class="p-1">8</span><span class="p-1">9</span><span class="p-1">10</span><span class="p-1">11</span><span class="p-1">12</span>
+<span class="p-1 bg-primary text-on-primary rounded-full">13</span><span class="p-1">14</span><span class="p-1">15</span><span class="p-1">16</span><span class="p-1">17</span><span class="p-1">18</span><span class="p-1">19</span>
+<span class="p-1">20</span><span class="p-1">21</span><span class="p-1">22</span><span class="p-1">23</span><span class="p-1">24</span><span class="p-1">25</span><span class="p-1">26</span>
+</div>
+</div>
+<!-- Venue Filters -->
+<div class="mb-stack-lg px-2">
+<h4 class="font-label-md text-on-surface uppercase tracking-wider mb-4 opacity-70">Venue Filters</h4>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="w-5 h-5 border-2 border-primary rounded flex items-center justify-center bg-primary text-white">
+<span class="material-symbols-outlined text-[14px] font-bold">check</span>
+</div>
+<span class="font-body-md group-hover:text-primary transition-colors">Indoor Field</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="w-5 h-5 border-2 border-primary rounded flex items-center justify-center bg-primary text-white">
+<span class="material-symbols-outlined text-[14px] font-bold">check</span>
+</div>
+<span class="font-body-md group-hover:text-primary transition-colors">Outdoor Court</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="w-5 h-5 border-2 border-outline rounded"></div>
+<span class="font-body-md group-hover:text-primary transition-colors">Gymnasium</span>
+</label>
+</div>
+</div>
+<!-- Heatmap & Pricing -->
+<div class="mt-auto space-y-4 px-2">
+<div class="flex items-center justify-between p-3 bg-surface-container rounded-lg">
+<div class="flex flex-col">
+<span class="font-label-md">Demand Heatmap</span>
+<span class="text-[10px] text-on-surface-variant">Overlay traffic density</span>
+</div>
+<button class="w-10 h-6 bg-primary-container rounded-full relative transition-all">
+<span class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></span>
+</button>
+</div>
+<div class="flex items-center justify-between p-3 border border-outline-variant rounded-lg">
+<div class="flex flex-col">
+<span class="font-label-md">Peak Pricing</span>
+<span class="text-[10px] text-on-surface-variant">+15% Active</span>
+</div>
+<button class="w-10 h-6 bg-primary-container rounded-full relative">
+<span class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></span>
+</button>
+</div>
+</div>
+<!-- Quick Stats -->
+<div class="mt-6 p-4 bg-primary text-on-primary rounded-xl shadow-lg relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-[80px]">leaderboard</span>
+</div>
+<div class="relative z-10">
+<span class="text-[10px] font-bold uppercase opacity-80">Today's Revenue</span>
+<h3 class="font-headline-lg mt-1">$4,280.00</h3>
+<div class="mt-3 bg-white/20 h-1.5 rounded-full overflow-hidden">
+<div class="bg-white h-full w-[82%]"></div>
+</div>
+<span class="text-[10px] block mt-2">82% Occupancy rate</span>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 overflow-hidden flex flex-col bg-surface">
+<!-- Calendar Header Toolbar -->
+<div class="p-margin-desktop flex items-center justify-between bg-white border-b border-outline-variant/20 shrink-0">
+<div class="flex items-center gap-gutter">
+<h2 class="font-headline-lg text-headline-lg">Venue Scheduling</h2>
+<div class="flex items-center bg-surface-container rounded-lg p-1">
+<button class="px-4 py-1.5 rounded-md font-label-md text-on-surface-variant hover:text-on-surface">Day</button>
+<button class="px-4 py-1.5 rounded-md bg-white shadow-sm font-label-md text-primary font-bold">Week</button>
+<button class="px-4 py-1.5 rounded-md font-label-md text-on-surface-variant hover:text-on-surface">Month</button>
+</div>
+</div>
+<div class="flex items-center gap-stack-md">
+<div class="flex items-center gap-2 mr-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container rounded-full p-2">chevron_left</span>
+<span class="font-label-md w-32 text-center">Oct 12 - Oct 18</span>
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container rounded-full p-2">chevron_right</span>
+</div>
+<button class="flex items-center gap-2 border border-outline-variant px-4 py-2 rounded-lg font-label-md hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+                        Filters
+                    </button>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-label-md hover:shadow-lg transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                        Booking
+                    </button>
+</div>
+</div>
+<!-- Calendar Grid Container -->
+<div class="flex-1 overflow-auto custom-scrollbar relative">
+<div class="calendar-grid min-w-[1000px]">
+<!-- Header Empty Corner -->
+<div class="sticky top-0 left-0 bg-white border-b border-r border-outline-variant z-30 h-16"></div>
+<!-- Days Header -->
+<div class="sticky top-0 bg-white border-b border-outline-variant z-20 flex items-center justify-center font-label-md h-16" style="grid-column: 2">Sun 12</div>
+<div class="sticky top-0 bg-white border-b border-outline-variant z-20 flex items-center justify-center font-label-md h-16" style="grid-column: 3">Mon 13</div>
+<div class="sticky top-0 bg-white border-b border-outline-variant z-20 flex items-center justify-center font-label-md h-16" style="grid-column: 4">Tue 14</div>
+<div class="sticky top-0 bg-white border-b border-outline-variant z-20 flex items-center justify-center font-label-md h-16" style="grid-column: 5">Wed 15</div>
+<div class="sticky top-0 bg-white border-b border-outline-variant z-20 flex items-center justify-center font-label-md h-16" style="grid-column: 6">Thu 16</div>
+<div class="sticky top-0 bg-white border-b border-outline-variant z-20 flex items-center justify-center font-label-md h-16" style="grid-column: 7">Fri 17</div>
+<div class="sticky top-0 bg-white border-b border-outline-variant z-20 flex items-center justify-center font-label-md h-16" style="grid-column: 8">Sat 18</div>
+<!-- Time Slots & Background Rows -->
+<script>
+                        const mainContainer = document.currentScript.parentElement;
+                        for (let hour = 8; hour <= 22; hour++) {
+                            const timeLabel = hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
+                            
+                            // Time column label
+                            const labelDiv = document.createElement('div');
+                            labelDiv.className = 'sticky left-0 bg-white border-r border-outline-variant z-10 flex items-start justify-center pt-2 text-[11px] font-bold text-outline-variant';
+                            labelDiv.style.gridRow = hour - 7;
+                            labelDiv.textContent = timeLabel;
+                            mainContainer.appendChild(labelDiv);
+
+                            // Background cells
+                            for (let day = 2; day <= 8; day++) {
+                                const cell = document.createElement('div');
+                                cell.className = 'time-border heatmap-cell-low hover:bg-surface-container-high transition-colors cursor-crosshair';
+                                cell.style.gridRow = hour - 7;
+                                cell.style.gridColumn = day;
+                                mainContainer.appendChild(cell);
+                            }
+                        }
+                    </script>
+<!-- Booked Slots (Positioned absolutely/grid-based) -->
+<!-- Football Blue -->
+<div class="booking-card bg-primary-container text-white m-1 rounded-lg p-2 flex flex-col justify-between overflow-hidden shadow-sm relative group" style="grid-row: 3 / span 2; grid-column: 4;">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-[10px] uppercase font-black">Football</span>
+<span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">more_vert</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-[13px] leading-tight">U-17 Academy Drills</span>
+<span class="text-[10px] opacity-80">10:00 AM - 12:00 PM</span>
+</div>
+<div class="drag-handle absolute bottom-0 left-0 right-0 h-1.5 flex items-center justify-center">
+<div class="w-8 h-1 bg-white/30 rounded-full"></div>
+</div>
+</div>
+<!-- Basketball Orange -->
+<div class="booking-card bg-[#f59e0b] text-white m-1 rounded-lg p-2 flex flex-col justify-between overflow-hidden shadow-sm relative group" style="grid-row: 5 / span 1.5; grid-column: 3;">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-[10px] uppercase font-black">Basketball</span>
+<span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity">edit</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-[13px] leading-tight">City League Q3</span>
+<span class="text-[10px] opacity-80">12:00 PM - 1:30 PM</span>
+</div>
+<div class="drag-handle absolute bottom-0 left-0 right-0 h-1.5 flex items-center justify-center">
+<div class="w-8 h-1 bg-white/30 rounded-full"></div>
+</div>
+</div>
+<!-- Tennis Green -->
+<div class="booking-card bg-tertiary-container text-on-tertiary-container m-1 rounded-lg p-2 flex flex-col justify-between overflow-hidden shadow-sm relative group" style="grid-row: 8 / span 1; grid-column: 6;">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-[10px] uppercase font-black">Tennis</span>
+<span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity">close</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-[13px] leading-tight">Private Coaching</span>
+<span class="text-[10px] opacity-80">3:00 PM - 4:00 PM</span>
+</div>
+</div>
+<!-- Another Booking -->
+<div class="booking-card bg-primary-container text-white m-1 rounded-lg p-2 flex flex-col justify-between overflow-hidden shadow-sm relative group border-2 border-white" style="grid-row: 9 / span 2; grid-column: 4;">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-[10px] uppercase font-black">Football</span>
+<span class="material-symbols-outlined text-[16px]">lock</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-[13px] leading-tight">Main Arena Maintenance</span>
+<span class="text-[10px] opacity-80">4:00 PM - 6:00 PM</span>
+</div>
+</div>
+<!-- Current Time Indicator -->
+<div class="absolute w-full h-[2px] bg-error z-40 pointer-events-none flex items-center" style="top: 410px; left: 0;">
+<div class="w-3 h-3 bg-error rounded-full -ml-1.5 border-2 border-white"></div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Floating Action Button (FAB) Mobile -->
+<button class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center z-50 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<!-- Quick Edit Hover Overlay (Concept) -->
+<div class="fixed hidden bg-white shadow-xl border border-outline-variant rounded-xl p-4 z-[100] w-64 pointer-events-none transition-opacity duration-200" id="quick-edit">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-primary-container/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">sports_soccer</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Slot Overview</h4>
+<p class="text-[10px] text-outline">Indoor Arena • Court A</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 text-label-sm">
+<div class="bg-surface p-2 rounded border border-outline-variant/10">
+<span class="text-[10px] text-outline block">Price</span>
+<span class="font-bold">$120/hr</span>
+</div>
+<div class="bg-surface p-2 rounded border border-outline-variant/10">
+<span class="text-[10px] text-outline block">Status</span>
+<span class="font-bold text-tertiary">Confirmed</span>
+</div>
+</div>
+<div class="mt-3 pt-3 border-t border-outline-variant/20 flex gap-2">
+<button class="flex-1 text-[11px] font-bold py-1 px-2 rounded bg-surface-container-high">Edit Slot</button>
+<button class="flex-1 text-[11px] font-bold py-1 px-2 rounded bg-primary text-white">View Details</button>
+</div>
+</div>
+<script>
+        // Micro-interaction for Hover States
+        const bookingCards = document.querySelectorAll('.booking-card');
+        const quickEdit = document.getElementById('quick-edit');
+
+        bookingCards.forEach(card => {
+            card.addEventListener('mouseenter', (e) => {
+                const rect = card.getBoundingClientRect();
+                quickEdit.style.left = `${rect.right + 10}px`;
+                quickEdit.style.top = `${rect.top}px`;
+                quickEdit.classList.remove('hidden');
+                quickEdit.style.opacity = '1';
+                
+                // Keep within window
+                if (rect.right + 270 > window.innerWidth) {
+                    quickEdit.style.left = `${rect.left - 270}px`;
+                }
+            });
+
+            card.addEventListener('mouseleave', () => {
+                quickEdit.classList.add('hidden');
+                quickEdit.style.opacity = '0';
+            });
+        });
+
+        // Toggle Switch functionality (Visual)
+        const toggleButtons = document.querySelectorAll('button[class*="rounded-full relative"]');
+        toggleButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const circle = btn.querySelector('span');
+                if (btn.classList.contains('bg-primary-container')) {
+                    btn.classList.replace('bg-primary-container', 'bg-outline-variant');
+                    circle.classList.replace('right-1', 'left-1');
+                } else {
+                    btn.classList.replace('bg-outline-variant', 'bg-primary-container');
+                    circle.classList.replace('left-1', 'right-1');
+                }
+            });
+        });
+    </script>
+</body></html>

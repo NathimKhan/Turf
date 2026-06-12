@@ -1,0 +1,655 @@
+const swaggerSpec = {
+  openapi: "3.0.3",
+  info: {
+    title: "TURFX Backend API",
+    version: "1.0.0",
+    description: "Complete MERN backend API for turf booking, payments, dashboards, reviews, events, and tournaments.",
+  },
+  servers: [
+    {
+      url: process.env.API_BASE_URL ? `${process.env.API_BASE_URL.replace(/\/$/, "")}/api` : "http://localhost:5000/api",
+      description: "Configured API server",
+    },
+  ],
+  tags: [
+    { name: "Auth" },
+    { name: "Users" },
+    { name: "Turfs" },
+    { name: "Bookings" },
+    { name: "Payments" },
+    { name: "Reviews" },
+    { name: "Events" },
+    { name: "Tournaments" },
+    { name: "Notifications" },
+    { name: "Owner" },
+    { name: "Admin" },
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+      },
+    },
+    schemas: {
+      ApiResponse: {
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          message: { type: "string" },
+          data: { type: "object" },
+        },
+      },
+      User: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          name: { type: "string" },
+          email: { type: "string", format: "email" },
+          phone: { type: "string" },
+          role: { type: "string", enum: ["user", "owner", "admin"] },
+          profileImage: { type: "string" },
+          walletBalance: { type: "number" },
+          membershipPlan: { type: "string" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
+      Turf: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          name: { type: "string" },
+          description: { type: "string" },
+          location: { type: "string" },
+          address: { type: "string" },
+          city: { type: "string" },
+          state: { type: "string" },
+          sportsSupported: {
+            type: "array",
+            items: { type: "string", enum: ["Football", "Cricket", "Badminton", "Volleyball", "Basketball"] },
+          },
+          pricePerHour: { type: "number" },
+          images: { type: "array", items: { type: "string" } },
+          amenities: {
+            type: "array",
+            items: { type: "string", enum: ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Seating Area"] },
+          },
+          rating: { type: "number" },
+          totalReviews: { type: "number" },
+          ownerId: { type: "string" },
+          isApproved: { type: "boolean" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
+      Booking: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          userId: { type: "string" },
+          turfId: { type: "string" },
+          bookingDate: { type: "string", format: "date" },
+          slotStartTime: { type: "string", example: "18:00" },
+          slotEndTime: { type: "string", example: "19:00" },
+          hoursBooked: { type: "number" },
+          totalAmount: { type: "number" },
+          paymentStatus: { type: "string", enum: ["pending", "paid", "failed"] },
+          bookingStatus: { type: "string", enum: ["upcoming", "completed", "cancelled"] },
+          createdAt: { type: "string", format: "date-time" },
+        },
+      },
+      Payment: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          userId: { type: "string" },
+          bookingId: { type: "string" },
+          amount: { type: "number" },
+          paymentMethod: { type: "string", enum: ["UPI", "Card", "Cash"] },
+          paymentStatus: { type: "string", enum: ["pending", "paid", "failed"] },
+          transactionId: { type: "string" },
+          createdAt: { type: "string", format: "date-time" },
+        },
+      },
+      Review: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          userId: { type: "string" },
+          turfId: { type: "string" },
+          rating: { type: "number", minimum: 1, maximum: 5 },
+          comment: { type: "string" },
+          createdAt: { type: "string", format: "date-time" },
+        },
+      },
+      Event: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          title: { type: "string" },
+          description: { type: "string" },
+          eventDate: { type: "string", format: "date-time" },
+          location: { type: "string" },
+          entryFee: { type: "number" },
+          maxParticipants: { type: "number" },
+          currentParticipants: { type: "number" },
+          createdBy: { type: "string" },
+        },
+      },
+      Tournament: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          title: { type: "string" },
+          description: { type: "string" },
+          sport: { type: "string" },
+          prizePool: { type: "number" },
+          startDate: { type: "string", format: "date-time" },
+          endDate: { type: "string", format: "date-time" },
+          participants: { type: "array", items: { type: "string" } },
+          createdBy: { type: "string" },
+        },
+      },
+      Notification: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          userId: { type: "string" },
+          title: { type: "string" },
+          message: { type: "string" },
+          isRead: { type: "boolean" },
+          createdAt: { type: "string", format: "date-time" },
+        },
+      },
+    },
+  },
+  paths: {
+    "/auth/register": {
+      post: {
+        tags: ["Auth"],
+        summary: "Register as a user or owner",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["name", "email", "password"],
+                properties: {
+                  name: { type: "string" },
+                  email: { type: "string", format: "email" },
+                  password: { type: "string", minLength: 6 },
+                  phone: { type: "string" },
+                  role: { type: "string", enum: ["user", "owner"] },
+                },
+              },
+            },
+          },
+        },
+        responses: { 201: { description: "Registered" }, 409: { description: "Email exists" } },
+      },
+    },
+    "/auth/login": {
+      post: {
+        tags: ["Auth"],
+        summary: "Login and receive JWT",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email", "password"],
+                properties: {
+                  email: { type: "string", format: "email" },
+                  password: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: { 200: { description: "Logged in" }, 401: { description: "Invalid credentials" } },
+      },
+    },
+    "/auth/logout": {
+      post: {
+        tags: ["Auth"],
+        summary: "Clear auth cookie",
+        responses: { 200: { description: "Logged out" } },
+      },
+    },
+    "/auth/profile": {
+      get: {
+        tags: ["Auth"],
+        security: [{ bearerAuth: [] }],
+        summary: "Get current user profile",
+        responses: { 200: { description: "Profile fetched" } },
+      },
+      put: {
+        tags: ["Auth"],
+        security: [{ bearerAuth: [] }],
+        summary: "Update current user profile",
+        responses: { 200: { description: "Profile updated" } },
+      },
+    },
+    "/auth/me": {
+      get: {
+        tags: ["Auth"],
+        security: [{ bearerAuth: [] }],
+        summary: "Alias for current profile",
+        responses: { 200: { description: "Profile fetched" } },
+      },
+    },
+    "/auth/change-password": {
+      put: {
+        tags: ["Auth"],
+        security: [{ bearerAuth: [] }],
+        summary: "Change password",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["currentPassword", "newPassword"],
+                properties: {
+                  currentPassword: { type: "string" },
+                  newPassword: { type: "string", minLength: 6 },
+                },
+              },
+            },
+          },
+        },
+        responses: { 200: { description: "Password changed" } },
+      },
+    },
+    "/auth/forgot-password": {
+      post: {
+        tags: ["Auth"],
+        summary: "Send reset password email",
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", required: ["email"], properties: { email: { type: "string" } } } } },
+        },
+        responses: { 200: { description: "Reset email sent if account exists" } },
+      },
+    },
+    "/auth/reset-password": {
+      post: {
+        tags: ["Auth"],
+        summary: "Reset password with token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["resetToken", "password"],
+                properties: {
+                  resetToken: { type: "string" },
+                  password: { type: "string", minLength: 6 },
+                },
+              },
+            },
+          },
+        },
+        responses: { 200: { description: "Password reset" } },
+      },
+    },
+    "/users": {
+      get: {
+        tags: ["Users"],
+        security: [{ bearerAuth: [] }],
+        summary: "Admin list users",
+        parameters: [
+          { name: "role", in: "query", schema: { type: "string" } },
+          { name: "search", in: "query", schema: { type: "string" } },
+        ],
+        responses: { 200: { description: "Users fetched" } },
+      },
+    },
+    "/users/{id}": {
+      get: {
+        tags: ["Users"],
+        security: [{ bearerAuth: [] }],
+        summary: "Admin get user",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "User fetched" } },
+      },
+      put: {
+        tags: ["Users"],
+        security: [{ bearerAuth: [] }],
+        summary: "Admin update user",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "User updated" } },
+      },
+      delete: {
+        tags: ["Users"],
+        security: [{ bearerAuth: [] }],
+        summary: "Admin delete user",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "User deleted" } },
+      },
+    },
+    "/turfs": {
+      get: {
+        tags: ["Turfs"],
+        summary: "List turfs with search filters",
+        parameters: [
+          { name: "search", in: "query", schema: { type: "string" } },
+          { name: "city", in: "query", schema: { type: "string" } },
+          { name: "sport", in: "query", schema: { type: "string" } },
+          { name: "minPrice", in: "query", schema: { type: "number" } },
+          { name: "maxPrice", in: "query", schema: { type: "number" } },
+          { name: "rating", in: "query", schema: { type: "number" } },
+        ],
+        responses: { 200: { description: "Turfs fetched" } },
+      },
+      post: {
+        tags: ["Turfs"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin create turf",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                allOf: [{ $ref: "#/components/schemas/Turf" }],
+              },
+            },
+          },
+        },
+        responses: { 201: { description: "Turf created" } },
+      },
+    },
+    "/turfs/search": {
+      get: {
+        tags: ["Turfs"],
+        summary: "Search turfs by query, city, sport, price, or rating",
+        responses: { 200: { description: "Turfs fetched" } },
+      },
+    },
+    "/turfs/city/{city}": {
+      get: {
+        tags: ["Turfs"],
+        summary: "List turfs by city",
+        parameters: [{ name: "city", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Turfs fetched" } },
+      },
+    },
+    "/turfs/{id}": {
+      get: {
+        tags: ["Turfs"],
+        summary: "Get turf details",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Turf fetched" } },
+      },
+      put: {
+        tags: ["Turfs"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin update turf",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Turf updated" } },
+      },
+      delete: {
+        tags: ["Turfs"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin delete turf",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Turf deleted" } },
+      },
+    },
+    "/turfs/{id}/slots": {
+      put: {
+        tags: ["Turfs"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin update turf slot schedule",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Slots updated" } },
+      },
+    },
+    "/bookings": {
+      get: {
+        tags: ["Bookings"],
+        security: [{ bearerAuth: [] }],
+        summary: "Current user's bookings, owner turf bookings, or all admin bookings",
+        responses: { 200: { description: "Bookings fetched" } },
+      },
+      post: {
+        tags: ["Bookings"],
+        security: [{ bearerAuth: [] }],
+        summary: "Create booking after slot availability check",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["turfId", "bookingDate", "slotStartTime", "slotEndTime"],
+                properties: {
+                  turfId: { type: "string" },
+                  bookingDate: { type: "string", format: "date" },
+                  slotStartTime: { type: "string", example: "18:00" },
+                  slotEndTime: { type: "string", example: "19:00" },
+                },
+              },
+            },
+          },
+        },
+        responses: { 201: { description: "Booking created" }, 409: { description: "Slot already booked" } },
+      },
+    },
+    "/bookings/my-bookings": {
+      get: {
+        tags: ["Bookings"],
+        security: [{ bearerAuth: [] }],
+        summary: "Alias for current user's bookings",
+        responses: { 200: { description: "Bookings fetched" } },
+      },
+    },
+    "/bookings/{id}": {
+      get: {
+        tags: ["Bookings"],
+        security: [{ bearerAuth: [] }],
+        summary: "Get booking details",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Booking fetched" } },
+      },
+    },
+    "/bookings/cancel/{id}": {
+      put: {
+        tags: ["Bookings"],
+        security: [{ bearerAuth: [] }],
+        summary: "Cancel booking",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Booking cancelled" } },
+      },
+    },
+    "/payments/create": {
+      post: {
+        tags: ["Payments"],
+        security: [{ bearerAuth: [] }],
+        summary: "Create fake successful demo payment",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["bookingId"],
+                properties: {
+                  bookingId: { type: "string" },
+                  paymentMethod: { type: "string", enum: ["UPI", "Card", "Cash"] },
+                },
+              },
+            },
+          },
+        },
+        responses: { 201: { description: "Payment successful" } },
+      },
+    },
+    "/payments/checkout": {
+      post: {
+        tags: ["Payments"],
+        security: [{ bearerAuth: [] }],
+        summary: "Frontend-compatible alias for fake payment creation",
+        responses: { 201: { description: "Payment successful" } },
+      },
+    },
+    "/payments/history": {
+      get: {
+        tags: ["Payments"],
+        security: [{ bearerAuth: [] }],
+        summary: "Payment history",
+        responses: { 200: { description: "Payment history fetched" } },
+      },
+    },
+    "/reviews": {
+      post: {
+        tags: ["Reviews"],
+        security: [{ bearerAuth: [] }],
+        summary: "Create review and recalculate turf rating",
+        responses: { 201: { description: "Review created" } },
+      },
+    },
+    "/reviews/turf/{id}": {
+      get: {
+        tags: ["Reviews"],
+        summary: "Get reviews for turf",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Reviews fetched" } },
+      },
+    },
+    "/reviews/{id}": {
+      delete: {
+        tags: ["Reviews"],
+        security: [{ bearerAuth: [] }],
+        summary: "Delete review",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Review deleted" } },
+      },
+    },
+    "/events": {
+      get: {
+        tags: ["Events"],
+        summary: "List events",
+        responses: { 200: { description: "Events fetched" } },
+      },
+      post: {
+        tags: ["Events"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin create event",
+        responses: { 201: { description: "Event created" } },
+      },
+    },
+    "/events/{id}": {
+      get: {
+        tags: ["Events"],
+        summary: "Get event",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Event fetched" } },
+      },
+      put: {
+        tags: ["Events"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin update event",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Event updated" } },
+      },
+      delete: {
+        tags: ["Events"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin delete event",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Event deleted" } },
+      },
+    },
+    "/tournaments": {
+      get: {
+        tags: ["Tournaments"],
+        summary: "List tournaments",
+        responses: { 200: { description: "Tournaments fetched" } },
+      },
+      post: {
+        tags: ["Tournaments"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin create tournament",
+        responses: { 201: { description: "Tournament created" } },
+      },
+    },
+    "/tournaments/{id}": {
+      get: {
+        tags: ["Tournaments"],
+        summary: "Get tournament",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Tournament fetched" } },
+      },
+      put: {
+        tags: ["Tournaments"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin update tournament",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Tournament updated" } },
+      },
+      delete: {
+        tags: ["Tournaments"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin delete tournament",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Tournament deleted" } },
+      },
+    },
+    "/notifications": {
+      get: {
+        tags: ["Notifications"],
+        security: [{ bearerAuth: [] }],
+        summary: "Get current user's notifications",
+        responses: { 200: { description: "Notifications fetched" } },
+      },
+      post: {
+        tags: ["Notifications"],
+        security: [{ bearerAuth: [] }],
+        summary: "Admin create notification",
+        responses: { 201: { description: "Notification created" } },
+      },
+    },
+    "/notifications/{id}/read": {
+      put: {
+        tags: ["Notifications"],
+        security: [{ bearerAuth: [] }],
+        summary: "Mark notification as read",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Notification marked read" } },
+      },
+    },
+    "/notifications/{id}": {
+      delete: {
+        tags: ["Notifications"],
+        security: [{ bearerAuth: [] }],
+        summary: "Delete notification",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Notification deleted" } },
+      },
+    },
+    "/owner/dashboard": {
+      get: {
+        tags: ["Owner"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner dashboard totals and earnings",
+        responses: { 200: { description: "Owner dashboard fetched" } },
+      },
+    },
+    "/admin/dashboard": {
+      get: {
+        tags: ["Admin"],
+        security: [{ bearerAuth: [] }],
+        summary: "Admin dashboard totals and recent activity",
+        responses: { 200: { description: "Admin dashboard fetched" } },
+      },
+    },
+  },
+};
+
+module.exports = swaggerSpec;

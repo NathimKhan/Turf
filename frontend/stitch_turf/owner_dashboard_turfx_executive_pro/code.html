@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TurfX Owner Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
+            border-color: #2563EB;
+        }
+        .stagger-fade-up {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.6s ease forwards;
+        }
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .chart-gradient {
+            background: linear-gradient(180deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0) 100%);
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#e1e2ed",
+                        "surface-container": "#ededf9",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#faf8ff",
+                        "secondary": "#00687a",
+                        "on-surface-variant": "#434655",
+                        "inverse-primary": "#b4c5ff",
+                        "on-secondary-container": "#006172",
+                        "inverse-on-surface": "#f0f0fb",
+                        "on-surface": "#191b23",
+                        "tertiary": "#006229",
+                        "primary-container": "#2563eb",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#dbe1ff",
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#4cd7f6",
+                        "surface-container-low": "#f3f3fe",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "on-tertiary-container": "#c1ffc5",
+                        "on-primary-container": "#eeefff",
+                        "surface-dim": "#d9d9e5",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#007e37",
+                        "on-primary-fixed": "#00174b",
+                        "on-primary": "#ffffff",
+                        "outline": "#737686",
+                        "on-tertiary-fixed": "#002109",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "secondary-container": "#57dffe",
+                        "surface-container-high": "#e7e7f3",
+                        "inverse-surface": "#2e3039",
+                        "surface-variant": "#e1e2ed",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#0053db",
+                        "primary": "#004ac6",
+                        "on-secondary-fixed": "#001f26",
+                        "on-background": "#191b23",
+                        "surface": "#faf8ff",
+                        "background": "#faf8ff",
+                        "outline-variant": "#c3c6d7",
+                        "tertiary-fixed": "#6bff8f",
+                        "secondary-fixed": "#acedff"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "gutter": "24px",
+                        "margin-desktop": "40px",
+                        "stack-md": "16px",
+                        "margin-mobile": "16px",
+                        "section-gap": "80px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm flex items-center justify-between px-margin-desktop h-16">
+<div class="flex items-center gap-stack-md">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">EliteSport Venue Pro</span>
+</div>
+<div class="flex items-center gap-stack-md">
+<div class="flex items-center bg-surface-container-high rounded-full px-4 py-1.5 gap-2 border border-outline-variant/50">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-48 lg:w-64" placeholder="Global search..." type="text"/>
+</div>
+<div class="flex items-center gap-3 ml-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden border border-outline-variant/30 ml-2">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a senior sports executive in a minimalist studio. The lighting is soft and high-key, emphasizing a clean and authoritative corporate aesthetic. The man wears a modern charcoal suit, looking directly at the camera with a confident and helpful expression. The background is a soft, out-of-focus grey that aligns with a premium sports fintech brand's visual identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKkqGR8iRAj_P3xyYblu2QOuSt673U15-mDw4gFYdtbkni2ODeRSRYc_tbnKuv_YozLwUMbKb4cfvUbddan2D2LScvNFG4I5tqZBh1KiMgkyOp9-ZtGnTpBpptPy16_pTR3jZD1ovBbupgzauqPeJWjxMnf-wt5uTCnZx3SbiROnVrE9ONu04Up347-wejhfAjZpB8OimMyCDa2CH_7olTzQym9wx0NMAsAqJh78mdpakoQmoeGxWbArMzZk5LRqpmXr0_5H6sVgM8"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 pt-16 bg-surface-container-lowest border-r border-outline-variant/20 shadow-md flex flex-col gap-base p-4">
+<div class="flex items-center gap-3 px-2 py-4 border-b border-outline-variant/10 mb-2">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined">stadium</span>
+</div>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Main Stadium</p>
+<p class="text-[11px] text-on-surface-variant font-medium">Premium Tier</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 bg-primary-container text-on-primary-container rounded-lg font-semibold transition-all" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-label-md text-label-md">Bookings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">stadium</span>
+<span class="font-label-md text-label-md">Venues</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Customers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">Finance</span>
+</a>
+</nav>
+<button class="mt-4 bg-primary text-white w-full py-2.5 rounded-lg font-label-md text-label-md shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-transform">
+            Add New Booking
+        </button>
+<div class="mt-auto pt-4 space-y-1 border-t border-outline-variant/10">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg text-label-sm font-label-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+                System Status
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg text-label-sm font-label-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">support_agent</span>
+                Help Desk
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-12 px-margin-desktop min-h-screen">
+<!-- Header -->
+<header class="flex flex-col md:flex-row md:items-end justify-between mb-stack-lg stagger-fade-up" style="animation-delay: 0.1s;">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight">Executive Overview</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Real-time performance metrics for TurfX Main Stadium.</p>
+</div>
+<div class="flex items-center gap-3 mt-4 md:mt-0">
+<div class="flex items-center bg-white border border-outline-variant/50 rounded-lg px-4 py-2 gap-2 cursor-pointer hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-primary text-[20px]">calendar_month</span>
+<span class="font-label-md text-label-md">Last 30 Days</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">keyboard_arrow_down</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">Quick Actions</button>
+<button class="bg-surface-container-high text-on-surface px-3 py-2 rounded-lg font-label-md text-label-md flex items-center justify-center">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</header>
+<!-- KPI Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
+<!-- Revenue KPI -->
+<div class="glass-card p-stack-md rounded-xl stagger-fade-up" style="animation-delay: 0.2s;">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 text-primary rounded-lg">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div class="flex items-center gap-1 text-tertiary font-label-sm">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+                        +12.5%
+                    </div>
+</div>
+<p class="text-on-surface-variant font-label-sm uppercase tracking-wider mb-1">Total Revenue</p>
+<div class="flex items-end justify-between">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">$128,430.50</h2>
+<div class="h-8 w-20 flex items-end gap-[2px]">
+<div class="bg-primary/20 h-[30%] w-full rounded-sm"></div>
+<div class="bg-primary/40 h-[50%] w-full rounded-sm"></div>
+<div class="bg-primary/30 h-[40%] w-full rounded-sm"></div>
+<div class="bg-primary/60 h-[70%] w-full rounded-sm"></div>
+<div class="bg-primary h-[90%] w-full rounded-sm"></div>
+</div>
+</div>
+</div>
+<!-- Active Bookings -->
+<div class="glass-card p-stack-md rounded-xl stagger-fade-up" style="animation-delay: 0.3s;">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-secondary/10 text-secondary rounded-lg">
+<span class="material-symbols-outlined">book_online</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary-fixed-dim opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span>
+</span>
+<span class="font-label-sm text-tertiary">Live Now</span>
+</div>
+</div>
+<p class="text-on-surface-variant font-label-sm uppercase tracking-wider mb-1">Active Bookings</p>
+<div class="flex items-end justify-between">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">1,240 <span class="text-label-md font-normal text-on-surface-variant">sessions</span></h2>
+<div class="text-tertiary font-label-sm">+8%</div>
+</div>
+</div>
+<!-- Occupancy -->
+<div class="glass-card p-stack-md rounded-xl stagger-fade-up" style="animation-delay: 0.4s;">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-tertiary/10 text-tertiary rounded-lg">
+<span class="material-symbols-outlined">pie_chart</span>
+</div>
+<div class="text-on-surface-variant font-label-sm">High Performance</div>
+</div>
+<p class="text-on-surface-variant font-label-sm uppercase tracking-wider mb-1">Avg. Occupancy</p>
+<div class="flex items-center gap-4">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">84%</h2>
+<div class="relative w-12 h-12">
+<svg class="w-full h-full" viewbox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="84, 100" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Growth -->
+<div class="glass-card p-stack-md rounded-xl stagger-fade-up" style="animation-delay: 0.5s;">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary-fixed/30 text-primary rounded-lg">
+<span class="material-symbols-outlined">person_add</span>
+</div>
+</div>
+<p class="text-on-surface-variant font-label-sm uppercase tracking-wider mb-1">Customer Growth</p>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">+450 <span class="text-label-md font-normal text-on-surface-variant">Athletes</span></h2>
+<div class="mt-2 w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full w-[65%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Main Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-stack-lg">
+<!-- Revenue Trends Area Chart -->
+<div class="lg:col-span-2 glass-card p-stack-md rounded-2xl flex flex-col stagger-fade-up" style="animation-delay: 0.6s;">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Revenue Trends</h3>
+<p class="text-label-sm text-on-surface-variant">Daily comparison against previous period</p>
+</div>
+<div class="flex items-center gap-4 text-label-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span>Current</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+<span>Previous</span>
+</div>
+</div>
+</div>
+<!-- Mock Chart Canvas -->
+<div class="relative h-64 w-full mt-auto">
+<!-- Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between">
+<div class="border-b border-outline-variant/10 w-full h-px"></div>
+<div class="border-b border-outline-variant/10 w-full h-px"></div>
+<div class="border-b border-outline-variant/10 w-full h-px"></div>
+<div class="border-b border-outline-variant/10 w-full h-px"></div>
+</div>
+<!-- Chart Curves (SVG Visualization) -->
+<svg class="absolute inset-0 w-full h-full overflow-visible" preserveaspectratio="none">
+<defs>
+<lineargradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#2563eb" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#2563eb" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Previous Period (Dashed) -->
+<path class="transition-all duration-500" d="M0,200 Q100,180 200,210 T400,160 T600,190 T800,140" fill="none" stroke="#c3c6d7" stroke-dasharray="4,4" stroke-width="2"></path>
+<!-- Current Period (Solid + Area) -->
+<path class="transition-all duration-500" d="M0,180 Q100,140 200,160 T400,100 T600,120 T800,80" fill="none" stroke="#2563eb" stroke-width="3"></path>
+<path d="M0,180 Q100,140 200,160 T400,100 T600,120 T800,80 L800,256 L0,256 Z" fill="url(#areaGradient)"></path>
+<!-- Data Points -->
+<circle class="cursor-pointer hover:r-7 transition-all" cx="400" cy="100" fill="#2563eb" r="5" stroke="white" stroke-width="2"></circle>
+</svg>
+<!-- X-Axis Labels -->
+<div class="absolute -bottom-8 w-full flex justify-between text-label-sm text-on-surface-variant font-medium">
+<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+</div>
+</div>
+</div>
+<!-- Upcoming Events -->
+<div class="glass-card rounded-2xl flex flex-col stagger-fade-up" style="animation-delay: 0.7s;">
+<div class="p-stack-md border-b border-outline-variant/10 flex items-center justify-between">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Today's Matches</h3>
+<span class="bg-surface-container-high px-2 py-1 rounded text-label-sm font-bold text-primary">LIVE</span>
+</div>
+<div class="flex-1 overflow-y-auto p-stack-md space-y-4 max-h-[360px]">
+<!-- Event Item -->
+<div class="group flex items-center gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="text-center min-w-[50px]">
+<p class="text-label-md font-bold text-on-surface">14:00</p>
+<p class="text-label-sm text-on-surface-variant">PM</p>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Academy Quarterfinals</h4>
+<p class="text-label-sm text-on-surface-variant">Pitch 1 • 7-a-side</p>
+</div>
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+</div>
+<!-- Event Item -->
+<div class="flex items-center gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="text-center min-w-[50px]">
+<p class="text-label-md font-bold text-on-surface">15:30</p>
+<p class="text-label-sm text-on-surface-variant">PM</p>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Corporate League</h4>
+<p class="text-label-sm text-on-surface-variant">Main Court • Full Pitch</p>
+</div>
+<div class="w-2 h-2 rounded-full bg-surface-container-highest"></div>
+</div>
+<!-- Event Item -->
+<div class="flex items-center gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="text-center min-w-[50px]">
+<p class="text-label-md font-bold text-on-surface">17:00</p>
+<p class="text-label-sm text-on-surface-variant">PM</p>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Elite Training Session</h4>
+<p class="text-label-sm text-on-surface-variant">Training Zone B</p>
+</div>
+<div class="w-2 h-2 rounded-full bg-surface-container-highest"></div>
+</div>
+<!-- Event Item -->
+<div class="flex items-center gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="text-center min-w-[50px]">
+<p class="text-label-md font-bold text-on-surface">19:00</p>
+<p class="text-label-sm text-on-surface-variant">PM</p>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Open Play Session</h4>
+<p class="text-label-sm text-on-surface-variant">Pitch 2 • 5-a-side</p>
+</div>
+<div class="w-2 h-2 rounded-full bg-surface-container-highest"></div>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant/10 text-center">
+<button class="text-primary font-label-md text-label-md hover:underline">View Full Schedule</button>
+</div>
+</div>
+</div>
+<!-- Secondary Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- Occupancy Heatmap -->
+<div class="glass-card p-stack-md rounded-2xl stagger-fade-up" style="animation-delay: 0.8s;">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Peak Hours</h3>
+<div class="flex items-center gap-2">
+<span class="text-label-sm text-on-surface-variant">Intensity:</span>
+<div class="flex gap-1">
+<div class="w-3 h-3 rounded-sm bg-primary/10"></div>
+<div class="w-3 h-3 rounded-sm bg-primary/40"></div>
+<div class="w-3 h-3 rounded-sm bg-primary/70"></div>
+<div class="w-3 h-3 rounded-sm bg-primary"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-8 gap-2">
+<div class="h-6"></div>
+<div class="text-center font-label-sm text-on-surface-variant">Mon</div>
+<div class="text-center font-label-sm text-on-surface-variant">Tue</div>
+<div class="text-center font-label-sm text-on-surface-variant">Wed</div>
+<div class="text-center font-label-sm text-on-surface-variant">Thu</div>
+<div class="text-center font-label-sm text-on-surface-variant">Fri</div>
+<div class="text-center font-label-sm text-on-surface-variant">Sat</div>
+<div class="text-center font-label-sm text-on-surface-variant">Sun</div>
+<!-- Rows -->
+<div class="font-label-sm text-on-surface-variant self-center">08:00</div>
+<div class="h-8 rounded bg-primary/20"></div>
+<div class="h-8 rounded bg-primary/10"></div>
+<div class="h-8 rounded bg-primary/30"></div>
+<div class="h-8 rounded bg-primary/20"></div>
+<div class="h-8 rounded bg-primary/40"></div>
+<div class="h-8 rounded bg-primary/60"></div>
+<div class="h-8 rounded bg-primary/70"></div>
+<div class="font-label-sm text-on-surface-variant self-center">12:00</div>
+<div class="h-8 rounded bg-primary/40"></div>
+<div class="h-8 rounded bg-primary/30"></div>
+<div class="h-8 rounded bg-primary/50"></div>
+<div class="h-8 rounded bg-primary/40"></div>
+<div class="h-8 rounded bg-primary/80"></div>
+<div class="h-8 rounded bg-primary"></div>
+<div class="h-8 rounded bg-primary"></div>
+<div class="font-label-sm text-on-surface-variant self-center">18:00</div>
+<div class="h-8 rounded bg-primary"></div>
+<div class="h-8 rounded bg-primary/90"></div>
+<div class="h-8 rounded bg-primary"></div>
+<div class="h-8 rounded bg-primary/90"></div>
+<div class="h-8 rounded bg-primary"></div>
+<div class="h-8 rounded bg-primary/90"></div>
+<div class="h-8 rounded bg-primary/70"></div>
+</div>
+</div>
+<!-- Venue Performance -->
+<div class="glass-card p-stack-md rounded-2xl stagger-fade-up" style="animation-delay: 0.9s;">
+<h3 class="font-headline-lg text-headline-lg text-on-surface mb-6">Venue Performance</h3>
+<div class="space-y-6">
+<!-- Venue Item -->
+<div>
+<div class="flex justify-between items-end mb-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Pitch 1 (Main Stadium)</span>
+<span class="text-label-sm text-on-surface-variant">$42,300 Revenue</span>
+</div>
+<span class="text-label-md font-bold text-primary">94% Utility</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2 overflow-hidden">
+<div class="bg-primary h-full w-[94%] rounded-full shadow-[0_0_8px_rgba(37,99,235,0.4)]"></div>
+</div>
+</div>
+<!-- Venue Item -->
+<div>
+<div class="flex justify-between items-end mb-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Pitch 2 (Community)</span>
+<span class="text-label-sm text-on-surface-variant">$31,100 Revenue</span>
+</div>
+<span class="text-label-md font-bold text-secondary">78% Utility</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2 overflow-hidden">
+<div class="bg-secondary h-full w-[78%] rounded-full"></div>
+</div>
+</div>
+<!-- Venue Item -->
+<div>
+<div class="flex justify-between items-end mb-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Indoor Futsal Court</span>
+<span class="text-label-sm text-on-surface-variant">$18,400 Revenue</span>
+</div>
+<span class="text-label-md font-bold text-on-surface-variant">62% Utility</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2 overflow-hidden">
+<div class="bg-outline-variant h-full w-[62%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto border-t border-outline-variant/10 bg-surface-container-low flex justify-between items-center py-stack-md px-margin-desktop ml-64">
+<div class="flex items-center gap-stack-md">
+<span class="font-bold text-on-surface">TurfX</span>
+<span class="font-label-sm text-label-sm text-secondary">© 2024 EliteSport Systems. All rights reserved.</span>
+</div>
+<div class="flex gap-stack-md">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Partner Portal</a>
+</div>
+</footer>
+<script>
+        // Micro-interaction: Dynamic Number Counter (Simplified)
+        document.addEventListener('DOMContentLoaded', () => {
+            const animateValue = (id, start, end, duration) => {
+                const obj = document.getElementById(id);
+                if (!obj) return;
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    }
+                };
+                window.requestAnimationFrame(step);
+            };
+
+            // Entrance effects or chart interactions can be added here
+        });
+    </script>
+</body></html>

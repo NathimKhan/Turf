@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#004e5c",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed": "#6bff8f",
+                    "surface-container-highest": "#e1e2ed",
+                    "surface-container": "#ededf9",
+                    "surface-container-high": "#e7e7f3",
+                    "on-primary-container": "#eeefff",
+                    "inverse-on-surface": "#f0f0fb",
+                    "surface": "#faf8ff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "inverse-surface": "#2e3039",
+                    "surface-variant": "#e1e2ed",
+                    "background": "#faf8ff",
+                    "inverse-primary": "#b4c5ff",
+                    "tertiary": "#006229",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "tertiary-container": "#007e37",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "secondary-container": "#57dffe",
+                    "on-secondary-fixed": "#001f26",
+                    "on-tertiary-container": "#c1ffc5",
+                    "on-secondary-container": "#006172",
+                    "secondary": "#00687a",
+                    "surface-container-low": "#f3f3fe",
+                    "on-tertiary-fixed": "#002109",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "outline": "#737686",
+                    "on-background": "#191b23",
+                    "primary-container": "#2563eb",
+                    "on-surface": "#191b23",
+                    "surface-tint": "#0053db",
+                    "on-primary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#acedff",
+                    "on-surface-variant": "#434655",
+                    "surface-bright": "#faf8ff",
+                    "primary": "#004ac6",
+                    "secondary-fixed-dim": "#4cd7f6",
+                    "outline-variant": "#c3c6d7",
+                    "primary-fixed": "#dbe1ff",
+                    "on-primary-fixed": "#00174b",
+                    "surface-dim": "#d9d9e5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-lg": "32px",
+                    "base": "8px",
+                    "stack-sm": "8px",
+                    "container-max": "1280px",
+                    "stack-md": "16px",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "margin-desktop": "40px",
+                    "section-gap": "80px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-2xl-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-2xl": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-2xl-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-2xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid #E2E8F0;
+        }
+        .kinetic-tap:active {
+            transform: scale(0.96);
+            transition: transform 0.1s ease-out;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf8ff;
+            color: #191b23;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="pb-24 overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm flex items-center justify-between px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a young athlete with focused eyes, set against a clean, minimalist studio background with soft cinematic lighting. The image uses a cool-toned color palette of soft greys and whites, maintaining a premium athletic aesthetic that matches a modern sports performance interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYgHKLS9kaopeUSyFPSvXCuAWL__FXyURrh753QfFXMlL1iOCmSUXtol3cA2MAU_fucjJvwngik3YjcH6AMVyLvXIoP_juKBdhOaXKesqICJkrqMyqky5p3sSpAt9Reu6GhxBbcYgW63LqTad2zdZrqMEOmYKHo4UC12bx5un2GvXvILMNWxJg_7xcK_-CnPdZRwuSliFmp8T7fi-vwXz6rn0Qhhiuux1N3TrxdELr14qJ8KGueLq2B4EC7oGFTVoTK0X4NL3qEuBc"/>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-extrabold tracking-tighter text-primary">TurfX</h1>
+</div>
+<button class="kinetic-tap text-primary">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="mt-20 px-margin-mobile flex flex-col gap-8">
+<!-- Athlete Profile Header -->
+<section class="flex flex-col items-center pt-4">
+<div class="relative group">
+<div class="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-primary to-secondary-container ring-4 ring-white shadow-xl">
+<div class="w-full h-full rounded-full overflow-hidden border-2 border-white">
+<img alt="Profile Avatar" class="w-full h-full object-cover" data-alt="Detailed close-up of a determined male athlete with short hair and light stubble, lit by high-contrast side lighting that emphasizes his athletic features. The atmosphere is energetic and professional, utilizing a primary blue and white color scheme consistent with a premium athletic brand dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCq0WgtAByfbqICrVBcd2U4JYVrioXDvZs9iGkOYt5wU5-BOz64pZbFRpe_DzX2BxA31o_3blFD86d_HXaLddZkipTebyUOi9lL6_0k94cTlVK2IzNAsSnyPfKVIprqsVIW8dDOYLZuwSItwb0TU6EfyXUZ25BsumzRD3h7s9g0FoUUm_WNnSXLb0x2NMKiO7X00pxzsc0_Sp-7kKqA07Oh6ag3HjHcqfZmJkxygvLL8XfBXL9mQIpRDYaTGywFBfzpA2e2KTIgZ0vm"/>
+</div>
+</div>
+<div class="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full border-2 border-white shadow-md">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div class="mt-4 text-center">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Alex "The Engine" Rivera</h2>
+<p class="font-body-md text-on-surface-variant">Elite Midfielder • Madrid, ES</p>
+</div>
+</section>
+<!-- Performance Stats Bento -->
+<section class="grid grid-cols-3 gap-3">
+<div class="glass-card rounded-xl p-4 flex flex-col items-center justify-center text-center">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary">42</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Games</span>
+</div>
+<div class="glass-card rounded-xl p-4 flex flex-col items-center justify-center text-center bg-primary-container/10">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-secondary">86<span class="text-sm">%</span></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Win Rate</span>
+</div>
+<div class="glass-card rounded-xl p-4 flex flex-col items-center justify-center text-center">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary">128</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Goals</span>
+</div>
+</section>
+<!-- Favorite Sports Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Favorite Sports</h3>
+<button class="text-primary font-label-md text-label-md">Edit</button>
+</div>
+<div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+<div class="flex-shrink-0 flex items-center gap-2 bg-white border border-outline-variant/30 rounded-full px-4 py-2 shadow-sm">
+<span class="material-symbols-outlined text-primary" data-icon="sports_soccer">sports_soccer</span>
+<span class="font-label-md text-label-md">Football</span>
+</div>
+<div class="flex-shrink-0 flex items-center gap-2 bg-white border border-outline-variant/30 rounded-full px-4 py-2 shadow-sm">
+<span class="material-symbols-outlined text-primary" data-icon="sports_tennis">sports_tennis</span>
+<span class="font-label-md text-label-md">Padel</span>
+</div>
+<div class="flex-shrink-0 flex items-center gap-2 bg-white border border-outline-variant/30 rounded-full px-4 py-2 shadow-sm">
+<span class="material-symbols-outlined text-primary" data-icon="sports_basketball">sports_basketball</span>
+<span class="font-label-md text-label-md">Basketball</span>
+</div>
+</div>
+</section>
+<!-- Achievements Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Recent Achievements</h3>
+<button class="text-primary font-label-md text-label-md">View All</button>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="glass-card rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden group">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" data-icon="workspace_premium" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md">Iron Lung</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Completed 10 matches in 7 days</p>
+</div>
+</div>
+<div class="glass-card rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden group">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="local_fire_department" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md">Golden Boot</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Scored 5 goals in one match</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Account Management & Settings -->
+<section class="flex flex-col gap-3 mb-8">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-1">Account Management</h3>
+<a class="flex items-center justify-between p-4 bg-white border border-outline-variant/20 rounded-xl kinetic-tap" href="#">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="person_outline">person_outline</span>
+</div>
+<span class="font-body-md text-body-md font-semibold">Personal Information</span>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 bg-white border border-outline-variant/20 rounded-xl kinetic-tap" href="#">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</div>
+<span class="font-body-md text-body-md font-semibold">Payment Methods</span>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 bg-white border border-outline-variant/20 rounded-xl kinetic-tap" href="#">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+<span class="font-body-md text-body-md font-semibold">App Settings</span>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</a>
+<button class="flex items-center justify-center gap-2 p-4 mt-4 text-error font-body-md font-bold kinetic-tap">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Logout Account
+            </button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-white/80 backdrop-blur-2xl border-t border-outline-variant/20 shadow-[0_-4px_12px_rgba(0,0,0,0.04)] flex justify-around items-center pt-3 pb-safe px-2 w-full">
+<button class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-opacity kinetic-tap">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-opacity kinetic-tap">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-label-sm text-label-sm">Search</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-opacity kinetic-tap">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span class="font-label-sm text-label-sm">Bookings</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-opacity kinetic-tap">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary scale-105 transition-transform kinetic-tap">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm font-bold">Profile</span>
+</button>
+</nav>
+<script>
+        // Simple micro-interaction for performance cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0px)';
+            });
+        });
+
+        // Add active safe area padding for modern iPhones
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+            document.querySelector('nav').style.paddingBottom = '24px';
+        }
+    </script>
+</body></html>
