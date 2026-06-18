@@ -21,22 +21,41 @@ Create `backend/.env` from `backend/.env.example`. The frontend uses the local
 Vite proxy by default, so no frontend environment file is required for local
 development.
 
+Seed the portfolio demo accounts and sample data:
+
+```bash
+npm run seed
+```
+
+The seeded quick-login accounts are:
+
+- Platform Owner: `admin@turfx.com` / `Admin@123`
+- Turf Owner: `owner1@turfx.com` / `Owner@123`
+- User: `user1@turfx.com` / `User@123`
+
 ## Run locally
 
-Start the backend:
+Start both applications:
+
+```bash
+npm run dev
+```
+
+Or run them in separate terminals:
 
 ```bash
 npm run dev:backend
-```
-
-In another terminal, start the frontend:
-
-```bash
 npm run dev:frontend
 ```
 
 The frontend runs at `http://localhost:5173` and proxies `/api` and `/uploads`
 to the backend at `http://localhost:5000`.
+
+## Prototype QA
+
+The complete issue ledger, route audit, interaction report, remaining
+limitations, and tutor demonstration script are in
+`docs/PROTOTYPE_COMPLETION_REPORT.md`.
 
 ## Production
 

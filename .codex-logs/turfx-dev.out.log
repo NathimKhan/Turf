@@ -1,0 +1,451 @@
+
+> turfx@1.0.0 dev
+> node scripts/dev.js
+
+
+> turfx-backend@1.0.0 dev
+> nodemon src/server.js
+
+
+> turfx-frontend@1.0.0 dev
+> vite --host 0.0.0.0
+
+[33m[nodemon] 3.1.14[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node src/server.js`[39m
+Port 5173 is in use, trying another one...
+
+  [32m[1mVITE[22m v6.4.3[39m  [2mready in [0m[1m360[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5174[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.29.128:[1m5174[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.17.64.1:[1m5174[22m/[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[2m10:35:34 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+TURFX API listening on port 5000
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+TURFX API listening on port 5000
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+TURFX API listening on port 5000
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+TURFX API listening on port 5000
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+TURFX API listening on port 5000
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+TURFX API listening on port 5000
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+TURFX API listening on port 5000
+[2m10:45:10 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css, /src/app/layouts/PortalLayout.jsx, /src/components/shared/Navbar.jsx, /src/pages/owner/OwnerPages.jsx[22m
+[0mGET /api/turfs/mine [36m304[0m 93.627 ms - -[0m
+[0mGET /api/bookings [36m304[0m 179.882 ms - -[0m
+[0mGET /api/payments/history [32m200[0m 213.543 ms - 16567[0m
+[0mGET /api/owner/dashboard [32m200[0m 269.362 ms - 7225[0m
+[0mGET /api/owner/dashboard [32m200[0m 237.763 ms - 7225[0m
+[0mGET /api/turfs/mine [36m304[0m 381.687 ms - -[0m
+[0mGET /api/bookings [36m304[0m 451.117 ms - -[0m
+[2m10:45:18 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css, /src/pages/owner/OwnerPages.jsx[22m
+[2m10:45:37 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/utils/bookingPass.js[22m
+[0mGET /api/auth/profile [36m304[0m 43.227 ms - -[0m
+[0mGET /api/turfs/mine [36m304[0m 90.596 ms - -[0m
+[0mGET /api/payments/history [36m304[0m 187.070 ms - -[0m
+[0mGET /api/bookings [36m304[0m 194.642 ms - -[0m
+[0mGET /api/auth/profile [36m304[0m 41.201 ms - -[0m
+[0mGET /api/owner/dashboard [36m304[0m 246.351 ms - -[0m
+[0mGET /api/turfs/mine [36m304[0m 97.397 ms - -[0m
+[0mGET /api/bookings [36m304[0m 170.893 ms - -[0m
+[0mGET /api/owner/dashboard [36m304[0m 250.874 ms - -[0m
+[2m10:45:48 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css, /src/app/routes/AppRoutes.jsx[22m
+[2m10:46:18 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css, /src/app/routes/AppRoutes.jsx[22m
+[2m10:46:34 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css, /src/app/routes/AppRoutes.jsx[22m
+[2m10:46:49 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css, /src/app/routes/AppRoutes.jsx[22m
+[2m10:47:26 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/shared/Navbar.jsx, /src/styles/index.css[22m
+[2m10:47:36 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/layouts/PortalLayout.jsx, /src/styles/index.css[22m
+[2m10:47:48 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/layouts/OwnerLayout.jsx, /src/styles/index.css[22m
+[0mGET /api/notifications [32m200[0m 146.931 ms - 5860[0m
+[0mGET /api/notifications [32m200[0m 152.056 ms - 5860[0m
+[2m10:48:13 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[2m10:48:44 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[2m10:49:12 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css, /src/app/routes/AppRoutes.jsx[22m
+[2m10:49:23 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css, /src/app/routes/AppRoutes.jsx[22m
+[2m10:49:32 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css, /src/app/layouts/PortalLayout.jsx, /src/app/layouts/OwnerLayout.jsx, /src/components/shared/Navbar.jsx[22m
+[2m10:49:40 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/routes/AppRoutes.jsx, /src/styles/index.css[22m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+TURFX API listening on port 5000
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+TURFX API listening on port 5000
+[0mGET /api/health [32m200[0m 3.277 ms - 112[0m
+[0mPOST /api/auth/login [32m200[0m 125.036 ms - 803[0m
+[0mPOST /api/auth/login [32m200[0m 245.010 ms - 752[0m
+[0mPOST /api/auth/login [32m200[0m 249.042 ms - 686[0m
+[0mPOST /api/auth/login [32m200[0m 124.959 ms - 803[0m
+[0mPOST /api/auth/login [32m200[0m 116.817 ms - 803[0m
+[0mGET /api/auth/profile [32m200[0m 49.900 ms - 620[0m
+[0mGET /api/turfs/mine [32m200[0m 106.706 ms - 13567[0m
+[0mGET /api/notifications [32m200[0m 152.527 ms - 5860[0m
+[0mGET /api/bookings [32m200[0m 186.216 ms - 20403[0m
+[0mGET /api/owner/dashboard [32m200[0m 253.227 ms - 7225[0m
+[0mGET /api/turfs/mine [36m304[0m 126.927 ms - -[0m
+[0mGET /api/notifications [36m304[0m 175.662 ms - -[0m
+[0mGET /api/bookings [36m304[0m 194.754 ms - -[0m
+[0mGET /api/owner/dashboard [36m304[0m 275.742 ms - -[0m
+[0mGET /api/auth/profile [36m304[0m 42.467 ms - -[0m
+[0mGET /api/turfs/mine [36m304[0m 96.558 ms - -[0m
+[0mGET /api/notifications [36m304[0m 125.693 ms - -[0m
+[0mGET /api/bookings [36m304[0m 198.056 ms - -[0m
+[0mGET /api/owner/dashboard [36m304[0m 241.256 ms - -[0m
+[0mPOST /api/auth/login [32m200[0m 644.426 ms - 803[0m
+[0mGET /api/auth/profile [32m200[0m 94.396 ms - 620[0m
+[0mGET /api/notifications [32m200[0m 443.566 ms - 5860[0m
+[0mGET /api/turfs/mine [32m200[0m 313.972 ms - 13567[0m
+[0mGET /api/bookings [32m200[0m 518.686 ms - 20403[0m
+[0mGET /api/owner/dashboard [32m200[0m 687.820 ms - 7225[0m
+[0mGET /api/payments/history [32m200[0m 397.418 ms - 16567[0m
+[0mPOST /api/auth/login [32m200[0m 199.729 ms - 803[0m
+[0mGET /api/auth/profile [32m200[0m 57.408 ms - 620[0m
+[0mGET /api/turfs/mine [32m200[0m 109.683 ms - 13567[0m
+[0mGET /api/notifications [32m200[0m 221.611 ms - 5860[0m
+[0mGET /api/bookings [32m200[0m 287.149 ms - 20403[0m
+[0mGET /api/owner/dashboard [32m200[0m 291.807 ms - 7225[0m
+[0mGET /api/payments/history [32m200[0m 262.366 ms - 16567[0m
+[0mPOST /api/auth/login [32m200[0m 322.351 ms - 686[0m
+[0mGET /api/auth/profile [32m200[0m 69.512 ms - 503[0m
+[0mGET /api/notifications [32m200[0m 238.874 ms - 16254[0m
+[0mGET /api/payments/history [32m200[0m 218.719 ms - 54581[0m
+[0mGET /api/admin/dashboard [32m200[0m 489.393 ms - 1263[0m
+[0mPOST /api/auth/login [32m200[0m 169.357 ms - 752[0m
+[0mGET /api/auth/profile [32m200[0m 49.774 ms - 569[0m
+[0mGET /api/bookings [32m200[0m 145.122 ms - 12036[0m
+[0mGET /api/turfs?limit=6 [32m200[0m 173.312 ms - 10212[0m
+[0mGET /api/notifications [32m200[0m 183.830 ms - 3042[0m
+[0mGET /api/payments/history [32m200[0m 215.825 ms - 10646[0m
+[0mPOST /api/auth/login [32m200[0m 492.924 ms - 803[0m
+[0mGET /api/auth/profile [32m200[0m 49.962 ms - 620[0m
+[0mGET /api/turfs/mine [32m200[0m 91.417 ms - 13567[0m
+[0mGET /api/notifications [32m200[0m 165.502 ms - 5860[0m
+[0mGET /api/bookings [32m200[0m 235.948 ms - 20403[0m
+[0mGET /api/owner/dashboard [32m200[0m 258.721 ms - 7225[0m
+[0mGET /api/payments/history [32m200[0m 202.591 ms - 16567[0m
+[0mGET /api/turfs/mine [36m304[0m 102.276 ms - -[0m
+[0mGET /api/notifications [36m304[0m 124.686 ms - -[0m
+[0mGET /api/bookings [36m304[0m 211.897 ms - -[0m
+[0mGET /api/owner/dashboard [36m304[0m 244.099 ms - -[0m
+[0mPUT /api/notifications/6a30f3da684ecf236aa2e5f3/read [32m200[0m 185.292 ms - 335[0m
+[0mGET /api/notifications [32m200[0m 147.076 ms - 5859[0m
+[0mPATCH /api/bookings/6a30e80bbdce930ec1d9428f/status [32m200[0m 270.506 ms - 816[0m
+[0mGET /api/notifications [36m304[0m 162.919 ms - -[0m
+[0mGET /api/bookings [32m200[0m 213.359 ms - 20401[0m
+[0mPUT /api/notifications/6a30ed5419c12ef3565f2dfc/read [32m200[0m 149.172 ms - 332[0m
+[0mGET /api/notifications [32m200[0m 156.441 ms - 5858[0m
+[0mGET /uploads/1781592959898-7-a-side-football-turf.jpg [36m304[0m 4.232 ms - -[0m
+[0mGET /api/turfs/mine [36m304[0m 97.842 ms - -[0m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[env] backend/.env loaded from C:\Users\nathi\OneDrive\Desktop\Turf\backend\.env
+[db] MONGO_URI exists: true
+[db] MONGO_URI value: mongodb+srv://nathim:***@cluster0.grqgvv4.mongodb.net/?appName=Cluster0
+[db] Node v24.15.0, mongoose 8.24.0, mongodb driver 6.20.0
+[db] default DNS servers: 127.0.0.1
+[db] mongoose connecting
+[db] mongoose disconnected
+[db] fallback DNS servers: 1.1.1.1, 8.8.8.8
+[db] Atlas SRV fallback built seed list with 3 host(s).
+[db] Atlas SRV fallback URI: mongodb://nathim:***@ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-01.grqgvv4.mongodb.net:27017,ac-f0kyxpk-shard-00-02.grqgvv4.mongodb.net:27017/?appName=Cluster0&authSource=admin&replicaSet=atlas-o37xrk-shard-0&tls=true&retryWrites=true&w=majority
+[db] mongoose connecting
+[db] mongoose connected
+MongoDB connected: ac-f0kyxpk-shard-00-00.grqgvv4.mongodb.net
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[2m11:19:22 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[2m11:19:46 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[2m11:19:56 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[2m11:20:27 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[2m11:20:45 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[2m11:20:55 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/shared/ChartPanel.jsx, /src/styles/index.css[22m
+[2m11:21:12 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[2m11:29:22 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m
+[2m11:30:10 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/owner/OwnerPages.jsx, /src/styles/index.css[22m

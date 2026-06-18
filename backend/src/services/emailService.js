@@ -1,7 +1,11 @@
 const nodemailer = require("nodemailer");
 
+function isEmailSimulationEnabled() {
+  return !(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
 function createTransporter() {
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  if (!isEmailSimulationEnabled()) {
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 587),
@@ -51,6 +55,7 @@ async function sendPasswordResetEmail(user, resetToken, req) {
 }
 
 module.exports = {
+  isEmailSimulationEnabled,
   sendEmail,
   sendPasswordResetEmail,
 };

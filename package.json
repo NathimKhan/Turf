@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "npm --prefix frontend run dev",
+    "dev": "node scripts/dev.js",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
     "build": "npm --prefix frontend run build",
@@ -11,6 +11,8 @@
     "lint": "npm --prefix frontend run lint && npm --prefix backend run lint",
     "lint:frontend": "npm --prefix frontend run lint",
     "lint:backend": "npm --prefix backend run lint",
+    "test": "npm --prefix backend test",
+    "seed": "npm --prefix backend run seed",
     "start:backend": "npm --prefix backend start"
   }
 }

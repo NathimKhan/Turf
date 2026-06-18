@@ -16,6 +16,15 @@ export function ToastViewport() {
     return () => window.clearTimeout(timeout);
   }, [location.key, location.state?.toast]);
 
+  useEffect(() => {
+    function handleToast(event) {
+      setMessage(String(event.detail || ""));
+    }
+
+    window.addEventListener("turfx:toast", handleToast);
+    return () => window.removeEventListener("turfx:toast", handleToast);
+  }, []);
+
   return (
     <AnimatePresence>
       {message && (

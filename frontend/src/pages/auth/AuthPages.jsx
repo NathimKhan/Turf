@@ -4,7 +4,8 @@ import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "../../store/authContext.js";
-import { roleHome } from "../../constants/auth.js";
+import { demoLoginOptions, roleHome } from "../../constants/auth.js";
+import { authApi } from "../../services/api/auth.js";
 import { Button } from "../../components/ui/button.jsx";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Input } from "../../components/ui/input.jsx";
@@ -14,10 +15,42 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-const registerSchema = loginSchema.extend({
-  name: z.string().min(2, "Name is required"),
-  role: z.enum(["user", "owner"]),
-});
+const registerSchema = z.object({
+    email: z.string().email("Use a valid email"),
+    password: z.string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[a-z]/, "Add a lowercase letter")
+      .regex(/[A-Z]/, "Add an uppercase letter")
+      .regex(/\d/, "Add a number"),
+  })
+  .extend({
+    address: z.string().optional(),
+    businessName: z.string().optional(),
+    confirmPassword: z.string().min(8, "Confirm your password"),
+    name: z.string().min(2, "Name is required"),
+    phone: z.string().optional(),
+    role: z.enum(["user", "owner"]),
+  })
+  .superRefine((values, context) => {
+    if (values.password !== values.confirmPassword) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+      });
+    }
+    if (values.role === "owner") {
+      [
+        ["businessName", "Business name is required"],
+        ["phone", "Phone is required"],
+        ["address", "Address is required"],
+      ].forEach(([field, message]) => {
+        if (!values[field]?.trim()) {
+          context.addIssue({ code: z.ZodIssueCode.custom, message, path: [field] });
+        }
+      });
+    }
+  });
 
 const forgotSchema = z.object({
   email: z.string().email("Use a valid email"),
@@ -35,49 +68,69 @@ function Field({ label, error, ...props }) {
 
 function AuthCard({ title, subtitle, mode }) {
   const schema = mode === "register" ? registerSchema : mode === "forgot" ? forgotSchema : loginSchema;
-  const { demoLoginOptions, login, register: registerAccount } = useAuth();
+  const { login, register: registerAccount } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState("success");
+  const [selectedDemoRole, setSelectedDemoRole] = useState("");
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
     reset,
+    watch,
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues:
       mode === "register"
-        ? { email: "", name: "", password: "", role: "user" }
-        : { email: "user1@turfx.com", password: "User@123" },
+        ? {
+            address: "",
+            businessName: "",
+            confirmPassword: "",
+            email: "",
+            name: "",
+            password: "",
+            phone: "",
+            role: "user",
+          }
+        : { email: "", password: "" },
   });
+  const selectedRole = watch("role");
+  const selectedDemo = demoLoginOptions.find((option) => option.role === selectedDemoRole);
 
   function destinationFor(user) {
     const requestedRoute = location.state?.from;
+    if (typeof requestedRoute === "string") {
+      return requestedRoute;
+    }
     if (requestedRoute?.pathname) {
       return `${requestedRoute.pathname}${requestedRoute.search || ""}${requestedRoute.hash || ""}`;
     }
     return roleHome[user.role] || "/dashboard";
   }
 
-  async function handleDemoLogin(option) {
-    reset({ email: option.email, password: option.password });
+  function selectDemoAccount(option) {
+    setSelectedDemoRole(option.role);
     setMessage("");
-
-    try {
-      const session = await login({ email: option.email, password: option.password });
-      navigate(destinationFor(session.user), { replace: true });
-    } catch (error) {
-      setMessageTone("error");
-      setMessage(typeof error === "string" ? error : error.message);
-    }
+    reset({ email: option.email, password: option.password });
   }
 
   async function onSubmit(values) {
     if (mode === "forgot") {
-      setMessageTone("success");
-      setMessage("Reset link queued for secure delivery.");
+      try {
+        const response = await authApi.forgotPassword(values);
+        const isSimulated = response.data?.data?.simulated;
+        setMessageTone("success");
+        setMessage(
+          isSimulated
+            ? "Password reset emails are simulated in this demo environment."
+            : response.data?.message || "Reset link queued for secure delivery.",
+        );
+      } catch (error) {
+        setMessageTone("error");
+        setMessage(error.response?.data?.message || error.message);
+      }
       return;
     }
 
@@ -86,6 +139,13 @@ function AuthCard({ title, subtitle, mode }) {
         mode === "register"
           ? await registerAccount(values)
           : await login({ email: values.email, password: values.password });
+
+      if (!session.token) {
+        setMessageTone("success");
+        setMessage(session.message);
+        reset();
+        return;
+      }
 
       navigate(destinationFor(session.user), { replace: true });
     } catch (error) {
@@ -103,40 +163,75 @@ function AuthCard({ title, subtitle, mode }) {
         {mode === "login" && (
           <div className="mt-6">
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {demoLoginOptions.map((option) => (
-                <Button
-                  className="min-w-0 w-full px-2"
-                  key={option.role}
-                  onClick={() => handleDemoLogin(option)}
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                >
-                  {option.label}
-                </Button>
-              ))}
+              {demoLoginOptions.map((option) => {
+                const isSelected = option.role === selectedDemoRole;
+
+                return (
+                  <Button
+                    aria-label={option.ariaLabel}
+                    aria-pressed={isSelected}
+                    className="min-w-0 w-full px-2"
+                    key={option.role}
+                    onClick={() => selectDemoAccount(option)}
+                    size="sm"
+                    type="button"
+                    variant={isSelected ? "primary" : "outline"}
+                  >
+                    {option.label}
+                  </Button>
+                );
+              })}
             </div>
             <div className="mt-3 space-y-1 text-xs leading-5 text-ink-muted sm:text-center">
-              <p><span className="font-bold text-ink">Platform Owner</span> = Website Administrator</p>
-              <p><span className="font-bold text-ink">Turf Owner</span> = Venue Manager</p>
-              <p><span className="font-bold text-ink">User</span> = Customer / Player</p>
+              {selectedDemo ? (
+                <p aria-live="polite">{selectedDemo.helperText}</p>
+              ) : (
+                <>
+                  <p><span className="font-bold text-ink">Platform Owner</span> = Website Administrator</p>
+                  <p><span className="font-bold text-ink">Turf Owner</span> = Venue Manager</p>
+                  <p><span className="font-bold text-ink">User</span> = Customer / Player</p>
+                </>
+              )}
             </div>
           </div>
         )}
         <form className="mt-7 space-y-5" onSubmit={handleSubmit(onSubmit)}>
-          {mode === "register" && <Field error={errors.name} label="Full name" placeholder="Alex Thompson" {...register("name")} />}
+          {mode === "register" && (
+            <Field
+              error={errors.name}
+              label={selectedRole === "owner" ? "Owner name" : "Full name"}
+              placeholder="Alex Thompson"
+              {...register("name")}
+            />
+          )}
           <Field error={errors.email} label="Email" placeholder="alex@turfx.app" type="email" {...register("email")} />
           {mode !== "forgot" && (
             <Field error={errors.password} label="Password" placeholder="********" type="password" {...register("password")} />
           )}
           {mode === "register" && (
-            <label className="block">
-              <span className="text-sm font-bold text-ink">Account type</span>
-              <select className="focus-ring mt-2 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm" {...register("role")}>
-                <option value="user">User (Customer / Player)</option>
-                <option value="owner">Turf Owner (Venue Owner)</option>
-              </select>
-            </label>
+            <>
+              <Field
+                error={errors.confirmPassword}
+                label="Confirm password"
+                placeholder="********"
+                type="password"
+                {...register("confirmPassword")}
+              />
+              <label className="block">
+                <span className="text-sm font-bold text-ink">Account type</span>
+                <select className="focus-ring mt-2 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm" {...register("role")}>
+                  <option value="user">User (Customer / Player)</option>
+                  <option value="owner">Turf Owner (Venue Owner)</option>
+                </select>
+              </label>
+              {selectedRole === "owner" && (
+                <>
+                  <Field error={errors.businessName} label="Business name" {...register("businessName")} />
+                  <Field error={errors.phone} label="Phone" type="tel" {...register("phone")} />
+                  <Field error={errors.address} label="Business address" {...register("address")} />
+                </>
+              )}
+            </>
           )}
           <Button className="w-full" disabled={isSubmitting} type="submit">
             {isSubmitting ? "Please wait..." : mode === "register" ? "Create Account" : mode === "forgot" ? "Send Reset Link" : "Sign In"}

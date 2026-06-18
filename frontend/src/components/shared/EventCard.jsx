@@ -4,12 +4,13 @@ import { Badge } from "../ui/badge.jsx";
 import { Button } from "../ui/button.jsx";
 import { Card } from "../ui/card.jsx";
 import { currency } from "../../utils/formatters.js";
+import { handleImageError } from "../../utils/media.js";
 
 export function EventCard({ event }) {
   return (
     <Card interactive className="overflow-hidden">
       <div className="relative h-56">
-        <img alt={event.title} className="h-full w-full object-cover" src={event.image} />
+        <img alt={event.title} className="h-full w-full object-cover" onError={handleImageError} src={event.image} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
         <Badge className="absolute left-4 top-4" variant="white">
           {event.type}

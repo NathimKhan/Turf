@@ -1,5 +1,3 @@
-import { roleLabels } from "../constants/auth.js";
-
 const AUTH_STORAGE_KEY = "turfx_auth";
 const LEGACY_TOKEN_KEY = "turfx_token";
 const LEGACY_USER_KEY = "turfx_user";
@@ -9,43 +7,6 @@ export const AUTH_ROLES = {
   OWNER: "owner",
   USER: "user",
 };
-
-export const DEMO_USERS = [
-  {
-    email: "admin@turfx.com",
-    name: "Demo Platform Owner",
-    password: "Admin@123",
-    role: AUTH_ROLES.ADMIN,
-  },
-  {
-    email: "owner1@turfx.com",
-    membership: "Venue Pro",
-    name: "Demo Turf Owner",
-    password: "Owner@123",
-    role: AUTH_ROLES.OWNER,
-  },
-  {
-    email: "user1@turfx.com",
-    membership: "TURFX Gold",
-    name: "Demo User 1",
-    password: "User@123",
-    points: 12060,
-    role: AUTH_ROLES.USER,
-  },
-];
-
-export const DEMO_LOGIN_OPTIONS = [
-  { label: roleLabels.admin, role: AUTH_ROLES.ADMIN },
-  { label: roleLabels.owner, role: AUTH_ROLES.OWNER },
-  { label: roleLabels.user, role: AUTH_ROLES.USER },
-].map((option) => {
-  const account = DEMO_USERS.find((user) => user.role === option.role);
-  return {
-    ...option,
-    email: account.email,
-    password: account.password,
-  };
-});
 
 function normalizeRole(role) {
   return role === "athlete" ? AUTH_ROLES.USER : role;

@@ -8,6 +8,8 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
+          if (id.includes("jspdf")) return "pdf-vendor";
+          if (id.includes("qrcode")) return "qr-vendor";
           if (id.includes("recharts") || id.includes("d3-")) return "charts-vendor";
           if (id.includes("framer-motion")) return "motion-vendor";
           if (id.includes("lucide-react")) return "icons-vendor";

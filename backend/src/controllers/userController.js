@@ -6,11 +6,17 @@ const updateUserValidation = [
   param("id").isMongoId().withMessage("Valid user id is required"),
   body("email").optional().isEmail().withMessage("Enter a valid email").normalizeEmail(),
   body("role").optional().isIn(["user", "owner", "admin"]).withMessage("Invalid role"),
+  body("accountStatus")
+    .optional()
+    .isIn(["active", "pending", "rejected", "suspended"])
+    .withMessage("Invalid account status"),
   body("walletBalance").optional().isFloat({ min: 0 }).withMessage("Wallet balance must be positive"),
 ];
 
 const getUsers = asyncHandler(async (req, res) => {
   const { role, search, page = 1, limit = 20 } = req.query;
+  const safePage = Math.max(Number(page) || 1, 1);
+  const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
   const filter = {};
 
   if (role) filter.role = role;
@@ -22,19 +28,19 @@ const getUsers = asyncHandler(async (req, res) => {
     ];
   }
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const skip = (safePage - 1) * safeLimit;
   const [users, total] = await Promise.all([
-    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(safeLimit),
     User.countDocuments(filter),
   ]);
 
   return successResponse(res, "Users fetched", {
     users,
     pagination: {
-      page: Number(page),
-      limit: Number(limit),
+      page: safePage,
+      limit: safeLimit,
       total,
-      pages: Math.ceil(total / Number(limit)) || 1,
+      pages: Math.ceil(total / safeLimit) || 1,
     },
   });
 });
@@ -60,7 +66,22 @@ const updateUser = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const allowedFields = ["name", "email", "phone", "role", "profileImage", "walletBalance", "membershipPlan"];
+  if (String(user._id) === String(req.user._id) && req.body.role && req.body.role !== "admin") {
+    const error = new Error("You cannot remove your own Platform Owner role");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const allowedFields = [
+    "name",
+    "email",
+    "phone",
+    "role",
+    "profileImage",
+    "walletBalance",
+    "membershipPlan",
+    "accountStatus",
+  ];
   allowedFields.forEach((field) => {
     if (req.body[field] !== undefined) {
       user[field] = req.body[field];
@@ -82,6 +103,12 @@ const deleteUser = asyncHandler(async (req, res) => {
   if (!user) {
     const error = new Error("User not found");
     error.statusCode = 404;
+    throw error;
+  }
+
+  if (String(user._id) === String(req.user._id)) {
+    const error = new Error("You cannot delete your own Platform Owner account");
+    error.statusCode = 409;
     throw error;
   }
 

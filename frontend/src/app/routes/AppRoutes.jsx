@@ -103,7 +103,7 @@ export function AppRoutes() {
           <Route element={<EventDetailsPage />} path="/events/:id" />
           <Route element={<SupportPage />} path="/support" />
           <Route element={<CoachingPage />} path="/coaching" />
-          <Route element={<ProtectedRoute authMessage={BOOKING_AUTH_MESSAGE} />}>
+          <Route element={<ProtectedRoute allowedRoles={["user", "admin"]} authMessage={BOOKING_AUTH_MESSAGE} />}>
             <Route element={<SlotSelectionPage />} path="/booking/slots" />
             <Route element={<CheckoutPage />} path="/checkout" />
             <Route element={<CheckoutPage />} path="/payment" />
@@ -122,6 +122,7 @@ export function AppRoutes() {
             <Route element={<FavoritesPage />} path="/favorites" />
             <Route element={<BookingDetailsPage />} path="/bookings/:id" />
             <Route element={<WalletPage />} path="/wallet" />
+            <Route element={<WalletPage />} path="/payments" />
             <Route element={<NotificationsPage />} path="/notifications" />
             <Route element={<MembershipCenterPage />} path="/membership-center" />
           </Route>
@@ -144,7 +145,7 @@ export function AppRoutes() {
           </Route>
         </Route>
 
-        <Route element={<ProtectedRoute role="admin" />}>
+        <Route element={<ProtectedRoute role="admin" showAccessDenied />}>
           <Route element={<OwnerLayout />}>
             <Route element={<Navigate replace to="/admin/dashboard" />} path="/admin" />
             <Route element={<AdminDashboardPage />} path="/admin/dashboard" />

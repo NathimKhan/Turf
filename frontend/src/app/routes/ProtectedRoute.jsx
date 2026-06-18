@@ -8,7 +8,19 @@ function resolveRoles(role, allowedRoles = []) {
   return role ? [role] : allowedRoles.map((allowedRole) => authService.normalizeRole(allowedRole));
 }
 
-export function ProtectedRoute({ allowedRoles = [], authMessage, children, role }) {
+function AccessDenied() {
+  return (
+    <div className="page-shell flex min-h-[55vh] items-center justify-center py-10">
+      <div className="w-full max-w-md rounded-xl border border-surface-border bg-white p-5 shadow-soft">
+        <p className="muted-label text-primary">Access Denied</p>
+        <h1 className="mt-3 text-2xl font-black">Platform owner access required</h1>
+        <p className="mt-2 text-sm text-ink-muted">This workspace is only available to the TURFX Platform Owner.</p>
+      </div>
+    </div>
+  );
+}
+
+export function ProtectedRoute({ allowedRoles = [], authMessage, children, role, showAccessDenied = false }) {
   const location = useLocation();
   const { hasRole, initialized, isAuthenticated, user } = useAuth();
   const requiredRoles = resolveRoles(role, allowedRoles);
@@ -30,6 +42,10 @@ export function ProtectedRoute({ allowedRoles = [], authMessage, children, role 
   }
 
   if (requiredRoles.length && !requiredRoles.some((requiredRole) => hasRole(requiredRole))) {
+    if (showAccessDenied) {
+      return <AccessDenied />;
+    }
+
     return <Navigate replace to={roleHome[authService.normalizeRole(user?.role)] || "/dashboard"} />;
   }
 

@@ -18,9 +18,19 @@ import { Card, CardContent } from "../ui/card.jsx";
 
 const chartColors = ["#2563EB", "#06B6D4", "#22C55E", "#F59E0B"];
 
-export function ChartPanel({ title, subtitle, data, type = "area", dataKey = "revenue" }) {
+export function ChartPanel({
+  title,
+  subtitle,
+  data,
+  type = "area",
+  dataKey = "revenue",
+  emptyTitle = "Your venues are ready for bookings.",
+  emptySubtitle = "Expected revenue and booking insights will appear as activity builds.",
+}) {
+  const hasData = Boolean(data?.length);
+
   return (
-    <Card className="min-h-[320px]">
+    <Card className={hasData ? "min-h-[320px]" : ""}>
       <CardContent>
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
@@ -28,8 +38,16 @@ export function ChartPanel({ title, subtitle, data, type = "area", dataKey = "re
             {subtitle && <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>}
           </div>
         </div>
-        <div className="h-64">
-          <ResponsiveContainer height="100%" width="100%">
+        <div className={hasData ? "h-64" : ""}>
+          {!hasData ? (
+            <div className="grid place-items-center rounded-xl bg-surface-low px-6 py-8 text-center">
+              <div>
+                <p className="font-black text-ink">{emptyTitle}</p>
+                <p className="mt-1 text-sm text-ink-muted">{emptySubtitle}</p>
+              </div>
+            </div>
+          ) : (
+            <ResponsiveContainer height="100%" width="100%">
             {type === "bar" ? (
               <BarChart data={data}>
                 <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" vertical={false} />
@@ -71,7 +89,8 @@ export function ChartPanel({ title, subtitle, data, type = "area", dataKey = "re
                 <Area dataKey={dataKey} fill="url(#revenueFill)" stroke="#2563EB" strokeWidth={3} type="monotone" />
               </AreaChart>
             )}
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          )}
         </div>
       </CardContent>
     </Card>

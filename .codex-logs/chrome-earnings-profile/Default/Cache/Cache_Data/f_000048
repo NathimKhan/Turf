@@ -1,0 +1,879 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/app/routes/AppRoutes.jsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=fec29364"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+let prevRefreshReg;
+let prevRefreshSig;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  prevRefreshReg = window.$RefreshReg$;
+  prevRefreshSig = window.$RefreshSig$;
+  window.$RefreshReg$ = RefreshRuntime.getRefreshReg("C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx");
+  window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
+}
+import __vite__cjsImport3_react from "/node_modules/.vite/deps/react.js?v=fec29364"; const lazy = __vite__cjsImport3_react["lazy"]; const Suspense = __vite__cjsImport3_react["Suspense"];
+import { Navigate, Route, Routes } from "/node_modules/.vite/deps/react-router-dom.js?v=fec29364";
+import { AuthLayout } from "/src/app/layouts/AuthLayout.jsx";
+import { OwnerLayout } from "/src/app/layouts/OwnerLayout.jsx?t=1781673572729";
+import { PortalLayout } from "/src/app/layouts/PortalLayout.jsx?t=1781673572729";
+import { PublicLayout } from "/src/app/layouts/PublicLayout.jsx?t=1781673572729";
+import { ProtectedRoute } from "/src/app/routes/ProtectedRoute.jsx";
+import { Skeleton } from "/src/components/ui/skeleton.jsx";
+import { BOOKING_AUTH_MESSAGE } from "/src/constants/auth.js";
+function lazyNamed(loader, exportName) {
+  return lazy(() => loader().then((module) => ({ default: module[exportName] })));
+}
+const LoginPage = lazyNamed(_c = () => import("/src/pages/auth/AuthPages.jsx"), "LoginPage");
+_c2 = LoginPage;
+const RegisterPage = lazyNamed(_c3 = () => import("/src/pages/auth/AuthPages.jsx"), "RegisterPage");
+_c4 = RegisterPage;
+const ForgotPasswordPage = lazyNamed(_c5 = () => import("/src/pages/auth/AuthPages.jsx"), "ForgotPasswordPage");
+_c6 = ForgotPasswordPage;
+const DashboardPage = lazyNamed(_c7 = () => import("/src/pages/athlete/AthletePages.jsx?t=1781673409828"), "DashboardPage");
+_c8 = DashboardPage;
+const MyBookingsPage = lazyNamed(_c9 = () => import("/src/pages/athlete/AthletePages.jsx?t=1781673409828"), "MyBookingsPage");
+_c0 = MyBookingsPage;
+const FavoritesPage = lazyNamed(_c1 = () => import("/src/pages/athlete/AthletePages.jsx?t=1781673409828"), "FavoritesPage");
+_c10 = FavoritesPage;
+const BookingDetailsPage = lazyNamed(_c11 = () => import("/src/pages/athlete/AthletePages.jsx?t=1781673409828"), "BookingDetailsPage");
+_c12 = BookingDetailsPage;
+const WalletPage = lazyNamed(_c13 = () => import("/src/pages/athlete/AthletePages.jsx?t=1781673409828"), "WalletPage");
+_c14 = WalletPage;
+const NotificationsPage = lazyNamed(_c15 = () => import("/src/pages/athlete/AthletePages.jsx?t=1781673409828"), "NotificationsPage");
+_c16 = NotificationsPage;
+const ProfilePage = lazyNamed(_c17 = () => import("/src/pages/athlete/AthletePages.jsx?t=1781673409828"), "ProfilePage");
+_c18 = ProfilePage;
+const MembershipCenterPage = lazyNamed(_c19 = () => import("/src/pages/athlete/AthletePages.jsx?t=1781673409828"), "MembershipCenterPage");
+_c20 = MembershipCenterPage;
+const SlotSelectionPage = lazyNamed(_c21 = () => import("/src/pages/booking/BookingPages.jsx"), "SlotSelectionPage");
+_c22 = SlotSelectionPage;
+const CheckoutPage = lazyNamed(_c23 = () => import("/src/pages/booking/BookingPages.jsx"), "CheckoutPage");
+_c24 = CheckoutPage;
+const PaymentSuccessPage = lazyNamed(_c25 = () => import("/src/pages/booking/BookingPages.jsx"), "PaymentSuccessPage");
+_c26 = PaymentSuccessPage;
+const BookingSuccessPage = lazyNamed(_c27 = () => import("/src/pages/booking/BookingPages.jsx"), "BookingSuccessPage");
+_c28 = BookingSuccessPage;
+const AdminDashboardPage = lazyNamed(_c29 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "AdminDashboardPage");
+_c30 = AdminDashboardPage;
+const UserManagementPage = lazyNamed(_c31 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "UserManagementPage");
+_c32 = UserManagementPage;
+const TurfOwnerManagementPage = lazyNamed(_c33 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "TurfOwnerManagementPage");
+_c34 = TurfOwnerManagementPage;
+const TurfManagementPage = lazyNamed(_c35 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "TurfManagementPage");
+_c36 = TurfManagementPage;
+const BookingManagementPage = lazyNamed(_c37 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "BookingManagementPage");
+_c38 = BookingManagementPage;
+const PlatformRevenuePage = lazyNamed(_c39 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "PlatformRevenuePage");
+_c40 = PlatformRevenuePage;
+const PlatformAnalyticsPage = lazyNamed(_c41 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "PlatformAnalyticsPage");
+_c42 = PlatformAnalyticsPage;
+const PlatformNotificationsPage = lazyNamed(_c43 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "PlatformNotificationsPage");
+_c44 = PlatformNotificationsPage;
+const EventManagementPage = lazyNamed(_c45 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "EventManagementPage");
+_c46 = EventManagementPage;
+const TournamentManagementPage = lazyNamed(_c47 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "TournamentManagementPage");
+_c48 = TournamentManagementPage;
+const ReportsPage = lazyNamed(_c49 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "ReportsPage");
+_c50 = ReportsPage;
+const SettingsPage = lazyNamed(_c51 = () => import("/src/pages/admin/AdminPages.jsx?t=1781673563650"), "SettingsPage");
+_c52 = SettingsPage;
+const OwnerDashboardPage = lazyNamed(_c53 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "OwnerDashboardPage");
+_c54 = OwnerDashboardPage;
+const MyTurfsPage = lazyNamed(_c55 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "MyTurfsPage");
+_c56 = MyTurfsPage;
+const OwnerBookingsPage = lazyNamed(_c57 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "OwnerBookingsPage");
+_c58 = OwnerBookingsPage;
+const OwnerReviewsPage = lazyNamed(_c59 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "OwnerReviewsPage");
+_c60 = OwnerReviewsPage;
+const TurfDetailsOwnerPage = lazyNamed(_c61 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "TurfDetailsOwnerPage");
+_c62 = TurfDetailsOwnerPage;
+const AddTurfWizardPage = lazyNamed(_c63 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "AddTurfWizardPage");
+_c64 = AddTurfWizardPage;
+const SlotManagementPage = lazyNamed(_c65 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "SlotManagementPage");
+_c66 = SlotManagementPage;
+const CalendarManagementPage = lazyNamed(_c67 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "CalendarManagementPage");
+_c68 = CalendarManagementPage;
+const AnalyticsCenterPage = lazyNamed(_c69 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "AnalyticsCenterPage");
+_c70 = AnalyticsCenterPage;
+const RevenueDashboardPage = lazyNamed(_c71 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "RevenueDashboardPage");
+_c72 = RevenueDashboardPage;
+const CRMPage = lazyNamed(_c73 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "CRMPage");
+_c74 = CRMPage;
+const AthleteProfileOwnerPage = lazyNamed(_c75 = () => import("/src/pages/owner/OwnerPages.jsx?t=1781673524490"), "AthleteProfileOwnerPage");
+_c76 = AthleteProfileOwnerPage;
+const LandingPage = lazyNamed(_c77 = () => import("/src/pages/public/PublicPages.jsx"), "LandingPage");
+_c78 = LandingPage;
+const ExplorePage = lazyNamed(_c79 = () => import("/src/pages/public/PublicPages.jsx"), "ExplorePage");
+_c80 = ExplorePage;
+const SearchResultsPage = lazyNamed(_c81 = () => import("/src/pages/public/PublicPages.jsx"), "SearchResultsPage");
+_c82 = SearchResultsPage;
+const VenueDetailsPage = lazyNamed(_c83 = () => import("/src/pages/public/PublicPages.jsx"), "VenueDetailsPage");
+_c84 = VenueDetailsPage;
+const MembershipsPage = lazyNamed(_c85 = () => import("/src/pages/public/PublicPages.jsx"), "MembershipsPage");
+_c86 = MembershipsPage;
+const TournamentsPage = lazyNamed(_c87 = () => import("/src/pages/public/PublicPages.jsx"), "TournamentsPage");
+_c88 = TournamentsPage;
+const TournamentHubPage = lazyNamed(_c89 = () => import("/src/pages/public/PublicPages.jsx"), "TournamentHubPage");
+_c90 = TournamentHubPage;
+const EventsPage = lazyNamed(_c91 = () => import("/src/pages/public/PublicPages.jsx"), "EventsPage");
+_c92 = EventsPage;
+const EventDetailsPage = lazyNamed(_c93 = () => import("/src/pages/public/PublicPages.jsx"), "EventDetailsPage");
+_c94 = EventDetailsPage;
+const SupportPage = lazyNamed(_c95 = () => import("/src/pages/public/PublicPages.jsx"), "SupportPage");
+_c96 = SupportPage;
+const CoachingPage = lazyNamed(_c97 = () => import("/src/pages/public/PublicPages.jsx"), "CoachingPage");
+_c98 = CoachingPage;
+function RouteLoader() {
+  return /* @__PURE__ */ jsxDEV("div", { className: "flex min-h-[55vh] items-center justify-center bg-background", children: /* @__PURE__ */ jsxDEV("div", { className: "w-full max-w-md rounded-xl border border-surface-border bg-white p-5 shadow-soft", children: [
+    /* @__PURE__ */ jsxDEV(Skeleton, { className: "h-5 w-32" }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 94,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ jsxDEV(Skeleton, { className: "mt-4 h-12 w-full" }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 95,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ jsxDEV(Skeleton, { className: "mt-3 h-12 w-4/5" }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 96,
+      columnNumber: 9
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+    lineNumber: 93,
+    columnNumber: 7
+  }, this) }, void 0, false, {
+    fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+    lineNumber: 92,
+    columnNumber: 5
+  }, this);
+}
+_c99 = RouteLoader;
+export function AppRoutes() {
+  return /* @__PURE__ */ jsxDEV(Suspense, { fallback: /* @__PURE__ */ jsxDEV(RouteLoader, {}, void 0, false, {
+    fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+    lineNumber: 104,
+    columnNumber: 25
+  }, this), children: /* @__PURE__ */ jsxDEV(Routes, { children: [
+    /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(AuthLayout, {}, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 106,
+      columnNumber: 25
+    }, this), children: [
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(LoginPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 107,
+        columnNumber: 27
+      }, this), path: "/login" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 107,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(RegisterPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 108,
+        columnNumber: 27
+      }, this), path: "/register" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 108,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(ForgotPasswordPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 109,
+        columnNumber: 27
+      }, this), path: "/forgot-password" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 109,
+        columnNumber: 11
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 106,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(PublicLayout, {}, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 112,
+      columnNumber: 25
+    }, this), children: [
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(LandingPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 113,
+        columnNumber: 27
+      }, this), index: true }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 113,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(ExplorePage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 114,
+        columnNumber: 27
+      }, this), path: "/explore" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 114,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(SearchResultsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 115,
+        columnNumber: 27
+      }, this), path: "/search" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 115,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(VenueDetailsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 116,
+        columnNumber: 27
+      }, this), path: "/venue/:id" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 116,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(VenueDetailsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 117,
+        columnNumber: 27
+      }, this), path: "/booking/venue/:id" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 117,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(MembershipsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 118,
+        columnNumber: 27
+      }, this), path: "/memberships" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 118,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(TournamentsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 119,
+        columnNumber: 27
+      }, this), path: "/tournaments" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 119,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(TournamentHubPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 120,
+        columnNumber: 27
+      }, this), path: "/tournaments/:id" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 120,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(EventsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 121,
+        columnNumber: 27
+      }, this), path: "/events" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 121,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(EventDetailsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 122,
+        columnNumber: 27
+      }, this), path: "/events/:id" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 122,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(SupportPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 123,
+        columnNumber: 27
+      }, this), path: "/support" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 123,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(CoachingPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 124,
+        columnNumber: 27
+      }, this), path: "/coaching" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 124,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { allowedRoles: ["user", "admin"], authMessage: BOOKING_AUTH_MESSAGE }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 125,
+        columnNumber: 27
+      }, this), children: [
+        /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(SlotSelectionPage, {}, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 126,
+          columnNumber: 29
+        }, this), path: "/booking/slots" }, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 126,
+          columnNumber: 13
+        }, this),
+        /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(CheckoutPage, {}, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 127,
+          columnNumber: 29
+        }, this), path: "/checkout" }, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 127,
+          columnNumber: 13
+        }, this),
+        /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(CheckoutPage, {}, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 128,
+          columnNumber: 29
+        }, this), path: "/payment" }, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 128,
+          columnNumber: 13
+        }, this),
+        /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(PaymentSuccessPage, {}, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 129,
+          columnNumber: 29
+        }, this), path: "/success" }, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 129,
+          columnNumber: 13
+        }, this),
+        /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(BookingSuccessPage, {}, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 130,
+          columnNumber: 29
+        }, this), path: "/booking-success" }, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+          lineNumber: 130,
+          columnNumber: 13
+        }, this)
+      ] }, void 0, true, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 125,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(ProtectedRoute, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 132,
+        columnNumber: 27
+      }, this), children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(ProfilePage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 133,
+        columnNumber: 29
+      }, this), path: "/profile" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 133,
+        columnNumber: 13
+      }, this) }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 132,
+        columnNumber: 11
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 112,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { allowedRoles: ["user", "admin"] }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 137,
+      columnNumber: 25
+    }, this), children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(PortalLayout, {}, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 138,
+      columnNumber: 27
+    }, this), children: [
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(DashboardPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 139,
+        columnNumber: 29
+      }, this), path: "/dashboard" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 139,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(MyBookingsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 140,
+        columnNumber: 29
+      }, this), path: "/bookings" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 140,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(FavoritesPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 141,
+        columnNumber: 29
+      }, this), path: "/favorites" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 141,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(BookingDetailsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 142,
+        columnNumber: 29
+      }, this), path: "/bookings/:id" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 142,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(WalletPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 143,
+        columnNumber: 29
+      }, this), path: "/wallet" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 143,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(WalletPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 144,
+        columnNumber: 29
+      }, this), path: "/payments" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 144,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(NotificationsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 145,
+        columnNumber: 29
+      }, this), path: "/notifications" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 145,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(MembershipCenterPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 146,
+        columnNumber: 29
+      }, this), path: "/membership-center" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 146,
+        columnNumber: 13
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 138,
+      columnNumber: 11
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 137,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { allowedRoles: ["owner", "admin"] }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 150,
+      columnNumber: 25
+    }, this), children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(OwnerLayout, {}, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 151,
+      columnNumber: 27
+    }, this), children: [
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(OwnerDashboardPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 152,
+        columnNumber: 29
+      }, this), path: "/owner/dashboard" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 152,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(MyTurfsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 153,
+        columnNumber: 29
+      }, this), path: "/owner/turfs" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 153,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(OwnerBookingsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 154,
+        columnNumber: 29
+      }, this), path: "/owner/bookings" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 154,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(OwnerReviewsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 155,
+        columnNumber: 29
+      }, this), path: "/owner/reviews" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 155,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(TurfDetailsOwnerPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 156,
+        columnNumber: 29
+      }, this), path: "/owner/turfs/:id" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 156,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(AddTurfWizardPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 157,
+        columnNumber: 29
+      }, this), path: "/owner/add-turf" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 157,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(SlotManagementPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 158,
+        columnNumber: 29
+      }, this), path: "/owner/slots" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 158,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(CalendarManagementPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 159,
+        columnNumber: 29
+      }, this), path: "/owner/calendar" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 159,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(AnalyticsCenterPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 160,
+        columnNumber: 29
+      }, this), path: "/owner/analytics" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 160,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(RevenueDashboardPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 161,
+        columnNumber: 29
+      }, this), path: "/owner/revenue" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 161,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(CRMPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 162,
+        columnNumber: 29
+      }, this), path: "/owner/crm" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 162,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(AthleteProfileOwnerPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 163,
+        columnNumber: 29
+      }, this), path: "/owner/athletes/:id" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 163,
+        columnNumber: 13
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 151,
+      columnNumber: 11
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 150,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { role: "admin", showAccessDenied: true }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 167,
+      columnNumber: 25
+    }, this), children: /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(OwnerLayout, {}, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 168,
+      columnNumber: 27
+    }, this), children: [
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(Navigate, { replace: true, to: "/admin/dashboard" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 169,
+        columnNumber: 29
+      }, this), path: "/admin" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 169,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(AdminDashboardPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 170,
+        columnNumber: 29
+      }, this), path: "/admin/dashboard" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 170,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(UserManagementPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 171,
+        columnNumber: 29
+      }, this), path: "/admin/users" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 171,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(TurfOwnerManagementPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 172,
+        columnNumber: 29
+      }, this), path: "/admin/owners" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 172,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(TurfManagementPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 173,
+        columnNumber: 29
+      }, this), path: "/admin/turfs" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 173,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(BookingManagementPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 174,
+        columnNumber: 29
+      }, this), path: "/admin/bookings" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 174,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(PlatformRevenuePage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 175,
+        columnNumber: 29
+      }, this), path: "/admin/revenue" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 175,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(PlatformAnalyticsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 176,
+        columnNumber: 29
+      }, this), path: "/admin/analytics" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 176,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(PlatformNotificationsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 177,
+        columnNumber: 29
+      }, this), path: "/admin/notifications" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 177,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(EventManagementPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 178,
+        columnNumber: 29
+      }, this), path: "/admin/events" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 178,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(TournamentManagementPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 179,
+        columnNumber: 29
+      }, this), path: "/admin/tournaments" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 179,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(ReportsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 180,
+        columnNumber: 29
+      }, this), path: "/admin/reports" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 180,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(SettingsPage, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 181,
+        columnNumber: 29
+      }, this), path: "/admin/settings" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+        lineNumber: 181,
+        columnNumber: 13
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 168,
+      columnNumber: 11
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 167,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ jsxDEV(Route, { element: /* @__PURE__ */ jsxDEV(Navigate, { replace: true, to: "/" }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 185,
+      columnNumber: 25
+    }, this), path: "*" }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+      lineNumber: 185,
+      columnNumber: 9
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+    lineNumber: 105,
+    columnNumber: 7
+  }, this) }, void 0, false, {
+    fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx",
+    lineNumber: 104,
+    columnNumber: 5
+  }, this);
+}
+_c100 = AppRoutes;
+var _c, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c0, _c1, _c10, _c11, _c12, _c13, _c14, _c15, _c16, _c17, _c18, _c19, _c20, _c21, _c22, _c23, _c24, _c25, _c26, _c27, _c28, _c29, _c30, _c31, _c32, _c33, _c34, _c35, _c36, _c37, _c38, _c39, _c40, _c41, _c42, _c43, _c44, _c45, _c46, _c47, _c48, _c49, _c50, _c51, _c52, _c53, _c54, _c55, _c56, _c57, _c58, _c59, _c60, _c61, _c62, _c63, _c64, _c65, _c66, _c67, _c68, _c69, _c70, _c71, _c72, _c73, _c74, _c75, _c76, _c77, _c78, _c79, _c80, _c81, _c82, _c83, _c84, _c85, _c86, _c87, _c88, _c89, _c90, _c91, _c92, _c93, _c94, _c95, _c96, _c97, _c98, _c99, _c100;
+$RefreshReg$(_c, "LoginPage$lazyNamed");
+$RefreshReg$(_c2, "LoginPage");
+$RefreshReg$(_c3, "RegisterPage$lazyNamed");
+$RefreshReg$(_c4, "RegisterPage");
+$RefreshReg$(_c5, "ForgotPasswordPage$lazyNamed");
+$RefreshReg$(_c6, "ForgotPasswordPage");
+$RefreshReg$(_c7, "DashboardPage$lazyNamed");
+$RefreshReg$(_c8, "DashboardPage");
+$RefreshReg$(_c9, "MyBookingsPage$lazyNamed");
+$RefreshReg$(_c0, "MyBookingsPage");
+$RefreshReg$(_c1, "FavoritesPage$lazyNamed");
+$RefreshReg$(_c10, "FavoritesPage");
+$RefreshReg$(_c11, "BookingDetailsPage$lazyNamed");
+$RefreshReg$(_c12, "BookingDetailsPage");
+$RefreshReg$(_c13, "WalletPage$lazyNamed");
+$RefreshReg$(_c14, "WalletPage");
+$RefreshReg$(_c15, "NotificationsPage$lazyNamed");
+$RefreshReg$(_c16, "NotificationsPage");
+$RefreshReg$(_c17, "ProfilePage$lazyNamed");
+$RefreshReg$(_c18, "ProfilePage");
+$RefreshReg$(_c19, "MembershipCenterPage$lazyNamed");
+$RefreshReg$(_c20, "MembershipCenterPage");
+$RefreshReg$(_c21, "SlotSelectionPage$lazyNamed");
+$RefreshReg$(_c22, "SlotSelectionPage");
+$RefreshReg$(_c23, "CheckoutPage$lazyNamed");
+$RefreshReg$(_c24, "CheckoutPage");
+$RefreshReg$(_c25, "PaymentSuccessPage$lazyNamed");
+$RefreshReg$(_c26, "PaymentSuccessPage");
+$RefreshReg$(_c27, "BookingSuccessPage$lazyNamed");
+$RefreshReg$(_c28, "BookingSuccessPage");
+$RefreshReg$(_c29, "AdminDashboardPage$lazyNamed");
+$RefreshReg$(_c30, "AdminDashboardPage");
+$RefreshReg$(_c31, "UserManagementPage$lazyNamed");
+$RefreshReg$(_c32, "UserManagementPage");
+$RefreshReg$(_c33, "TurfOwnerManagementPage$lazyNamed");
+$RefreshReg$(_c34, "TurfOwnerManagementPage");
+$RefreshReg$(_c35, "TurfManagementPage$lazyNamed");
+$RefreshReg$(_c36, "TurfManagementPage");
+$RefreshReg$(_c37, "BookingManagementPage$lazyNamed");
+$RefreshReg$(_c38, "BookingManagementPage");
+$RefreshReg$(_c39, "PlatformRevenuePage$lazyNamed");
+$RefreshReg$(_c40, "PlatformRevenuePage");
+$RefreshReg$(_c41, "PlatformAnalyticsPage$lazyNamed");
+$RefreshReg$(_c42, "PlatformAnalyticsPage");
+$RefreshReg$(_c43, "PlatformNotificationsPage$lazyNamed");
+$RefreshReg$(_c44, "PlatformNotificationsPage");
+$RefreshReg$(_c45, "EventManagementPage$lazyNamed");
+$RefreshReg$(_c46, "EventManagementPage");
+$RefreshReg$(_c47, "TournamentManagementPage$lazyNamed");
+$RefreshReg$(_c48, "TournamentManagementPage");
+$RefreshReg$(_c49, "ReportsPage$lazyNamed");
+$RefreshReg$(_c50, "ReportsPage");
+$RefreshReg$(_c51, "SettingsPage$lazyNamed");
+$RefreshReg$(_c52, "SettingsPage");
+$RefreshReg$(_c53, "OwnerDashboardPage$lazyNamed");
+$RefreshReg$(_c54, "OwnerDashboardPage");
+$RefreshReg$(_c55, "MyTurfsPage$lazyNamed");
+$RefreshReg$(_c56, "MyTurfsPage");
+$RefreshReg$(_c57, "OwnerBookingsPage$lazyNamed");
+$RefreshReg$(_c58, "OwnerBookingsPage");
+$RefreshReg$(_c59, "OwnerReviewsPage$lazyNamed");
+$RefreshReg$(_c60, "OwnerReviewsPage");
+$RefreshReg$(_c61, "TurfDetailsOwnerPage$lazyNamed");
+$RefreshReg$(_c62, "TurfDetailsOwnerPage");
+$RefreshReg$(_c63, "AddTurfWizardPage$lazyNamed");
+$RefreshReg$(_c64, "AddTurfWizardPage");
+$RefreshReg$(_c65, "SlotManagementPage$lazyNamed");
+$RefreshReg$(_c66, "SlotManagementPage");
+$RefreshReg$(_c67, "CalendarManagementPage$lazyNamed");
+$RefreshReg$(_c68, "CalendarManagementPage");
+$RefreshReg$(_c69, "AnalyticsCenterPage$lazyNamed");
+$RefreshReg$(_c70, "AnalyticsCenterPage");
+$RefreshReg$(_c71, "RevenueDashboardPage$lazyNamed");
+$RefreshReg$(_c72, "RevenueDashboardPage");
+$RefreshReg$(_c73, "CRMPage$lazyNamed");
+$RefreshReg$(_c74, "CRMPage");
+$RefreshReg$(_c75, "AthleteProfileOwnerPage$lazyNamed");
+$RefreshReg$(_c76, "AthleteProfileOwnerPage");
+$RefreshReg$(_c77, "LandingPage$lazyNamed");
+$RefreshReg$(_c78, "LandingPage");
+$RefreshReg$(_c79, "ExplorePage$lazyNamed");
+$RefreshReg$(_c80, "ExplorePage");
+$RefreshReg$(_c81, "SearchResultsPage$lazyNamed");
+$RefreshReg$(_c82, "SearchResultsPage");
+$RefreshReg$(_c83, "VenueDetailsPage$lazyNamed");
+$RefreshReg$(_c84, "VenueDetailsPage");
+$RefreshReg$(_c85, "MembershipsPage$lazyNamed");
+$RefreshReg$(_c86, "MembershipsPage");
+$RefreshReg$(_c87, "TournamentsPage$lazyNamed");
+$RefreshReg$(_c88, "TournamentsPage");
+$RefreshReg$(_c89, "TournamentHubPage$lazyNamed");
+$RefreshReg$(_c90, "TournamentHubPage");
+$RefreshReg$(_c91, "EventsPage$lazyNamed");
+$RefreshReg$(_c92, "EventsPage");
+$RefreshReg$(_c93, "EventDetailsPage$lazyNamed");
+$RefreshReg$(_c94, "EventDetailsPage");
+$RefreshReg$(_c95, "SupportPage$lazyNamed");
+$RefreshReg$(_c96, "SupportPage");
+$RefreshReg$(_c97, "CoachingPage$lazyNamed");
+$RefreshReg$(_c98, "CoachingPage");
+$RefreshReg$(_c99, "RouteLoader");
+$RefreshReg$(_c100, "AppRoutes");
+if (import.meta.hot && !inWebWorker) {
+  window.$RefreshReg$ = prevRefreshReg;
+  window.$RefreshSig$ = prevRefreshSig;
+}
+if (import.meta.hot && !inWebWorker) {
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/app/routes/AppRoutes.jsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+
+//# sourceMappingURL=data:application/json;base64,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QUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBQyxNQUFBRSxNQUFBRTtBQUFBLGFBQUF4SixJQUFBO0FBQUEsYUFBQUMsS0FBQTtBQUFBLGFBQUFFLEtBQUE7QUFBQSxhQUFBQyxLQUFBO0FBQUEsYUFBQUUsS0FBQTtBQUFBLGFBQUFDLEtBQUE7QUFBQSxhQUFBRSxLQUFBO0FBQUEsYUFBQUMsS0FBQTtBQUFBLGFBQUFFLEtBQUE7QUFBQSxhQUFBQyxLQUFBO0FBQUEsYUFBQUUsS0FBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFFLE9BQUEiLCJuYW1lcyI6WyJsYXp5IiwiU3VzcGVuc2UiLCJOYXZpZ2F0ZSIsIlJvdXRlIiwiUm91dGVzIiwiQXV0aExheW91dCIsIk93bmVyTGF5b3V0IiwiUG9ydGFsTGF5b3V0IiwiUHVibGljTGF5b3V0IiwiUHJvdGVjdGVkUm91dGUiLCJTa2VsZXRvbiIsIkJPT0tJTkdfQVVUSF9NRVNTQUdFIiwibGF6eU5hbWVkIiwibG9hZGVyIiwiZXhwb3J0TmFtZSIsInRoZW4iLCJtb2R1bGUiLCJkZWZhdWx0IiwiTG9naW5QYWdlIiwiX2MiLCJfYzIiLCJSZWdpc3RlclBhZ2UiLCJfYzMiLCJfYzQiLCJGb3Jnb3RQYXNzd29yZFBhZ2UiLCJfYzUiLCJfYzYiLCJEYXNoYm9hcmRQYWdlIiwiX2M3IiwiX2M4IiwiTXlCb29raW5nc1BhZ2UiLCJfYzkiLCJfYzAiLCJGYXZvcml0ZXNQYWdlIiwiX2MxIiwiX2MxMCIsIkJvb2tpbmdEZXRhaWxzUGFnZSIsIl9jMTEiLCJfYzEyIiwiV2FsbGV0UGFnZSIsIl9jMTMiLCJfYzE0IiwiTm90aWZpY2F0aW9uc1BhZ2UiLCJfYzE1IiwiX2MxNiIsIlByb2ZpbGVQYWdlIiwiX2MxNyIsIl9jMTgiLCJNZW1iZXJzaGlwQ2VudGVyUGFnZSIsIl9jMTkiLCJfYzIwIiwiU2xvdFNlbGVjdGlvblBhZ2UiLCJfYzIxIiwiX2MyMiIsIkNoZWNrb3V0UGFnZSIsIl9jMjMiLCJfYzI0IiwiUGF5bWVudFN1Y2Nlc3NQYWdlIiwiX2MyNSIsIl9jMjYiLCJCb29raW5nU3VjY2Vzc1BhZ2UiLCJfYzI3IiwiX2MyOCIsIkFkbWluRGFzaGJvYXJkUGFnZSIsIl9jMjkiLCJfYzMwIiwiVXNlck1hbmFnZW1lbnRQYWdlIiwiX2MzMSIsIl9jMzIiLCJUdXJmT3duZXJNYW5hZ2VtZW50UGFnZSIsIl9jMzMiLCJfYzM0IiwiVHVyZk1hbmFnZW1lbnRQYWdlIiwiX2MzNSIsIl9jMzYiLCJCb29raW5nTWFuYWdlbWVudFBhZ2UiLCJfYzM3IiwiX2MzOCIsIlBsYXRmb3JtUmV2ZW51ZVBhZ2UiLCJfYzM5IiwiX2M0MCIsIlBsYXRmb3JtQW5hbHl0aWNzUGFnZSIsIl9jNDEiLCJfYzQyIiwiUGxhdGZvcm1Ob3RpZmljYXRpb25zUGFnZSIsIl9jNDMiLCJfYzQ0IiwiRXZlbnRNYW5hZ2VtZW50UGFnZSIsIl9jNDUiLCJfYzQ2IiwiVG91cm5hbWVudE1hbmFnZW1lbnRQYWdlIiwiX2M0NyIsIl9jNDgiLCJSZXBvcnRzUGFnZSIsIl9jNDkiLCJfYzUwIiwiU2V0dGluZ3NQYWdlIiwiX2M1MSIsIl9jNTIiLCJPd25lckRhc2hib2FyZFBhZ2UiLCJfYzUzIiwiX2M1NCIsIk15VHVyZnNQYWdlIiwiX2M1NSIsIl9jNTYiLCJPd25lckJvb2tpbmdzUGFnZSIsIl9jNTciLCJfYzU4IiwiT3duZXJSZXZpZXdzUGFnZSIsIl9jNTkiLCJfYzYwIiwiVHVyZkRldGFpbHNPd25lclBhZ2UiLCJfYzYxIiwiX2M2MiIsIkFkZFR1cmZXaXphcmRQYWdlIiwiX2M2MyIsIl9jNjQiLCJTbG90TWFuYWdlbWVudFBhZ2UiLCJfYzY1IiwiX2M2NiIsIkNhbGVuZGFyTWFuYWdlbWVudFBhZ2UiLCJfYzY3IiwiX2M2OCIsIkFuYWx5dGljc0NlbnRlclBhZ2UiLCJfYzY5IiwiX2M3MCIsIlJldmVudWVEYXNoYm9hcmRQYWdlIiwiX2M3MSIsIl9jNzIiLCJDUk1QYWdlIiwiX2M3MyIsIl9jNzQiLCJBdGhsZXRlUHJvZmlsZU93bmVyUGFnZSIsIl9jNzUiLCJfYzc2IiwiTGFuZGluZ1BhZ2UiLCJfYzc3IiwiX2M3OCIsIkV4cGxvcmVQYWdlIiwiX2M3OSIsIl9jODAiLCJTZWFyY2hSZXN1bHRzUGFnZSIsIl9jODEiLCJfYzgyIiwiVmVudWVEZXRhaWxzUGFnZSIsIl9jODMiLCJfYzg0IiwiTWVtYmVyc2hpcHNQYWdlIiwiX2M4NSIsIl9jODYiLCJUb3VybmFtZW50c1BhZ2UiLCJfYzg3IiwiX2M4OCIsIlRvdXJuYW1lbnRIdWJQYWdlIiwiX2M4OSIsIl9jOTAiLCJFdmVudHNQYWdlIiwiX2M5MSIsIl9jOTIiLCJFdmVudERldGFpbHNQYWdlIiwiX2M5MyIsIl9jOTQiLCJTdXBwb3J0UGFnZSIsIl9jOTUiLCJfYzk2IiwiQ29hY2hpbmdQYWdlIiwiX2M5NyIsIl9jOTgiLCJSb3V0ZUxvYWRlciIsIl9jOTkiLCJBcHBSb3V0ZXMiLCJfYzEwMCJdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJBcHBSb3V0ZXMuanN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IGxhenksIFN1c3BlbnNlIH0gZnJvbSBcInJlYWN0XCI7XG5pbXBvcnQgeyBOYXZpZ2F0ZSwgUm91dGUsIFJvdXRlcyB9IGZyb20gXCJyZWFjdC1yb3V0ZXItZG9tXCI7XG5pbXBvcnQgeyBBdXRoTGF5b3V0IH0gZnJvbSBcIi4uL2xheW91dHMvQXV0aExheW91dC5qc3hcIjtcbmltcG9ydCB7IE93bmVyTGF5b3V0IH0gZnJvbSBcIi4uL2xheW91dHMvT3duZXJMYXlvdXQuanN4XCI7XG5pbXBvcnQgeyBQb3J0YWxMYXlvdXQgfSBmcm9tIFwiLi4vbGF5b3V0cy9Qb3J0YWxMYXlvdXQuanN4XCI7XG5pbXBvcnQgeyBQdWJsaWNMYXlvdXQgfSBmcm9tIFwiLi4vbGF5b3V0cy9QdWJsaWNMYXlvdXQuanN4XCI7XG5pbXBvcnQgeyBQcm90ZWN0ZWRSb3V0ZSB9IGZyb20gXCIuL1Byb3RlY3RlZFJvdXRlLmpzeFwiO1xuaW1wb3J0IHsgU2tlbGV0b24gfSBmcm9tIFwiLi4vLi4vY29tcG9uZW50cy91aS9za2VsZXRvbi5qc3hcIjtcbmltcG9ydCB7IEJPT0tJTkdfQVVUSF9NRVNTQUdFIH0gZnJvbSBcIi4uLy4uL2NvbnN0YW50cy9hdXRoLmpzXCI7XG5cbmZ1bmN0aW9uIGxhenlOYW1lZChsb2FkZXIsIGV4cG9ydE5hbWUpIHtcbiAgcmV0dXJuIGxhenkoKCkgPT4gbG9hZGVyKCkudGhlbigobW9kdWxlKSA9PiAoeyBkZWZhdWx0OiBtb2R1bGVbZXhwb3J0TmFtZV0gfSkpKTtcbn1cblxuY29uc3QgTG9naW5QYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2F1dGgvQXV0aFBhZ2VzLmpzeFwiKSwgXCJMb2dpblBhZ2VcIik7XG5jb25zdCBSZWdpc3RlclBhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvYXV0aC9BdXRoUGFnZXMuanN4XCIpLCBcIlJlZ2lzdGVyUGFnZVwiKTtcbmNvbnN0IEZvcmdvdFBhc3N3b3JkUGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hdXRoL0F1dGhQYWdlcy5qc3hcIiksIFwiRm9yZ290UGFzc3dvcmRQYWdlXCIpO1xuXG5jb25zdCBEYXNoYm9hcmRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2F0aGxldGUvQXRobGV0ZVBhZ2VzLmpzeFwiKSwgXCJEYXNoYm9hcmRQYWdlXCIpO1xuY29uc3QgTXlCb29raW5nc1BhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvYXRobGV0ZS9BdGhsZXRlUGFnZXMuanN4XCIpLCBcIk15Qm9va2luZ3NQYWdlXCIpO1xuY29uc3QgRmF2b3JpdGVzUGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hdGhsZXRlL0F0aGxldGVQYWdlcy5qc3hcIiksIFwiRmF2b3JpdGVzUGFnZVwiKTtcbmNvbnN0IEJvb2tpbmdEZXRhaWxzUGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hdGhsZXRlL0F0aGxldGVQYWdlcy5qc3hcIiksIFwiQm9va2luZ0RldGFpbHNQYWdlXCIpO1xuY29uc3QgV2FsbGV0UGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hdGhsZXRlL0F0aGxldGVQYWdlcy5qc3hcIiksIFwiV2FsbGV0UGFnZVwiKTtcbmNvbnN0IE5vdGlmaWNhdGlvbnNQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2F0aGxldGUvQXRobGV0ZVBhZ2VzLmpzeFwiKSwgXCJOb3RpZmljYXRpb25zUGFnZVwiKTtcbmNvbnN0IFByb2ZpbGVQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2F0aGxldGUvQXRobGV0ZVBhZ2VzLmpzeFwiKSwgXCJQcm9maWxlUGFnZVwiKTtcbmNvbnN0IE1lbWJlcnNoaXBDZW50ZXJQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2F0aGxldGUvQXRobGV0ZVBhZ2VzLmpzeFwiKSwgXCJNZW1iZXJzaGlwQ2VudGVyUGFnZVwiKTtcblxuY29uc3QgU2xvdFNlbGVjdGlvblBhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvYm9va2luZy9Cb29raW5nUGFnZXMuanN4XCIpLCBcIlNsb3RTZWxlY3Rpb25QYWdlXCIpO1xuY29uc3QgQ2hlY2tvdXRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2Jvb2tpbmcvQm9va2luZ1BhZ2VzLmpzeFwiKSwgXCJDaGVja291dFBhZ2VcIik7XG5jb25zdCBQYXltZW50U3VjY2Vzc1BhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvYm9va2luZy9Cb29raW5nUGFnZXMuanN4XCIpLCBcIlBheW1lbnRTdWNjZXNzUGFnZVwiKTtcbmNvbnN0IEJvb2tpbmdTdWNjZXNzUGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9ib29raW5nL0Jvb2tpbmdQYWdlcy5qc3hcIiksIFwiQm9va2luZ1N1Y2Nlc3NQYWdlXCIpO1xuXG5jb25zdCBBZG1pbkRhc2hib2FyZFBhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvYWRtaW4vQWRtaW5QYWdlcy5qc3hcIiksIFwiQWRtaW5EYXNoYm9hcmRQYWdlXCIpO1xuY29uc3QgVXNlck1hbmFnZW1lbnRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2FkbWluL0FkbWluUGFnZXMuanN4XCIpLCBcIlVzZXJNYW5hZ2VtZW50UGFnZVwiKTtcbmNvbnN0IFR1cmZPd25lck1hbmFnZW1lbnRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2FkbWluL0FkbWluUGFnZXMuanN4XCIpLCBcIlR1cmZPd25lck1hbmFnZW1lbnRQYWdlXCIpO1xuY29uc3QgVHVyZk1hbmFnZW1lbnRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2FkbWluL0FkbWluUGFnZXMuanN4XCIpLCBcIlR1cmZNYW5hZ2VtZW50UGFnZVwiKTtcbmNvbnN0IEJvb2tpbmdNYW5hZ2VtZW50UGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hZG1pbi9BZG1pblBhZ2VzLmpzeFwiKSwgXCJCb29raW5nTWFuYWdlbWVudFBhZ2VcIik7XG5jb25zdCBQbGF0Zm9ybVJldmVudWVQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2FkbWluL0FkbWluUGFnZXMuanN4XCIpLCBcIlBsYXRmb3JtUmV2ZW51ZVBhZ2VcIik7XG5jb25zdCBQbGF0Zm9ybUFuYWx5dGljc1BhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvYWRtaW4vQWRtaW5QYWdlcy5qc3hcIiksIFwiUGxhdGZvcm1BbmFseXRpY3NQYWdlXCIpO1xuY29uc3QgUGxhdGZvcm1Ob3RpZmljYXRpb25zUGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hZG1pbi9BZG1pblBhZ2VzLmpzeFwiKSwgXCJQbGF0Zm9ybU5vdGlmaWNhdGlvbnNQYWdlXCIpO1xuY29uc3QgRXZlbnRNYW5hZ2VtZW50UGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hZG1pbi9BZG1pblBhZ2VzLmpzeFwiKSwgXCJFdmVudE1hbmFnZW1lbnRQYWdlXCIpO1xuY29uc3QgVG91cm5hbWVudE1hbmFnZW1lbnRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2FkbWluL0FkbWluUGFnZXMuanN4XCIpLCBcIlRvdXJuYW1lbnRNYW5hZ2VtZW50UGFnZVwiKTtcbmNvbnN0IFJlcG9ydHNQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2FkbWluL0FkbWluUGFnZXMuanN4XCIpLCBcIlJlcG9ydHNQYWdlXCIpO1xuY29uc3QgU2V0dGluZ3NQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL2FkbWluL0FkbWluUGFnZXMuanN4XCIpLCBcIlNldHRpbmdzUGFnZVwiKTtcblxuY29uc3QgT3duZXJEYXNoYm9hcmRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL293bmVyL093bmVyUGFnZXMuanN4XCIpLCBcIk93bmVyRGFzaGJvYXJkUGFnZVwiKTtcbmNvbnN0IE15VHVyZnNQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL293bmVyL093bmVyUGFnZXMuanN4XCIpLCBcIk15VHVyZnNQYWdlXCIpO1xuY29uc3QgT3duZXJCb29raW5nc1BhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvb3duZXIvT3duZXJQYWdlcy5qc3hcIiksIFwiT3duZXJCb29raW5nc1BhZ2VcIik7XG5jb25zdCBPd25lclJldmlld3NQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL293bmVyL093bmVyUGFnZXMuanN4XCIpLCBcIk93bmVyUmV2aWV3c1BhZ2VcIik7XG5jb25zdCBUdXJmRGV0YWlsc093bmVyUGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9vd25lci9Pd25lclBhZ2VzLmpzeFwiKSwgXCJUdXJmRGV0YWlsc093bmVyUGFnZVwiKTtcbmNvbnN0IEFkZFR1cmZXaXphcmRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL293bmVyL093bmVyUGFnZXMuanN4XCIpLCBcIkFkZFR1cmZXaXphcmRQYWdlXCIpO1xuY29uc3QgU2xvdE1hbmFnZW1lbnRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL293bmVyL093bmVyUGFnZXMuanN4XCIpLCBcIlNsb3RNYW5hZ2VtZW50UGFnZVwiKTtcbmNvbnN0IENhbGVuZGFyTWFuYWdlbWVudFBhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvb3duZXIvT3duZXJQYWdlcy5qc3hcIiksIFwiQ2FsZW5kYXJNYW5hZ2VtZW50UGFnZVwiKTtcbmNvbnN0IEFuYWx5dGljc0NlbnRlclBhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvb3duZXIvT3duZXJQYWdlcy5qc3hcIiksIFwiQW5hbHl0aWNzQ2VudGVyUGFnZVwiKTtcbmNvbnN0IFJldmVudWVEYXNoYm9hcmRQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL293bmVyL093bmVyUGFnZXMuanN4XCIpLCBcIlJldmVudWVEYXNoYm9hcmRQYWdlXCIpO1xuY29uc3QgQ1JNUGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9vd25lci9Pd25lclBhZ2VzLmpzeFwiKSwgXCJDUk1QYWdlXCIpO1xuY29uc3QgQXRobGV0ZVByb2ZpbGVPd25lclBhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvb3duZXIvT3duZXJQYWdlcy5qc3hcIiksIFwiQXRobGV0ZVByb2ZpbGVPd25lclBhZ2VcIik7XG5cbmNvbnN0IExhbmRpbmdQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL3B1YmxpYy9QdWJsaWNQYWdlcy5qc3hcIiksIFwiTGFuZGluZ1BhZ2VcIik7XG5jb25zdCBFeHBsb3JlUGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9wdWJsaWMvUHVibGljUGFnZXMuanN4XCIpLCBcIkV4cGxvcmVQYWdlXCIpO1xuY29uc3QgU2VhcmNoUmVzdWx0c1BhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvcHVibGljL1B1YmxpY1BhZ2VzLmpzeFwiKSwgXCJTZWFyY2hSZXN1bHRzUGFnZVwiKTtcbmNvbnN0IFZlbnVlRGV0YWlsc1BhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvcHVibGljL1B1YmxpY1BhZ2VzLmpzeFwiKSwgXCJWZW51ZURldGFpbHNQYWdlXCIpO1xuY29uc3QgTWVtYmVyc2hpcHNQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL3B1YmxpYy9QdWJsaWNQYWdlcy5qc3hcIiksIFwiTWVtYmVyc2hpcHNQYWdlXCIpO1xuY29uc3QgVG91cm5hbWVudHNQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL3B1YmxpYy9QdWJsaWNQYWdlcy5qc3hcIiksIFwiVG91cm5hbWVudHNQYWdlXCIpO1xuY29uc3QgVG91cm5hbWVudEh1YlBhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvcHVibGljL1B1YmxpY1BhZ2VzLmpzeFwiKSwgXCJUb3VybmFtZW50SHViUGFnZVwiKTtcbmNvbnN0IEV2ZW50c1BhZ2UgPSBsYXp5TmFtZWQoKCkgPT4gaW1wb3J0KFwiLi4vLi4vcGFnZXMvcHVibGljL1B1YmxpY1BhZ2VzLmpzeFwiKSwgXCJFdmVudHNQYWdlXCIpO1xuY29uc3QgRXZlbnREZXRhaWxzUGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9wdWJsaWMvUHVibGljUGFnZXMuanN4XCIpLCBcIkV2ZW50RGV0YWlsc1BhZ2VcIik7XG5jb25zdCBTdXBwb3J0UGFnZSA9IGxhenlOYW1lZCgoKSA9PiBpbXBvcnQoXCIuLi8uLi9wYWdlcy9wdWJsaWMvUHVibGljUGFnZXMuanN4XCIpLCBcIlN1cHBvcnRQYWdlXCIpO1xuY29uc3QgQ29hY2hpbmdQYWdlID0gbGF6eU5hbWVkKCgpID0+IGltcG9ydChcIi4uLy4uL3BhZ2VzL3B1YmxpYy9QdWJsaWNQYWdlcy5qc3hcIiksIFwiQ29hY2hpbmdQYWdlXCIpO1xuXG5mdW5jdGlvbiBSb3V0ZUxvYWRlcigpIHtcbiAgcmV0dXJuIChcbiAgICA8ZGl2IGNsYXNzTmFtZT1cImZsZXggbWluLWgtWzU1dmhdIGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciBiZy1iYWNrZ3JvdW5kXCI+XG4gICAgICA8ZGl2IGNsYXNzTmFtZT1cInctZnVsbCBtYXgtdy1tZCByb3VuZGVkLXhsIGJvcmRlciBib3JkZXItc3VyZmFjZS1ib3JkZXIgYmctd2hpdGUgcC01IHNoYWRvdy1zb2Z0XCI+XG4gICAgICAgIDxTa2VsZXRvbiBjbGFzc05hbWU9XCJoLTUgdy0zMlwiIC8+XG4gICAgICAgIDxTa2VsZXRvbiBjbGFzc05hbWU9XCJtdC00IGgtMTIgdy1mdWxsXCIgLz5cbiAgICAgICAgPFNrZWxldG9uIGNsYXNzTmFtZT1cIm10LTMgaC0xMiB3LTQvNVwiIC8+XG4gICAgICA8L2Rpdj5cbiAgICA8L2Rpdj5cbiAgKTtcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIEFwcFJvdXRlcygpIHtcbiAgcmV0dXJuIChcbiAgICA8U3VzcGVuc2UgZmFsbGJhY2s9ezxSb3V0ZUxvYWRlciAvPn0+XG4gICAgICA8Um91dGVzPlxuICAgICAgICA8Um91dGUgZWxlbWVudD17PEF1dGhMYXlvdXQgLz59PlxuICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8TG9naW5QYWdlIC8+fSBwYXRoPVwiL2xvZ2luXCIgLz5cbiAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFJlZ2lzdGVyUGFnZSAvPn0gcGF0aD1cIi9yZWdpc3RlclwiIC8+XG4gICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxGb3Jnb3RQYXNzd29yZFBhZ2UgLz59IHBhdGg9XCIvZm9yZ290LXBhc3N3b3JkXCIgLz5cbiAgICAgICAgPC9Sb3V0ZT5cblxuICAgICAgICA8Um91dGUgZWxlbWVudD17PFB1YmxpY0xheW91dCAvPn0+XG4gICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxMYW5kaW5nUGFnZSAvPn0gaW5kZXggLz5cbiAgICAgICAgICA8Um91dGUgZWxlbWVudD17PEV4cGxvcmVQYWdlIC8+fSBwYXRoPVwiL2V4cGxvcmVcIiAvPlxuICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8U2VhcmNoUmVzdWx0c1BhZ2UgLz59IHBhdGg9XCIvc2VhcmNoXCIgLz5cbiAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFZlbnVlRGV0YWlsc1BhZ2UgLz59IHBhdGg9XCIvdmVudWUvOmlkXCIgLz5cbiAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFZlbnVlRGV0YWlsc1BhZ2UgLz59IHBhdGg9XCIvYm9va2luZy92ZW51ZS86aWRcIiAvPlxuICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8TWVtYmVyc2hpcHNQYWdlIC8+fSBwYXRoPVwiL21lbWJlcnNoaXBzXCIgLz5cbiAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFRvdXJuYW1lbnRzUGFnZSAvPn0gcGF0aD1cIi90b3VybmFtZW50c1wiIC8+XG4gICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxUb3VybmFtZW50SHViUGFnZSAvPn0gcGF0aD1cIi90b3VybmFtZW50cy86aWRcIiAvPlxuICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8RXZlbnRzUGFnZSAvPn0gcGF0aD1cIi9ldmVudHNcIiAvPlxuICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8RXZlbnREZXRhaWxzUGFnZSAvPn0gcGF0aD1cIi9ldmVudHMvOmlkXCIgLz5cbiAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFN1cHBvcnRQYWdlIC8+fSBwYXRoPVwiL3N1cHBvcnRcIiAvPlxuICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8Q29hY2hpbmdQYWdlIC8+fSBwYXRoPVwiL2NvYWNoaW5nXCIgLz5cbiAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFByb3RlY3RlZFJvdXRlIGFsbG93ZWRSb2xlcz17W1widXNlclwiLCBcImFkbWluXCJdfSBhdXRoTWVzc2FnZT17Qk9PS0lOR19BVVRIX01FU1NBR0V9IC8+fT5cbiAgICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8U2xvdFNlbGVjdGlvblBhZ2UgLz59IHBhdGg9XCIvYm9va2luZy9zbG90c1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PENoZWNrb3V0UGFnZSAvPn0gcGF0aD1cIi9jaGVja291dFwiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PENoZWNrb3V0UGFnZSAvPn0gcGF0aD1cIi9wYXltZW50XCIgLz5cbiAgICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8UGF5bWVudFN1Y2Nlc3NQYWdlIC8+fSBwYXRoPVwiL3N1Y2Nlc3NcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxCb29raW5nU3VjY2Vzc1BhZ2UgLz59IHBhdGg9XCIvYm9va2luZy1zdWNjZXNzXCIgLz5cbiAgICAgICAgICA8L1JvdXRlPlxuICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8UHJvdGVjdGVkUm91dGUgLz59PlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxQcm9maWxlUGFnZSAvPn0gcGF0aD1cIi9wcm9maWxlXCIgLz5cbiAgICAgICAgICA8L1JvdXRlPlxuICAgICAgICA8L1JvdXRlPlxuXG4gICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8UHJvdGVjdGVkUm91dGUgYWxsb3dlZFJvbGVzPXtbXCJ1c2VyXCIsIFwiYWRtaW5cIl19IC8+fT5cbiAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFBvcnRhbExheW91dCAvPn0+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PERhc2hib2FyZFBhZ2UgLz59IHBhdGg9XCIvZGFzaGJvYXJkXCIgLz5cbiAgICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8TXlCb29raW5nc1BhZ2UgLz59IHBhdGg9XCIvYm9va2luZ3NcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxGYXZvcml0ZXNQYWdlIC8+fSBwYXRoPVwiL2Zhdm9yaXRlc1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PEJvb2tpbmdEZXRhaWxzUGFnZSAvPn0gcGF0aD1cIi9ib29raW5ncy86aWRcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxXYWxsZXRQYWdlIC8+fSBwYXRoPVwiL3dhbGxldFwiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFdhbGxldFBhZ2UgLz59IHBhdGg9XCIvcGF5bWVudHNcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxOb3RpZmljYXRpb25zUGFnZSAvPn0gcGF0aD1cIi9ub3RpZmljYXRpb25zXCIgLz5cbiAgICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8TWVtYmVyc2hpcENlbnRlclBhZ2UgLz59IHBhdGg9XCIvbWVtYmVyc2hpcC1jZW50ZXJcIiAvPlxuICAgICAgICAgIDwvUm91dGU+XG4gICAgICAgIDwvUm91dGU+XG5cbiAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxQcm90ZWN0ZWRSb3V0ZSBhbGxvd2VkUm9sZXM9e1tcIm93bmVyXCIsIFwiYWRtaW5cIl19IC8+fT5cbiAgICAgICAgICA8Um91dGUgZWxlbWVudD17PE93bmVyTGF5b3V0IC8+fT5cbiAgICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8T3duZXJEYXNoYm9hcmRQYWdlIC8+fSBwYXRoPVwiL293bmVyL2Rhc2hib2FyZFwiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PE15VHVyZnNQYWdlIC8+fSBwYXRoPVwiL293bmVyL3R1cmZzXCIgLz5cbiAgICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8T3duZXJCb29raW5nc1BhZ2UgLz59IHBhdGg9XCIvb3duZXIvYm9va2luZ3NcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxPd25lclJldmlld3NQYWdlIC8+fSBwYXRoPVwiL293bmVyL3Jldmlld3NcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxUdXJmRGV0YWlsc093bmVyUGFnZSAvPn0gcGF0aD1cIi9vd25lci90dXJmcy86aWRcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxBZGRUdXJmV2l6YXJkUGFnZSAvPn0gcGF0aD1cIi9vd25lci9hZGQtdHVyZlwiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFNsb3RNYW5hZ2VtZW50UGFnZSAvPn0gcGF0aD1cIi9vd25lci9zbG90c1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PENhbGVuZGFyTWFuYWdlbWVudFBhZ2UgLz59IHBhdGg9XCIvb3duZXIvY2FsZW5kYXJcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxBbmFseXRpY3NDZW50ZXJQYWdlIC8+fSBwYXRoPVwiL293bmVyL2FuYWx5dGljc1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFJldmVudWVEYXNoYm9hcmRQYWdlIC8+fSBwYXRoPVwiL293bmVyL3JldmVudWVcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxDUk1QYWdlIC8+fSBwYXRoPVwiL293bmVyL2NybVwiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PEF0aGxldGVQcm9maWxlT3duZXJQYWdlIC8+fSBwYXRoPVwiL293bmVyL2F0aGxldGVzLzppZFwiIC8+XG4gICAgICAgICAgPC9Sb3V0ZT5cbiAgICAgICAgPC9Sb3V0ZT5cblxuICAgICAgICA8Um91dGUgZWxlbWVudD17PFByb3RlY3RlZFJvdXRlIHJvbGU9XCJhZG1pblwiIHNob3dBY2Nlc3NEZW5pZWQgLz59PlxuICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8T3duZXJMYXlvdXQgLz59PlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxOYXZpZ2F0ZSByZXBsYWNlIHRvPVwiL2FkbWluL2Rhc2hib2FyZFwiIC8+fSBwYXRoPVwiL2FkbWluXCIgLz5cbiAgICAgICAgICAgIDxSb3V0ZSBlbGVtZW50PXs8QWRtaW5EYXNoYm9hcmRQYWdlIC8+fSBwYXRoPVwiL2FkbWluL2Rhc2hib2FyZFwiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFVzZXJNYW5hZ2VtZW50UGFnZSAvPn0gcGF0aD1cIi9hZG1pbi91c2Vyc1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFR1cmZPd25lck1hbmFnZW1lbnRQYWdlIC8+fSBwYXRoPVwiL2FkbWluL293bmVyc1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFR1cmZNYW5hZ2VtZW50UGFnZSAvPn0gcGF0aD1cIi9hZG1pbi90dXJmc1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PEJvb2tpbmdNYW5hZ2VtZW50UGFnZSAvPn0gcGF0aD1cIi9hZG1pbi9ib29raW5nc1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFBsYXRmb3JtUmV2ZW51ZVBhZ2UgLz59IHBhdGg9XCIvYWRtaW4vcmV2ZW51ZVwiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFBsYXRmb3JtQW5hbHl0aWNzUGFnZSAvPn0gcGF0aD1cIi9hZG1pbi9hbmFseXRpY3NcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxQbGF0Zm9ybU5vdGlmaWNhdGlvbnNQYWdlIC8+fSBwYXRoPVwiL2FkbWluL25vdGlmaWNhdGlvbnNcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxFdmVudE1hbmFnZW1lbnRQYWdlIC8+fSBwYXRoPVwiL2FkbWluL2V2ZW50c1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFRvdXJuYW1lbnRNYW5hZ2VtZW50UGFnZSAvPn0gcGF0aD1cIi9hZG1pbi90b3VybmFtZW50c1wiIC8+XG4gICAgICAgICAgICA8Um91dGUgZWxlbWVudD17PFJlcG9ydHNQYWdlIC8+fSBwYXRoPVwiL2FkbWluL3JlcG9ydHNcIiAvPlxuICAgICAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxTZXR0aW5nc1BhZ2UgLz59IHBhdGg9XCIvYWRtaW4vc2V0dGluZ3NcIiAvPlxuICAgICAgICAgIDwvUm91dGU+XG4gICAgICAgIDwvUm91dGU+XG5cbiAgICAgICAgPFJvdXRlIGVsZW1lbnQ9ezxOYXZpZ2F0ZSByZXBsYWNlIHRvPVwiL1wiIC8+fSBwYXRoPVwiKlwiIC8+XG4gICAgICA8L1JvdXRlcz5cbiAgICA8L1N1c3BlbnNlPlxuICApO1xufVxuIl0sImZpbGUiOiJDOi9Vc2Vycy9uYXRoaS9PbmVEcml2ZS9EZXNrdG9wL1R1cmYvZnJvbnRlbmQvc3JjL2FwcC9yb3V0ZXMvQXBwUm91dGVzLmpzeCJ9

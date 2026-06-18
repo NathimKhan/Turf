@@ -42,6 +42,13 @@ JWT_EXPIRES_IN=7d
 JWT_COOKIE_EXPIRES_DAYS=7
 CLIENT_URL=http://localhost:5173
 API_BASE_URL=http://localhost:5000
+API_RATE_LIMIT=600
+PAYMENT_PROVIDER=mock
+ADMIN_NAME="TURFX Platform Owner"
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=replace-with-a-strong-password
+ADMIN_ROTATE_PASSWORD=false
+SUPPORT_EMAIL=support@example.com
 SMTP_HOST=
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -52,15 +59,14 @@ EMAIL_FROM="TURFX <no-reply@turfx.local>"
 
 If SMTP values are empty, Nodemailer uses JSON transport so forgot-password still runs during development.
 
-## Demo Seed Accounts
+## Production Bootstrap
 
-After `npm run seed`:
+`npm run seed` is idempotent and does not delete application data. It creates
+or verifies one Platform Owner from `ADMIN_NAME`, `ADMIN_EMAIL`, and
+`ADMIN_PASSWORD`, then upserts baseline platform settings.
 
-- Admin: `admin@turfx.com` / `Admin@123`
-- Owner: `owner1@turfx.com` / `Owner@123`
-- User: `user1@turfx.com` / `User@123`
-
-The seed script creates 10 users, 5 owners, 1 admin, 20 turfs, 50 bookings, 20 reviews, 10 events, 10 tournaments, payments, and notifications.
+Set `ADMIN_ROTATE_PASSWORD=true` only when intentionally rotating the bootstrap
+account password.
 
 ## MongoDB Atlas Setup
 
@@ -80,10 +86,11 @@ The seed script creates 10 users, 5 owners, 1 admin, 20 turfs, 50 bookings, 20 r
    - `JWT_SECRET`
    - `CLIENT_URL` with your Netlify frontend URL
    - `API_BASE_URL` with the Render backend URL
+   - `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `SUPPORT_EMAIL`
    - SMTP values if you want real email delivery
 4. Deploy the service.
 5. Open `https://your-render-service.onrender.com/api/docs` to verify Swagger.
-6. Run `npm run seed` from Render Shell once if you want demo data.
+6. Run `npm run seed` from Render Shell once to bootstrap the Platform Owner.
 
 ## API Response Format
 

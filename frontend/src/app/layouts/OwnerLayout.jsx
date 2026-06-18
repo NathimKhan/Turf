@@ -1,9 +1,11 @@
-import { Link, Outlet } from "react-router-dom";
-import { Bell, Search, Settings } from "lucide-react";
+import { useState } from "react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Search, Settings } from "lucide-react";
 import { adminNav, ownerNav } from "../../constants/routes.js";
 import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
 import { PageTransition } from "../../components/shared/Motion.jsx";
+import { NotificationBell } from "../../components/shared/NotificationBell.jsx";
 import { SideNav } from "../../components/shared/SideNav.jsx";
 import { UserMenu } from "../../components/shared/UserMenu.jsx";
 import { authService } from "../../services/authService.js";
@@ -11,7 +13,18 @@ import { useAuth } from "../../store/authContext.js";
 
 export function OwnerLayout() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
   const isPlatformOwner = authService.normalizeRole(user?.role) === "admin";
+
+  function submitSearch(event) {
+    event.preventDefault();
+    const query = search.trim();
+    navigate({
+      pathname: isPlatformOwner ? "/admin/users" : "/owner/turfs",
+      search: query ? `?search=${encodeURIComponent(query)}` : "",
+    });
+  }
 
   return (
     <div className="min-h-screen bg-background text-ink">
@@ -23,28 +36,27 @@ export function OwnerLayout() {
               <p className="hidden text-sm font-bold text-primary sm:block">{isPlatformOwner ? "TURFX Platform Owner" : "TURFX Turf Owner"}</p>
               <p className="text-xs text-ink-muted">{isPlatformOwner ? "Global platform operations" : "Venue operations workspace"}</p>
             </div>
-            <div className="hidden max-w-md flex-1 md:block">
+            <form className="hidden max-w-md flex-1 md:block" onSubmit={submitSearch}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" size={18} />
                 <Input
                   className="h-10 rounded-full bg-surface-low pl-10"
+                  onChange={(event) => setSearch(event.target.value)}
                   placeholder={isPlatformOwner ? "Search platform records..." : "Search your venues..."}
+                  value={search}
                 />
               </div>
-            </div>
+            </form>
             <div className="flex items-center gap-2">
               {!isPlatformOwner && (
                 <Button as={Link} size="sm" to="/owner/add-turf">
                   Add Venue
                 </Button>
               )}
-              <Link
-                className="rounded-full p-2 text-ink-muted hover:bg-surface-low"
+              <NotificationBell
+                fallbackHref={isPlatformOwner ? "/admin/notifications" : "/owner/bookings"}
                 title={isPlatformOwner ? "Platform notifications" : "Booking notifications"}
-                to={isPlatformOwner ? "/admin/notifications" : "/owner/bookings"}
-              >
-                <Bell size={20} />
-              </Link>
+              />
               <Link
                 className="rounded-full p-2 text-ink-muted hover:bg-surface-low"
                 title={isPlatformOwner ? "System settings" : "Availability settings"}

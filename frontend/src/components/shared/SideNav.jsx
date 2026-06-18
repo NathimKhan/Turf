@@ -1,4 +1,4 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "../../utils/cn.js";
 import { Button } from "../ui/button.jsx";
 import { BrandLogo } from "./BrandLogo.jsx";
@@ -7,6 +7,24 @@ import { Icon } from "./icons.jsx";
 export function SideNav({ items, mode = "athlete" }) {
   const isWorkspace = mode === "owner" || mode === "platform";
   const isPlatform = mode === "platform";
+  const location = useLocation();
+  const navigate = useNavigate();
+  const footerActionHref = mode === "owner" ? "/owner/turfs" : "/membership-center";
+
+  function handleFooterActionClick(event) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (location.pathname === footerActionHref) {
+      document.querySelector("main")?.scrollIntoView({ block: "start" });
+      return;
+    }
+
+    navigate(footerActionHref);
+  }
 
   return (
     <aside
@@ -29,7 +47,7 @@ export function SideNav({ items, mode = "athlete" }) {
           </div>
         </div>
       )}
-      <nav className="flex-1 space-y-1">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto">
         {items.map((item) => (
           <NavLink
             className={({ isActive }) =>
@@ -46,19 +64,22 @@ export function SideNav({ items, mode = "athlete" }) {
           </NavLink>
         ))}
       </nav>
-      <div className="mt-auto rounded-2xl border border-accent/20 bg-accent-soft p-4">
-        <p className="muted-label text-accent-deep">{isPlatform ? "System Health" : mode === "owner" ? "Venue Portfolio" : "Pro Plan"}</p>
-        <p className="mt-1 text-sm font-black">{isPlatform ? "All services operational" : mode === "owner" ? "Manage your locations" : "Elevate your game"}</p>
-        <Button
-          as={Link}
-          className="mt-4 w-full"
-          size="sm"
-          to={isPlatform ? "/admin/settings" : mode === "owner" ? "/owner/turfs" : "/membership-center"}
-          variant={isWorkspace ? "outline" : "accent"}
-        >
-          {isPlatform ? "View Settings" : mode === "owner" ? "View Venues" : "Upgrade Now"}
-        </Button>
-      </div>
+      {!isPlatform && (
+        <div className="mt-auto rounded-2xl border border-accent/20 bg-accent-soft p-4">
+          <p className="muted-label text-accent-deep">{mode === "owner" ? "Venue Portfolio" : "Pro Plan"}</p>
+          <p className="mt-1 text-sm font-black">{mode === "owner" ? "Manage your locations" : "Elevate your game"}</p>
+          <Button
+            as={Link}
+            className="mt-4 w-full"
+            onClick={handleFooterActionClick}
+            size="sm"
+            to={footerActionHref}
+            variant={isWorkspace ? "outline" : "accent"}
+          >
+            {mode === "owner" ? "View Venues" : "Upgrade Now"}
+          </Button>
+        </div>
+      )}
     </aside>
   );
 }

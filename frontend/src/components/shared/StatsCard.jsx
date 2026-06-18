@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { animate, motion, useMotionValue, useMotionValueEvent, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "../ui/card.jsx";
 import { Icon } from "./icons.jsx";
@@ -62,13 +63,15 @@ function AnimatedMetric({ value, delay }) {
   return displayValue;
 }
 
-export function StatsCard({ label, value, trend, icon = "Activity", tone = "primary", delay = 0 }) {
+export function StatsCard({ label, value, trend, icon = "Activity", tone = "primary", delay = 0, to }) {
   const tones = {
     primary: "bg-primary-soft text-primary",
     secondary: "bg-secondary-soft text-secondary-deep",
     accent: "bg-accent-soft text-accent-deep",
     warning: "bg-warning-soft text-amber-700",
   };
+  const Component = to ? Link : "div";
+  const componentProps = to ? { to } : {};
 
   return (
     <motion.div
@@ -76,20 +79,22 @@ export function StatsCard({ label, value, trend, icon = "Activity", tone = "prim
       initial={{ opacity: 0, y: 18 }}
       transition={{ duration: 0.45, delay }}
     >
-      <Card interactive>
-        <CardContent>
-          <div className="flex items-start justify-between gap-4">
-            <div className={`grid h-12 w-12 place-items-center rounded-xl ${tones[tone] || tones.primary}`}>
-              <Icon name={icon} />
+      <Component className="block text-inherit no-underline" {...componentProps}>
+        <Card interactive>
+          <CardContent>
+            <div className="flex items-start justify-between gap-4">
+              <div className={`grid h-12 w-12 place-items-center rounded-xl ${tones[tone] || tones.primary}`}>
+                <Icon name={icon} />
+              </div>
+              {trend && <span className="rounded-full bg-accent-soft px-2.5 py-1 text-sm font-bold text-accent-deep">{trend}</span>}
             </div>
-            {trend && <span className="rounded-full bg-accent-soft px-2.5 py-1 text-sm font-bold text-accent-deep">{trend}</span>}
-          </div>
-          <p className="muted-label mt-6">{label}</p>
-          <p className="mt-2 text-3xl font-black tracking-normal text-ink">
-            <AnimatedMetric delay={delay} value={value} />
-          </p>
-        </CardContent>
-      </Card>
+            <p className="muted-label mt-6">{label}</p>
+            <p className="mt-2 text-3xl font-black tracking-normal text-ink">
+              <AnimatedMetric delay={delay} value={value} />
+            </p>
+          </CardContent>
+        </Card>
+      </Component>
     </motion.div>
   );
 }

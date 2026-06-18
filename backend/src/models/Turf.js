@@ -83,10 +83,29 @@ const turfSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    moderationStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "suspended"],
+      index: true,
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    approvedAt: Date,
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     schedule: {
       slotMinutes: {
         type: Number,
         default: 60,
+      },
+      bufferMinutes: {
+        type: Number,
+        default: 0,
       },
       weeklyAvailability: {
         monday: { type: [String], default: ["06:00-23:00"] },
@@ -99,6 +118,22 @@ const turfSchema = new mongoose.Schema(
       },
       blackoutDates: {
         type: [Date],
+        default: [],
+      },
+      blackouts: {
+        type: [
+          {
+            date: {
+              type: Date,
+              required: true,
+            },
+            reason: {
+              type: String,
+              trim: true,
+              default: "Blackout",
+            },
+          },
+        ],
         default: [],
       },
     },
@@ -134,7 +169,14 @@ turfSchema.virtual("reviews").get(function getReviewCount() {
 });
 
 turfSchema.virtual("status").get(function getStatus() {
-  return this.isApproved ? "published" : "review";
+  const moderationStatus = this.moderationStatus || (this.isApproved ? "approved" : "pending");
+  const statusMap = {
+    approved: "published",
+    pending: "review",
+    rejected: "rejected",
+    suspended: "suspended",
+  };
+  return statusMap[moderationStatus] || "review";
 });
 
 turfSchema.methods.toJSON = function toJSON() {

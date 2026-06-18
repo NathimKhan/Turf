@@ -1,71 +1,24 @@
-const { body, param } = require("express-validator");
+const { body } = require("express-validator");
 const Booking = require("../models/Booking");
 const Notification = require("../models/Notification");
 const Turf = require("../models/Turf");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
+const {
+  buildOccupancyKeys,
+  buildSlotKey,
+  calculateHours,
+  getBufferMinutes,
+  normalizeDate,
+  validateSlotRequest,
+} = require("../services/availabilityService");
+const { recordBookingConflict } = require("../services/conflictLogService");
 
-function normalizeDate(input) {
-  if (typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
-    return new Date(`${input}T00:00:00.000Z`);
-  }
-
-  const date = new Date(input);
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-
-function minutes(time) {
-  const [hours, mins] = time.split(":").map(Number);
-  return hours * 60 + mins;
-}
-
-function calculateHours(startTime, endTime) {
-  const diff = minutes(endTime) - minutes(startTime);
-
-  if (diff <= 0) {
-    const error = new Error("Slot end time must be after slot start time");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  return diff / 60;
-}
-
-function isSameUtcDate(date, compareDate) {
-  return (
-    date.getUTCFullYear() === compareDate.getUTCFullYear() &&
-    date.getUTCMonth() === compareDate.getUTCMonth() &&
-    date.getUTCDate() === compareDate.getUTCDate()
-  );
-}
-
-function isSlotAvailableInSchedule(turf, bookingDate, startTime, endTime) {
-  const blackoutDates = turf.schedule?.blackoutDates || [];
-  const isBlackoutDate = blackoutDates.some((blackoutDate) => isSameUtcDate(new Date(blackoutDate), bookingDate));
-
-  if (isBlackoutDate) {
-    return false;
-  }
-
-  const dayKeys = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-  const dayKey = dayKeys[bookingDate.getUTCDay()];
-  const ranges = turf.schedule?.weeklyAvailability?.[dayKey] || [];
-  const start = minutes(startTime);
-  const end = minutes(endTime);
-
-  return ranges.some((range) => {
-    const [rangeStart, rangeEnd] = range.split("-");
-    return start >= minutes(rangeStart) && end <= minutes(rangeEnd);
-  });
-}
-
-async function findOverlappingBooking(turfId, bookingDate, startTime, endTime) {
-  return Booking.findOne({
+async function findActiveBookings(turfId, bookingDate) {
+  return Booking.find({
     turfId,
     bookingDate,
-    bookingStatus: { $ne: "cancelled" },
-    slotStartTime: { $lt: endTime },
-    slotEndTime: { $gt: startTime },
-  });
+    bookingStatus: { $in: ["pending", "confirmed", "checked_in", "upcoming"] },
+  }).select("slotStartTime slotEndTime bookingStatus");
 }
 
 const bookingValidation = [
@@ -93,36 +46,94 @@ const createBooking = asyncHandler(async (req, res) => {
 
   const dateOnly = normalizeDate(bookingDate);
   const hoursBooked = calculateHours(slotStartTime, slotEndTime);
+  const today = normalizeDate(new Date());
 
-  if (!isSlotAvailableInSchedule(turf, dateOnly, slotStartTime, slotEndTime)) {
-    const error = new Error("Selected slot is outside turf availability");
-    error.statusCode = 409;
+  if (dateOnly < today) {
+    const error = new Error("Past dates cannot be booked");
+    error.statusCode = 400;
     throw error;
   }
 
-  const existingBooking = await findOverlappingBooking(turfId, dateOnly, slotStartTime, slotEndTime);
+  const activeBookings = await findActiveBookings(turfId, dateOnly);
+  const availability = validateSlotRequest(turf, dateOnly, slotStartTime, slotEndTime, activeBookings);
 
-  if (existingBooking) {
-    const error = new Error("Selected slot is already booked");
-    error.statusCode = 409;
+  if (!availability.available) {
+    await recordBookingConflict({
+      bookingDate: dateOnly,
+      endTime: slotEndTime,
+      reason: availability.message,
+      startTime: slotStartTime,
+      status: availability.status,
+      turfId,
+      userId: req.user._id,
+    });
+    const error = new Error(availability.message);
+    error.statusCode = availability.statusCode;
     throw error;
   }
 
-  const booking = await Booking.create({
-    userId: req.user._id,
-    turfId,
-    bookingDate: dateOnly,
-    slotStartTime,
-    slotEndTime,
-    hoursBooked,
-    totalAmount: Number((hoursBooked * turf.pricePerHour).toFixed(2)),
-  });
+  let booking;
+  try {
+    booking = await Booking.create({
+      userId: req.user._id,
+      turfId,
+      bookingDate: dateOnly,
+      slotStartTime,
+      slotEndTime,
+      hoursBooked,
+      totalAmount: Number((hoursBooked * turf.pricePerHour).toFixed(2)),
+      bookingStatus: "pending",
+      occupancyKeys: buildOccupancyKeys(turfId, dateOnly, slotStartTime, slotEndTime, getBufferMinutes(turf)),
+      slotKey: buildSlotKey(turfId, dateOnly, slotStartTime, slotEndTime),
+    });
+  } catch (error) {
+    if (error.code === 11000 && error.keyPattern?.slotKey) {
+      await recordBookingConflict({
+        bookingDate: dateOnly,
+        endTime: slotEndTime,
+        reason: "Selected slot is already booked",
+        startTime: slotStartTime,
+        status: "booked",
+        turfId,
+        userId: req.user._id,
+      });
+      error.message = "Selected slot is already booked";
+      error.statusCode = 409;
+    }
+    if (error.code === 11000 && error.keyPattern?.occupancyKeys) {
+      await recordBookingConflict({
+        bookingDate: dateOnly,
+        endTime: slotEndTime,
+        reason: "This time overlaps with another booking.",
+        startTime: slotStartTime,
+        status: "booked",
+        turfId,
+        userId: req.user._id,
+      });
+      error.message = "This time overlaps with another booking.";
+      error.statusCode = 409;
+    }
+    throw error;
+  }
 
-  await Notification.create({
-    userId: req.user._id,
-    title: "Booking created",
-    message: `${turf.name} is reserved for ${slotStartTime}-${slotEndTime}. Complete payment to confirm it.`,
-  });
+  await Notification.create([
+    {
+      userId: req.user._id,
+      title: "Booking created",
+      message: `${turf.name} is reserved for ${slotStartTime}-${slotEndTime}. Complete payment to confirm it.`,
+      metadata: { bookingId: booking._id, turfId },
+      targetUrl: `/bookings/${booking._id}`,
+      type: "booking",
+    },
+    {
+      userId: turf.ownerId,
+      title: "New booking request",
+      message: `${req.user.name} requested ${turf.name} for ${slotStartTime}-${slotEndTime}.`,
+      metadata: { bookingId: booking._id, turfId },
+      targetUrl: "/owner/bookings",
+      type: "booking",
+    },
+  ]);
 
   return successResponse(res, "Booking created", { booking }, 201);
 });
@@ -192,16 +203,97 @@ const cancelBooking = asyncHandler(async (req, res) => {
     throw error;
   }
 
+  if (booking.bookingStatus === "cancelled") {
+    return successResponse(res, "Booking already cancelled", { booking });
+  }
+
   booking.bookingStatus = "cancelled";
+  booking.occupancyKeys = [];
+  booking.slotKey = undefined;
+  booking.cancelledAt = new Date();
+  booking.cancelledBy = req.user._id;
   await booking.save();
 
   await Notification.create({
     userId: booking.userId,
     title: "Booking cancelled",
     message: `Your booking at ${booking.turfId.name} has been cancelled.`,
+    metadata: { bookingId: booking._id, turfId: booking.turfId._id || booking.turfId },
+    targetUrl: `/bookings/${booking._id}`,
+    type: "booking",
   });
 
+  if (!isOwner) {
+    await Notification.create({
+      userId: booking.turfId.ownerId,
+      title: "User cancelled a booking",
+      message: `A booking at ${booking.turfId.name} was cancelled and the slot is released.`,
+      metadata: { bookingId: booking._id, turfId: booking.turfId._id || booking.turfId },
+      targetUrl: "/owner/bookings",
+      type: "booking",
+    });
+  }
+
   return successResponse(res, "Booking cancelled", { booking });
+});
+
+const updateBookingStatus = asyncHandler(async (req, res) => {
+  const booking = await Booking.findById(req.params.id).populate("turfId", "ownerId name");
+
+  if (!booking) {
+    const error = new Error("Booking not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const isOwner = String(booking.turfId.ownerId) === String(req.user._id);
+  if (!isOwner && req.user.role !== "admin") {
+    const error = new Error("You cannot update this booking");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const nextStatus = req.body.status;
+  if (booking.bookingStatus === "cancelled" || booking.bookingStatus === "completed") {
+    const error = new Error(`A ${booking.bookingStatus} booking cannot change status`);
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const transitions = {
+    pending: ["confirmed", "cancelled"],
+    confirmed: ["checked_in", "cancelled"],
+    checked_in: ["completed"],
+    upcoming: ["confirmed", "checked_in", "cancelled"],
+  };
+  if (!transitions[booking.bookingStatus]?.includes(nextStatus)) {
+    const error = new Error(`Booking cannot move from ${booking.bookingStatus} to ${nextStatus}`);
+    error.statusCode = 409;
+    throw error;
+  }
+
+  booking.bookingStatus = nextStatus;
+  if (nextStatus === "cancelled") {
+    booking.occupancyKeys = [];
+    booking.slotKey = undefined;
+    booking.cancelledAt = new Date();
+    booking.cancelledBy = req.user._id;
+  }
+  await booking.save();
+
+  await Notification.create({
+    userId: booking.userId,
+    title: nextStatus === "checked_in" ? "Booking checked in" : `Booking ${nextStatus}`,
+    message:
+      nextStatus === "completed"
+        ? `Your booking at ${booking.turfId.name} is complete. Share a review from Booking Details.`
+        : `Your booking at ${booking.turfId.name} is now ${nextStatus.replace("_", " ")}.`,
+    metadata: { bookingId: booking._id, turfId: booking.turfId._id || booking.turfId },
+    targetUrl: `/bookings/${booking._id}`,
+    type: "booking",
+  });
+
+  return successResponse(res, "Booking status updated", { booking });
 });
 
 module.exports = {
@@ -210,4 +302,5 @@ module.exports = {
   createBooking,
   getBookingById,
   getMyBookings,
+  updateBookingStatus,
 };

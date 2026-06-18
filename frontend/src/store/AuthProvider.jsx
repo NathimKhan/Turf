@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { authService, DEMO_LOGIN_OPTIONS } from "../services/authService.js";
+import { authService } from "../services/authService.js";
 import { AuthContext } from "./authContext.js";
 import {
   clearAuth,
@@ -22,8 +22,12 @@ export function AuthProvider({ children }) {
   const user = useSelector(selectAuthUser);
 
   useEffect(() => {
-    dispatch(fetchProfile());
-  }, [dispatch]);
+    if (token) {
+      dispatch(fetchProfile());
+    } else {
+      dispatch(clearAuth());
+    }
+  }, [dispatch, token]);
 
   useEffect(() => {
     const handleUnauthorized = () => dispatch(clearAuth());
@@ -38,6 +42,11 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(
     async (details) => dispatch(registerUser(details)).unwrap(),
+    [dispatch],
+  );
+
+  const refreshProfile = useCallback(
+    async () => dispatch(fetchProfile()).unwrap(),
     [dispatch],
   );
 
@@ -57,18 +66,18 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      demoLoginOptions: DEMO_LOGIN_OPTIONS,
       hasRole,
       initialized,
       isAuthenticated,
       login,
       logout,
       register,
+      refreshProfile,
       status,
       token,
       user,
     }),
-    [hasRole, initialized, isAuthenticated, login, logout, register, status, token, user],
+    [hasRole, initialized, isAuthenticated, login, logout, refreshProfile, register, status, token, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

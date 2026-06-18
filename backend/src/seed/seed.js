@@ -1,240 +1,419 @@
 const path = require("path");
 
 const dotenvPath = path.join(__dirname, "../../.env");
-const dotenvResult = require("dotenv").config({ path: dotenvPath });
-if (dotenvResult.error) {
-  console.warn(`[env] backend/.env not loaded from ${dotenvPath}; using existing process environment.`);
-} else {
-  console.log(`[env] backend/.env loaded from ${dotenvPath}`);
-}
+require("dotenv").config({ path: dotenvPath });
 
 const connectDatabase = require("../config/database");
 const Booking = require("../models/Booking");
 const Event = require("../models/Event");
 const Notification = require("../models/Notification");
 const Payment = require("../models/Payment");
+const PlatformSetting = require("../models/PlatformSetting");
 const Review = require("../models/Review");
 const Tournament = require("../models/Tournament");
 const Turf = require("../models/Turf");
 const User = require("../models/User");
+const { buildSlotKey, normalizeDate } = require("../services/availabilityService");
 
-const sports = ["Football", "Cricket", "Badminton", "Volleyball", "Basketball"];
-const amenities = ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Seating Area"];
-const cities = [
-  { city: "Mumbai", state: "Maharashtra" },
-  { city: "Bengaluru", state: "Karnataka" },
-  { city: "Delhi", state: "Delhi" },
-  { city: "Hyderabad", state: "Telangana" },
-  { city: "Pune", state: "Maharashtra" },
-];
-const imagePool = [
-  "https://images.unsplash.com/photo-1556056504-5c7696c4c28d?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1626248801379-51a0748a5f96?auto=format&fit=crop&w=1200&q=80",
-];
+const PLATFORM_FEE_RATE = 0.1;
 
-function addDays(days) {
+function revenueSplit(amount) {
+  const platformFee = Number((Number(amount || 0) * PLATFORM_FEE_RATE).toFixed(2));
+  return {
+    ownerRevenue: Number((Number(amount || 0) - platformFee).toFixed(2)),
+    platformFee,
+    platformFeeRate: PLATFORM_FEE_RATE,
+  };
+}
+
+function requiredEnvironment(name, developmentDefault = "") {
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    if (process.env.NODE_ENV !== "production" && developmentDefault) {
+      return developmentDefault;
+    }
+    throw new Error(`${name} is required for production bootstrap`);
+  }
+
+  return value;
+}
+
+async function bootstrapPlatformOwner() {
+  const email = requiredEnvironment("ADMIN_EMAIL", "admin@turfx.com").toLowerCase();
+  const password = requiredEnvironment("ADMIN_PASSWORD", "Admin@123");
+  const name = process.env.ADMIN_NAME?.trim() || "TURFX Platform Owner";
+  let admin = await User.findOne({ email }).select("+password");
+
+  if (!admin) {
+    admin = await User.create({
+      name,
+      email,
+      password,
+      role: "admin",
+      accountStatus: "active",
+      membershipPlan: "Admin",
+    });
+    return { admin, created: true };
+  }
+
+  admin.name = name;
+  admin.role = "admin";
+  admin.accountStatus = "active";
+  admin.membershipPlan = "Admin";
+
+  if (String(process.env.ADMIN_ROTATE_PASSWORD).toLowerCase() === "true") {
+    admin.password = password;
+  }
+
+  await admin.save();
+  return { admin, created: false };
+}
+
+async function bootstrapSettings(adminId) {
+  const settings = [
+    {
+      key: "booking.service_fee_percent",
+      value: 0,
+      category: "booking",
+      description: "Platform service fee percentage applied to new bookings.",
+    },
+    {
+      key: "booking.cancellation_hours",
+      value: 2,
+      category: "booking",
+      description: "Minimum notice in hours for user booking cancellation.",
+    },
+    {
+      key: "platform.support_email",
+      value: process.env.SUPPORT_EMAIL || process.env.ADMIN_EMAIL,
+      category: "support",
+      description: "Primary support contact shown by platform workflows.",
+      isPublic: true,
+    },
+  ];
+
+  await Promise.all(
+    settings.map((setting) =>
+      PlatformSetting.findOneAndUpdate(
+        { key: setting.key },
+        { ...setting, updatedBy: adminId },
+        { upsert: true, runValidators: true },
+      ),
+    ),
+  );
+}
+
+function futureDate(days) {
   const date = new Date();
-  date.setUTCHours(0, 0, 0, 0);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date;
+  date.setDate(date.getDate() + days);
+  return normalizeDate(date);
 }
 
-function transactionId(index) {
-  return `SEED-TXN-${String(index + 1).padStart(4, "0")}`;
+async function ensureDemoUser({ email, password, ...updates }) {
+  let user = await User.findOne({ email }).select("+password");
+
+  if (!user) {
+    user = await User.create({
+      ...updates,
+      email,
+      password,
+    });
+    return user;
+  }
+
+  Object.entries(updates).forEach(([key, value]) => {
+    user[key] = value;
+  });
+
+  if (String(process.env.DEMO_ROTATE_PASSWORD || "true").toLowerCase() === "true") {
+    user.password = password;
+  }
+
+  await user.save();
+  return user;
 }
 
-async function clearDatabase() {
-  await Promise.all([
-    Booking.deleteMany(),
-    Event.deleteMany(),
-    Notification.deleteMany(),
-    Payment.deleteMany(),
-    Review.deleteMany(),
-    Tournament.deleteMany(),
-    Turf.deleteMany(),
-    User.deleteMany(),
-  ]);
+async function upsertByQuery(Model, query, payload) {
+  return Model.findOneAndUpdate(query, payload, {
+    new: true,
+    runValidators: true,
+    setDefaultsOnInsert: true,
+    upsert: true,
+  });
+}
+
+async function bootstrapDemoData() {
+  if (process.env.NODE_ENV === "production" && String(process.env.DEMO_SEED).toLowerCase() !== "true") {
+    return { created: false, skipped: true };
+  }
+
+  const admin = await ensureDemoUser({
+    name: "TURFX Platform Owner",
+    email: "admin@turfx.com",
+    password: "Admin@123",
+    role: "admin",
+    accountStatus: "active",
+    membershipPlan: "Admin",
+  });
+  const owner = await ensureDemoUser({
+    name: "Priya Menon",
+    businessName: "TURFX Pro Venues",
+    address: "12 Arena Road, Mumbai",
+    phone: "9876543210",
+    email: "owner1@turfx.com",
+    password: "Owner@123",
+    role: "owner",
+    accountStatus: "active",
+    membershipPlan: "Venue Pro",
+    approvedAt: new Date(),
+    approvedBy: admin._id,
+  });
+  const user = await ensureDemoUser({
+    name: "Alex Thompson",
+    email: "user1@turfx.com",
+    password: "User@123",
+    phone: "9123456780",
+    bio: "Weekend football captain and TURFX Gold member.",
+    role: "user",
+    accountStatus: "active",
+    membershipPlan: "Gold",
+    walletBalance: 2500,
+  });
+
+  const demoTurfs = [
+    {
+      name: "The Stadium",
+      description: "Premium football turf with broadcast lighting, seating, washrooms, and digital check-in.",
+      location: "Bandra West",
+      address: "20 Stadium Avenue",
+      city: "Mumbai",
+      state: "Maharashtra",
+      sportsSupported: ["Football"],
+      amenities: ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Seating Area"],
+      pricePerHour: 1800,
+      rating: 4.8,
+      totalReviews: 18,
+    },
+    {
+      name: "Skyline Cricket Box",
+      description: "Compact cricket box for evening leagues, training sessions, and group bookings.",
+      location: "Andheri East",
+      address: "7 Skyline Park",
+      city: "Mumbai",
+      state: "Maharashtra",
+      sportsSupported: ["Cricket"],
+      amenities: ["Parking", "Drinking Water", "Flood Lights"],
+      pricePerHour: 1400,
+      rating: 4.6,
+      totalReviews: 11,
+    },
+    {
+      name: "Ace Indoor Arena",
+      description: "Indoor badminton and basketball venue with recovery zones and member priority access.",
+      location: "Koregaon Park",
+      address: "5 Ace Street",
+      city: "Pune",
+      state: "Maharashtra",
+      sportsSupported: ["Badminton", "Basketball"],
+      amenities: ["Washroom", "Drinking Water", "Seating Area"],
+      pricePerHour: 950,
+      rating: 4.7,
+      totalReviews: 14,
+    },
+  ];
+
+  const turfs = [];
+  for (const turf of demoTurfs) {
+    turfs.push(
+      await upsertByQuery(
+        Turf,
+        { name: turf.name, ownerId: owner._id },
+        {
+          ...turf,
+          ownerId: owner._id,
+          isApproved: true,
+          moderationStatus: "approved",
+          approvedAt: new Date(),
+          approvedBy: admin._id,
+          schedule: {
+            slotMinutes: 60,
+            weeklyAvailability: {
+              monday: ["06:00-23:00"],
+              tuesday: ["06:00-23:00"],
+              wednesday: ["06:00-23:00"],
+              thursday: ["06:00-23:00"],
+              friday: ["06:00-23:00"],
+              saturday: ["06:00-23:00"],
+              sunday: ["06:00-23:00"],
+            },
+            blackoutDates: [],
+          },
+        },
+      ),
+    );
+  }
+
+  user.favorites = [...new Set([...(user.favorites || []).map(String), String(turfs[0]._id)])];
+  await user.save();
+
+  const tomorrow = futureDate(1);
+  const completedDate = futureDate(-2);
+  const confirmedBooking = await upsertByQuery(
+    Booking,
+    {
+      userId: user._id,
+      turfId: turfs[0]._id,
+      bookingDate: tomorrow,
+      slotStartTime: "18:00",
+    },
+    {
+      userId: user._id,
+      turfId: turfs[0]._id,
+      bookingDate: tomorrow,
+      slotStartTime: "18:00",
+      slotEndTime: "19:00",
+      hoursBooked: 1,
+      totalAmount: turfs[0].pricePerHour,
+      paymentStatus: "paid",
+      bookingStatus: "confirmed",
+      slotKey: buildSlotKey(turfs[0]._id, tomorrow, "18:00", "19:00"),
+    },
+  );
+  const completedBooking = await upsertByQuery(
+    Booking,
+    {
+      userId: user._id,
+      turfId: turfs[1]._id,
+      bookingDate: completedDate,
+      slotStartTime: "20:00",
+    },
+    {
+      userId: user._id,
+      turfId: turfs[1]._id,
+      bookingDate: completedDate,
+      slotStartTime: "20:00",
+      slotEndTime: "21:00",
+      hoursBooked: 1,
+      totalAmount: turfs[1].pricePerHour,
+      paymentStatus: "paid",
+      bookingStatus: "completed",
+    },
+  );
+
+  for (const { booking, turf } of [
+    { booking: confirmedBooking, turf: turfs[0] },
+    { booking: completedBooking, turf: turfs[1] },
+  ]) {
+    const split = revenueSplit(booking.totalAmount);
+    await upsertByQuery(
+      Payment,
+      { bookingId: booking._id, paymentStatus: "paid" },
+      {
+        userId: user._id,
+        bookingId: booking._id,
+        ownerId: turf.ownerId,
+        venueId: turf._id,
+        amount: booking.totalAmount,
+        ...split,
+        paymentMethod: "Card",
+        paymentStatus: "paid",
+        transactionId: `DEMO-${String(booking._id).slice(-8).toUpperCase()}`,
+        provider: "mock",
+        providerReference: "demo-seed",
+        paidAt: new Date(),
+      },
+    );
+  }
+
+  await upsertByQuery(
+    Review,
+    { userId: user._id, turfId: turfs[1]._id },
+    {
+      userId: user._id,
+      turfId: turfs[1]._id,
+      rating: 5,
+      comment: "Smooth check-in, bright lighting, and a great post-match experience.",
+    },
+  );
+
+  await upsertByQuery(
+    Event,
+    { title: "Corporate Athletics Challenge" },
+    {
+      title: "Corporate Athletics Challenge",
+      description: "A high-energy team challenge with mock ticketing and athlete check-in.",
+      eventDate: futureDate(14),
+      location: "Mumbai Sports District",
+      entryFee: 499,
+      maxParticipants: 80,
+      currentParticipants: 32,
+      createdBy: admin._id,
+    },
+  );
+  await upsertByQuery(
+    Tournament,
+    { title: "TURFX Pro Elite Cup" },
+    {
+      title: "TURFX Pro Elite Cup",
+      description: "Portfolio-ready competitive bracket with prize pool, participants, and registration CTA.",
+      sport: "Football",
+      prizePool: 75000,
+      startDate: futureDate(21),
+      endDate: futureDate(23),
+      participants: [user._id],
+      createdBy: admin._id,
+    },
+  );
+
+  const notificationTemplates = [
+    [user._id, "Welcome to TURFX Gold", "Your Gold benefits are active for priority booking and rewards."],
+    [user._id, "Upcoming booking confirmed", `${turfs[0].name} is confirmed for tomorrow at 18:00.`],
+    [owner._id, "Venue portfolio ready", "Your approved demo venues are live for bookings."],
+    [admin._id, "Prototype data ready", "Demo accounts, venues, events, and bookings are available."],
+  ];
+
+  for (const [userId, title, message] of notificationTemplates) {
+    await upsertByQuery(Notification, { userId, title }, { userId, title, message, isRead: false });
+  }
+
+  return {
+    admin,
+    created: true,
+    owner,
+    turfs,
+    user,
+  };
 }
 
 async function seed() {
   await connectDatabase();
-  await clearDatabase();
+  const { admin, created } = await bootstrapPlatformOwner();
+  await bootstrapSettings(admin._id);
+  const demo = await bootstrapDemoData();
 
-  const users = await User.create(
-    Array.from({ length: 10 }).map((_, index) => ({
-      name: `Demo User ${index + 1}`,
-      email: `user${index + 1}@turfx.com`,
-      phone: `90000000${String(index + 1).padStart(2, "0")}`,
-      password: "User@123",
-      role: "user",
-      walletBalance: 500 + index * 100,
-      membershipPlan: index % 3 === 0 ? "Gold" : index % 3 === 1 ? "Elite" : "Starter",
-    })),
-  );
-
-  const owners = await User.create(
-    Array.from({ length: 5 }).map((_, index) => ({
-      name: `Demo Owner ${index + 1}`,
-      email: `owner${index + 1}@turfx.com`,
-      phone: `91000000${String(index + 1).padStart(2, "0")}`,
-      password: "Owner@123",
-      role: "owner",
-      membershipPlan: "Venue Pro",
-    })),
-  );
-
-  const admin = await User.create({
-    name: "Super Admin",
-    email: "admin@turfx.com",
-    phone: "9999999999",
-    password: "Admin@123",
-    role: "admin",
-    membershipPlan: "Admin",
-  });
-
-  const turfs = await Turf.create(
-    Array.from({ length: 20 }).map((_, index) => {
-      const place = cities[index % cities.length];
-      const primarySport = sports[index % sports.length];
-      const secondarySport = sports[(index + 2) % sports.length];
-
-      return {
-        name: `${primarySport} Arena ${index + 1}`,
-        description: `Premium ${primarySport.toLowerCase()} turf with well-maintained playing surface, lighting, seating, and clean support facilities.`,
-        location: `${place.city} Sports District ${index + 1}`,
-        address: `${100 + index}, Turf Street, ${place.city}`,
-        city: place.city,
-        state: place.state,
-        sportsSupported: [primarySport, secondarySport],
-        pricePerHour: 700 + (index % 6) * 150,
-        images: [imagePool[index % imagePool.length], imagePool[(index + 1) % imagePool.length]],
-        amenities: amenities.filter((_, amenityIndex) => (amenityIndex + index) % 2 === 0).slice(0, 4),
-        ownerId: owners[index % owners.length]._id,
-        isApproved: true,
-      };
-    }),
-  );
-
-  const slotPairs = [
-    ["06:00", "07:00"],
-    ["07:00", "08:00"],
-    ["08:00", "09:00"],
-    ["17:00", "18:00"],
-    ["18:00", "19:00"],
-    ["19:00", "20:00"],
-    ["20:00", "21:00"],
-    ["21:00", "22:00"],
-    ["22:00", "23:00"],
-    ["16:00", "17:00"],
-  ];
-
-  const bookingPayloads = Array.from({ length: 50 }).map((_, index) => {
-    const turf = turfs[index % turfs.length];
-    const [slotStartTime, slotEndTime] = slotPairs[index % slotPairs.length];
-
-    return {
-      userId: users[index % users.length]._id,
-      turfId: turf._id,
-      bookingDate: addDays(1 + Math.floor(index / 10)),
-      slotStartTime,
-      slotEndTime,
-      hoursBooked: 1,
-      totalAmount: turf.pricePerHour,
-      paymentStatus: index % 3 === 0 ? "pending" : "paid",
-      bookingStatus: index % 11 === 0 ? "completed" : "upcoming",
-    };
-  });
-
-  const bookings = await Booking.create(bookingPayloads);
-
-  const paidBookings = bookings.filter((booking) => booking.paymentStatus === "paid");
-  await Payment.create(
-    paidBookings.map((booking, index) => ({
-      userId: booking.userId,
-      bookingId: booking._id,
-      amount: booking.totalAmount,
-      paymentMethod: ["UPI", "Card", "Cash"][index % 3],
-      paymentStatus: "paid",
-      transactionId: transactionId(index),
-    })),
-  );
-
-  const reviews = await Review.create(
-    Array.from({ length: 20 }).map((_, index) => ({
-      userId: users[index % users.length]._id,
-      turfId: turfs[index]._id,
-      rating: 4 + (index % 2),
-      comment: `Great playing experience, clean facility, and smooth booking process. Visit ${index + 1} was worth it.`,
-    })),
-  );
-
-  await Promise.all(
-    turfs.map(async (turf) => {
-      const turfReviews = reviews.filter((review) => String(review.turfId) === String(turf._id));
-      if (!turfReviews.length) return;
-
-      turf.totalReviews = turfReviews.length;
-      turf.rating = Number((turfReviews.reduce((sum, review) => sum + review.rating, 0) / turfReviews.length).toFixed(1));
-      await turf.save();
-    }),
-  );
-
-  await Event.create(
-    Array.from({ length: 10 }).map((_, index) => ({
-      title: `TURFX Community Event ${index + 1}`,
-      description: "A friendly sports event for local athletes, teams, and venue members.",
-      eventDate: addDays(10 + index * 3),
-      location: `${cities[index % cities.length].city} Sports Hub`,
-      entryFee: 250 + index * 50,
-      maxParticipants: 40 + index * 10,
-      currentParticipants: 10 + index,
-      createdBy: owners[index % owners.length]._id,
-    })),
-  );
-
-  await Tournament.create(
-    Array.from({ length: 10 }).map((_, index) => ({
-      title: `${sports[index % sports.length]} Championship ${index + 1}`,
-      description: "Competitive tournament with knockout rounds, leaderboard tracking, and prize distribution.",
-      sport: sports[index % sports.length],
-      prizePool: 10000 + index * 2500,
-      startDate: addDays(20 + index * 4),
-      endDate: addDays(22 + index * 4),
-      participants: users.slice(0, 4 + (index % 4)).map((user) => user._id),
-      createdBy: index % 2 === 0 ? admin._id : owners[index % owners.length]._id,
-    })),
-  );
-
-  await Notification.create([
-    ...users.map((user, index) => ({
-      userId: user._id,
-      title: "Welcome to TURFX",
-      message: `Your demo user account is ready. Use user${index + 1}@turfx.com with password User@123.`,
-    })),
-    ...owners.map((owner, index) => ({
-      userId: owner._id,
-      title: "Owner workspace ready",
-      message: `Your demo owner account is ready. Use owner${index + 1}@turfx.com with password Owner@123.`,
-    })),
-    {
-      userId: admin._id,
-      title: "Admin workspace ready",
-      message: "Use admin@turfx.com with password Admin@123.",
-    },
-  ]);
-
-  console.log("Seed completed");
-  console.log("Admin: admin@turfx.com / Admin@123");
-  console.log("Owner: owner1@turfx.com / Owner@123");
-  console.log("User: user1@turfx.com / User@123");
-
-  process.exit(0);
+  console.log(`Platform Owner ${created ? "created" : "verified"}: ${admin.email}`);
+  console.log("Baseline platform settings are ready.");
+  if (demo.skipped) {
+    console.log("Demo prototype data skipped in production. Set DEMO_SEED=true to enable it.");
+  } else {
+    console.log("Demo prototype accounts ready: admin@turfx.com, owner1@turfx.com, user1@turfx.com");
+  }
+  return { admin, created, demo };
 }
 
-seed().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (require.main === module) {
+  seed()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error(error.message);
+      process.exit(1);
+    });
+}
+
+module.exports = {
+  bootstrapDemoData,
+  bootstrapPlatformOwner,
+  bootstrapSettings,
+  seed,
+};

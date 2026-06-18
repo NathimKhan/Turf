@@ -41,15 +41,30 @@ const bookingSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed"],
+      enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
       index: true,
     },
     bookingStatus: {
       type: String,
-      enum: ["upcoming", "completed", "cancelled"],
-      default: "upcoming",
+      enum: ["pending", "confirmed", "checked_in", "cancelled", "completed", "upcoming"],
+      default: "pending",
       index: true,
+    },
+    slotKey: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    occupancyKeys: {
+      type: [String],
+      default: [],
+      select: false,
+    },
+    cancelledAt: Date,
+    cancelledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   {
@@ -60,6 +75,15 @@ const bookingSchema = new mongoose.Schema(
 );
 
 bookingSchema.index({ turfId: 1, bookingDate: 1, slotStartTime: 1, slotEndTime: 1, bookingStatus: 1 });
+bookingSchema.index(
+  { occupancyKeys: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      occupancyKeys: { $type: "string" },
+    },
+  },
+);
 
 bookingSchema.virtual("athleteId").get(function getAthleteId() {
   return this.userId;
@@ -77,6 +101,9 @@ bookingSchema.virtual("status").get(function getStatus() {
   const map = {
     cancelled: "cancelled",
     completed: "completed",
+    confirmed: "confirmed",
+    checked_in: "checked_in",
+    pending: "pending",
     upcoming: this.paymentStatus === "paid" ? "confirmed" : "pending",
   };
   return map[this.bookingStatus] || this.bookingStatus;

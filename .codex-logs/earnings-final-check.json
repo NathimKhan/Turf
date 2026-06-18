@@ -1,0 +1,13 @@
+{
+  "desktop": {
+    "url": "http://localhost:5174/owner/revenue",
+    "hasSixMonthLabels": true,
+    "hasRevenueWidgets": true,
+    "hasTable": true,
+    "chartRect": {
+      "width": 559,
+      "height": 256
+    }
+  },
+  "errors": []
+}

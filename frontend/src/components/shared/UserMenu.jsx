@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { roleLabels } from "../../constants/auth.js";
 import { authService } from "../../services/authService.js";
 import { useAuth } from "../../store/authContext.js";
+import { handleImageError } from "../../utils/media.js";
 
 const menuItems = {
   admin: [
@@ -14,14 +15,22 @@ const menuItems = {
     { label: "Bookings", href: "/admin/bookings" },
     { label: "Revenue", href: "/admin/revenue" },
     { label: "Analytics", href: "/admin/analytics" },
+    { label: "Notifications", href: "/admin/notifications" },
+    { label: "Events", href: "/admin/events" },
+    { label: "Tournaments", href: "/admin/tournaments" },
+    { label: "Reports", href: "/admin/reports" },
     { label: "Settings", href: "/admin/settings" },
   ],
   owner: [
     { label: "Dashboard", href: "/owner/dashboard" },
     { label: "My Venues", href: "/owner/turfs" },
+    { label: "Availability", href: "/owner/slots" },
+    { label: "Calendar", href: "/owner/calendar" },
     { label: "Bookings", href: "/owner/bookings" },
     { label: "Earnings", href: "/owner/revenue" },
     { label: "Reviews", href: "/owner/reviews" },
+    { label: "Analytics", href: "/owner/analytics" },
+    { label: "Athletes", href: "/owner/crm" },
     { label: "Profile", href: "/profile" },
   ],
   user: [
@@ -79,7 +88,7 @@ export function UserMenu() {
         type="button"
       >
         {user.profileImage ? (
-          <img alt="" className="h-8 w-8 rounded-full object-cover" src={user.profileImage} />
+          <img alt="" className="h-8 w-8 rounded-full object-cover" onError={handleImageError} src={user.profileImage} />
         ) : (
           <span className="grid h-8 w-8 place-items-center rounded-full bg-primary text-white">{initial}</span>
         )}

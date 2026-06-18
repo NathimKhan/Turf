@@ -9,6 +9,7 @@ function errorMessage(error) {
 function authPayload(response) {
   const payload = response.data?.data || {};
   return {
+    message: response.data?.message || "",
     token: payload.token || authService.getStoredToken(),
     user: authService.toPublicUser(payload.user),
   };
@@ -27,8 +28,8 @@ export const fetchProfile = createAsyncThunk(
   },
   {
     condition: (_, { getState }) => {
-      const { initialized, status } = getState().auth;
-      return !initialized && status !== "checking";
+      const { status } = getState().auth;
+      return status !== "checking";
     },
   },
 );
@@ -45,8 +46,9 @@ export const loginUser = createAsyncThunk("auth/login", async (credentials, { re
 
 export const registerUser = createAsyncThunk("auth/register", async (details, { rejectWithValue }) => {
   try {
-    const session = authPayload(await authApi.register(details));
-    authService.persistSession(session);
+    const request = details.role === "owner" ? authApi.registerOwner(details) : authApi.register(details);
+    const session = authPayload(await request);
+    if (session.token) authService.persistSession(session);
     return session;
   } catch (error) {
     return rejectWithValue(errorMessage(error));
@@ -125,8 +127,8 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.initialized = true;
         state.status = "idle";
-        state.token = action.payload.token;
-        state.user = action.payload.user;
+        state.token = action.payload.token || null;
+        state.user = action.payload.token ? action.payload.user : null;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.error = action.payload;

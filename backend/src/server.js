@@ -3,6 +3,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const express = require("express");
 const helmet = require("helmet");
+const http = require("http");
 const morgan = require("morgan");
 const swaggerUi = require("swagger-ui-express");
 
@@ -29,8 +30,25 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const favoriteRoutes = require("./routes/favoriteRoutes");
+const {
+  apiLimiter,
+  rejectUnsafeKeys,
+} = require("./middleware/securityMiddleware");
+
+function validateProductionEnvironment() {
+  if (process.env.NODE_ENV !== "production") return;
+
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error("JWT_SECRET must be at least 32 characters in production.");
+  }
+}
 
 const app = express();
+
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
   .split(",")
@@ -49,7 +67,9 @@ app.use(
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS"));
+      const error = new Error("Not allowed by CORS");
+      error.statusCode = 403;
+      return callback(error);
     },
     credentials: true,
   }),
@@ -59,6 +79,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/api", apiLimiter);
+app.use("/api", rejectUnsafeKeys);
 
 app.get("/", (req, res) => {
   res.json({
@@ -96,21 +118,43 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/favorites", favoriteRoutes);
 
 app.use(notFound);
 app.use(errorMiddleware);
 
 const port = process.env.PORT || 5000;
 
+function explainListenFailure(error) {
+  if (error.code === "EADDRINUSE") {
+    console.error(`[server] Port ${port} is already in use.`);
+    console.error("[server] Another TURFX backend/dev process is probably still running.");
+    console.error("[server] Stop the existing process, then run `npm run dev` again.");
+    return;
+  }
+
+  console.error(`Failed to start server: ${error.message}`);
+}
+
+function listen() {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(app);
+
+    server.once("error", reject);
+    server.listen(port, () => {
+      server.off("error", reject);
+      console.log(`TURFX API listening on port ${port}`);
+      resolve(server);
+    });
+  });
+}
+
 if (process.env.NODE_ENV !== "test") {
+  validateProductionEnvironment();
   connectDatabase()
-    .then(() => {
-      app.listen(port, () => {
-        console.log(`TURFX API listening on port ${port}`);
-      });
-    })
+    .then(listen)
     .catch((error) => {
-      console.error(`Failed to start server: ${error.message}`);
+      explainListenFailure(error);
       process.exit(1);
     });
 }

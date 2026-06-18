@@ -1,0 +1,258 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/components/shared/ChartPanel.jsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=fec29364"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+let prevRefreshReg;
+let prevRefreshSig;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  prevRefreshReg = window.$RefreshReg$;
+  prevRefreshSig = window.$RefreshSig$;
+  window.$RefreshReg$ = RefreshRuntime.getRefreshReg("C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx");
+  window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
+}
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from "/node_modules/.vite/deps/recharts.js?v=fec29364";
+import { Card, CardContent } from "/src/components/ui/card.jsx";
+const chartColors = ["#2563EB", "#06B6D4", "#22C55E", "#F59E0B"];
+export function ChartPanel({
+  title,
+  subtitle,
+  data,
+  type = "area",
+  dataKey = "revenue",
+  emptyTitle = "Your venues are ready for bookings.",
+  emptySubtitle = "Expected revenue and booking insights will appear as activity builds."
+}) {
+  const hasData = Boolean(data?.length);
+  return /* @__PURE__ */ jsxDEV(Card, { className: hasData ? "min-h-[320px]" : "", children: /* @__PURE__ */ jsxDEV(CardContent, { children: [
+    /* @__PURE__ */ jsxDEV("div", { className: "mb-6 flex items-start justify-between gap-4", children: /* @__PURE__ */ jsxDEV("div", { children: [
+      /* @__PURE__ */ jsxDEV("h3", { className: "text-2xl font-black text-ink", children: title }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 56,
+        columnNumber: 13
+      }, this),
+      subtitle && /* @__PURE__ */ jsxDEV("p", { className: "mt-1 text-sm text-ink-muted", children: subtitle }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 57,
+        columnNumber: 26
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 55,
+      columnNumber: 11
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 54,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ jsxDEV("div", { className: hasData ? "h-64" : "", children: !hasData ? /* @__PURE__ */ jsxDEV("div", { className: "grid place-items-center rounded-xl bg-surface-low px-6 py-8 text-center", children: /* @__PURE__ */ jsxDEV("div", { children: [
+      /* @__PURE__ */ jsxDEV("p", { className: "font-black text-ink", children: emptyTitle }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 64,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV("p", { className: "mt-1 text-sm text-ink-muted", children: emptySubtitle }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 65,
+        columnNumber: 17
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 63,
+      columnNumber: 15
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 62,
+      columnNumber: 11
+    }, this) : /* @__PURE__ */ jsxDEV(ResponsiveContainer, { height: "100%", width: "100%", children: type === "bar" ? /* @__PURE__ */ jsxDEV(BarChart, { data, children: [
+      /* @__PURE__ */ jsxDEV(CartesianGrid, { stroke: "#E2E8F0", strokeDasharray: "3 3", vertical: false }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 72,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(XAxis, { dataKey: "name", stroke: "#64748B" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 73,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(YAxis, { stroke: "#64748B" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 74,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(Tooltip, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 75,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(Bar, { dataKey, fill: "#2563EB", radius: [8, 8, 0, 0] }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 76,
+        columnNumber: 17
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 71,
+      columnNumber: 13
+    }, this) : type === "line" ? /* @__PURE__ */ jsxDEV(LineChart, { data, children: [
+      /* @__PURE__ */ jsxDEV(CartesianGrid, { stroke: "#E2E8F0", strokeDasharray: "3 3", vertical: false }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 80,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(XAxis, { dataKey: "name", stroke: "#64748B" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 81,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(YAxis, { stroke: "#64748B" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 82,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(Tooltip, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 83,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(Line, { dataKey, dot: { r: 4 }, stroke: "#2563EB", strokeWidth: 3, type: "monotone" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 84,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(Line, { dataKey: "previous", stroke: "#94A3B8", strokeDasharray: "5 5", strokeWidth: 2, type: "monotone" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 85,
+        columnNumber: 17
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 79,
+      columnNumber: 13
+    }, this) : type === "pie" ? /* @__PURE__ */ jsxDEV(PieChart, { children: [
+      /* @__PURE__ */ jsxDEV(Pie, { data, dataKey: "value", innerRadius: 58, outerRadius: 90, paddingAngle: 4, children: data.map(
+        (entry, index) => /* @__PURE__ */ jsxDEV(Cell, { fill: chartColors[index % chartColors.length] }, entry.name, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+          lineNumber: 91,
+          columnNumber: 17
+        }, this)
+      ) }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 89,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(Tooltip, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 94,
+        columnNumber: 17
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 88,
+      columnNumber: 13
+    }, this) : /* @__PURE__ */ jsxDEV(AreaChart, { data, children: [
+      /* @__PURE__ */ jsxDEV("defs", { children: /* @__PURE__ */ jsxDEV("linearGradient", { id: "revenueFill", x1: "0", x2: "0", y1: "0", y2: "1", children: [
+        /* @__PURE__ */ jsxDEV("stop", { offset: "5%", stopColor: "#2563EB", stopOpacity: 0.35 }, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+          lineNumber: 100,
+          columnNumber: 21
+        }, this),
+        /* @__PURE__ */ jsxDEV("stop", { offset: "95%", stopColor: "#2563EB", stopOpacity: 0 }, void 0, false, {
+          fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+          lineNumber: 101,
+          columnNumber: 21
+        }, this)
+      ] }, void 0, true, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 99,
+        columnNumber: 19
+      }, this) }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 98,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(CartesianGrid, { stroke: "#E2E8F0", strokeDasharray: "3 3", vertical: false }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 104,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(XAxis, { dataKey: "name", stroke: "#64748B" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 105,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(YAxis, { stroke: "#64748B" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 106,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(Tooltip, {}, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 107,
+        columnNumber: 17
+      }, this),
+      /* @__PURE__ */ jsxDEV(Area, { dataKey, fill: "url(#revenueFill)", stroke: "#2563EB", strokeWidth: 3, type: "monotone" }, void 0, false, {
+        fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+        lineNumber: 108,
+        columnNumber: 17
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 97,
+      columnNumber: 13
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 69,
+      columnNumber: 11
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+      lineNumber: 60,
+      columnNumber: 9
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+    lineNumber: 53,
+    columnNumber: 7
+  }, this) }, void 0, false, {
+    fileName: "C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx",
+    lineNumber: 52,
+    columnNumber: 5
+  }, this);
+}
+_c = ChartPanel;
+var _c;
+$RefreshReg$(_c, "ChartPanel");
+if (import.meta.hot && !inWebWorker) {
+  window.$RefreshReg$ = prevRefreshReg;
+  window.$RefreshSig$ = prevRefreshSig;
+}
+if (import.meta.hot && !inWebWorker) {
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/nathi/OneDrive/Desktop/Turf/frontend/src/components/shared/ChartPanel.jsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+
+//# sourceMappingURL=data:application/json;base64,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QUFVLGlCQUFnQixPQUFNLFVBQVUsU0FBaEU7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUFzRTtBQUFBLE1BQ3RFLHVCQUFDLFNBQU0sU0FBUSxRQUFPLFFBQU8sYUFBN0I7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUFzQztBQUFBLE1BQ3RDLHVCQUFDLFNBQU0sUUFBTyxhQUFkO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBdUI7QUFBQSxNQUN2Qix1QkFBQyxhQUFEO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBUTtBQUFBLE1BQ1IsdUJBQUMsUUFBSyxTQUFrQixNQUFLLHFCQUFvQixRQUFPLFdBQVUsYUFBYSxHQUFHLE1BQUssY0FBdkY7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUFpRztBQUFBLFNBWG5HO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FZQSxLQXhDRjtBQUFBO0FBQUE7QUFBQTtBQUFBLFdBMENBLEtBbkRKO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FxREE7QUFBQSxPQTVERjtBQUFBO0FBQUE7QUFBQTtBQUFBLFNBNkRBLEtBOURGO0FBQUE7QUFBQTtBQUFBO0FBQUEsU0ErREE7QUFFSjtBQUFDQyxLQTdFZWhCO0FBQVUsSUFBQWdCO0FBQUEsYUFBQUEsSUFBQSIsIm5hbWVzIjpbIkFyZWEiLCJBcmVhQ2hhcnQiLCJCYXIiLCJCYXJDaGFydCIsIkNhcnRlc2lhbkdyaWQiLCJDZWxsIiwiTGluZSIsIkxpbmVDaGFydCIsIlBpZSIsIlBpZUNoYXJ0IiwiUmVzcG9uc2l2ZUNvbnRhaW5lciIsIlRvb2x0aXAiLCJYQXhpcyIsIllBeGlzIiwiQ2FyZCIsIkNhcmRDb250ZW50IiwiY2hhcnRDb2xvcnMiLCJDaGFydFBhbmVsIiwidGl0bGUiLCJzdWJ0aXRsZSIsImRhdGEiLCJ0eXBlIiwiZGF0YUtleSIsImVtcHR5VGl0bGUiLCJlbXB0eVN1YnRpdGxlIiwiaGFzRGF0YSIsIkJvb2xlYW4iLCJsZW5ndGgiLCJyIiwibWFwIiwiZW50cnkiLCJpbmRleCIsIm5hbWUiLCJfYyJdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJDaGFydFBhbmVsLmpzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge1xuICBBcmVhLFxuICBBcmVhQ2hhcnQsXG4gIEJhcixcbiAgQmFyQ2hhcnQsXG4gIENhcnRlc2lhbkdyaWQsXG4gIENlbGwsXG4gIExpbmUsXG4gIExpbmVDaGFydCxcbiAgUGllLFxuICBQaWVDaGFydCxcbiAgUmVzcG9uc2l2ZUNvbnRhaW5lcixcbiAgVG9vbHRpcCxcbiAgWEF4aXMsXG4gIFlBeGlzLFxufSBmcm9tIFwicmVjaGFydHNcIjtcbmltcG9ydCB7IENhcmQsIENhcmRDb250ZW50IH0gZnJvbSBcIi4uL3VpL2NhcmQuanN4XCI7XG5cbmNvbnN0IGNoYXJ0Q29sb3JzID0gW1wiIzI1NjNFQlwiLCBcIiMwNkI2RDRcIiwgXCIjMjJDNTVFXCIsIFwiI0Y1OUUwQlwiXTtcblxuZXhwb3J0IGZ1bmN0aW9uIENoYXJ0UGFuZWwoe1xuICB0aXRsZSxcbiAgc3VidGl0bGUsXG4gIGRhdGEsXG4gIHR5cGUgPSBcImFyZWFcIixcbiAgZGF0YUtleSA9IFwicmV2ZW51ZVwiLFxuICBlbXB0eVRpdGxlID0gXCJZb3VyIHZlbnVlcyBhcmUgcmVhZHkgZm9yIGJvb2tpbmdzLlwiLFxuICBlbXB0eVN1YnRpdGxlID0gXCJFeHBlY3RlZCByZXZlbnVlIGFuZCBib29raW5nIGluc2lnaHRzIHdpbGwgYXBwZWFyIGFzIGFjdGl2aXR5IGJ1aWxkcy5cIixcbn0pIHtcbiAgY29uc3QgaGFzRGF0YSA9IEJvb2xlYW4oZGF0YT8ubGVuZ3RoKTtcblxuICByZXR1cm4gKFxuICAgIDxDYXJkIGNsYXNzTmFtZT17aGFzRGF0YSA/IFwibWluLWgtWzMyMHB4XVwiIDogXCJcIn0+XG4gICAgICA8Q2FyZENvbnRlbnQ+XG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwibWItNiBmbGV4IGl0ZW1zLXN0YXJ0IGp1c3RpZnktYmV0d2VlbiBnYXAtNFwiPlxuICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICA8aDMgY2xhc3NOYW1lPVwidGV4dC0yeGwgZm9udC1ibGFjayB0ZXh0LWlua1wiPnt0aXRsZX08L2gzPlxuICAgICAgICAgICAge3N1YnRpdGxlICYmIDxwIGNsYXNzTmFtZT1cIm10LTEgdGV4dC1zbSB0ZXh0LWluay1tdXRlZFwiPntzdWJ0aXRsZX08L3A+fVxuICAgICAgICAgIDwvZGl2PlxuICAgICAgICA8L2Rpdj5cbiAgICAgICAgPGRpdiBjbGFzc05hbWU9e2hhc0RhdGEgPyBcImgtNjRcIiA6IFwiXCJ9PlxuICAgICAgICAgIHshaGFzRGF0YSA/IChcbiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZ3JpZCBwbGFjZS1pdGVtcy1jZW50ZXIgcm91bmRlZC14bCBiZy1zdXJmYWNlLWxvdyBweC02IHB5LTggdGV4dC1jZW50ZXJcIj5cbiAgICAgICAgICAgICAgPGRpdj5cbiAgICAgICAgICAgICAgICA8cCBjbGFzc05hbWU9XCJmb250LWJsYWNrIHRleHQtaW5rXCI+e2VtcHR5VGl0bGV9PC9wPlxuICAgICAgICAgICAgICAgIDxwIGNsYXNzTmFtZT1cIm10LTEgdGV4dC1zbSB0ZXh0LWluay1tdXRlZFwiPntlbXB0eVN1YnRpdGxlfTwvcD5cbiAgICAgICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICApIDogKFxuICAgICAgICAgICAgPFJlc3BvbnNpdmVDb250YWluZXIgaGVpZ2h0PVwiMTAwJVwiIHdpZHRoPVwiMTAwJVwiPlxuICAgICAgICAgICAge3R5cGUgPT09IFwiYmFyXCIgPyAoXG4gICAgICAgICAgICAgIDxCYXJDaGFydCBkYXRhPXtkYXRhfT5cbiAgICAgICAgICAgICAgICA8Q2FydGVzaWFuR3JpZCBzdHJva2U9XCIjRTJFOEYwXCIgc3Ryb2tlRGFzaGFycmF5PVwiMyAzXCIgdmVydGljYWw9e2ZhbHNlfSAvPlxuICAgICAgICAgICAgICAgIDxYQXhpcyBkYXRhS2V5PVwibmFtZVwiIHN0cm9rZT1cIiM2NDc0OEJcIiAvPlxuICAgICAgICAgICAgICAgIDxZQXhpcyBzdHJva2U9XCIjNjQ3NDhCXCIgLz5cbiAgICAgICAgICAgICAgICA8VG9vbHRpcCAvPlxuICAgICAgICAgICAgICAgIDxCYXIgZGF0YUtleT17ZGF0YUtleX0gZmlsbD1cIiMyNTYzRUJcIiByYWRpdXM9e1s4LCA4LCAwLCAwXX0gLz5cbiAgICAgICAgICAgICAgPC9CYXJDaGFydD5cbiAgICAgICAgICAgICkgOiB0eXBlID09PSBcImxpbmVcIiA/IChcbiAgICAgICAgICAgICAgPExpbmVDaGFydCBkYXRhPXtkYXRhfT5cbiAgICAgICAgICAgICAgICA8Q2FydGVzaWFuR3JpZCBzdHJva2U9XCIjRTJFOEYwXCIgc3Ryb2tlRGFzaGFycmF5PVwiMyAzXCIgdmVydGljYWw9e2ZhbHNlfSAvPlxuICAgICAgICAgICAgICAgIDxYQXhpcyBkYXRhS2V5PVwibmFtZVwiIHN0cm9rZT1cIiM2NDc0OEJcIiAvPlxuICAgICAgICAgICAgICAgIDxZQXhpcyBzdHJva2U9XCIjNjQ3NDhCXCIgLz5cbiAgICAgICAgICAgICAgICA8VG9vbHRpcCAvPlxuICAgICAgICAgICAgICAgIDxMaW5lIGRhdGFLZXk9e2RhdGFLZXl9IGRvdD17eyByOiA0IH19IHN0cm9rZT1cIiMyNTYzRUJcIiBzdHJva2VXaWR0aD17M30gdHlwZT1cIm1vbm90b25lXCIgLz5cbiAgICAgICAgICAgICAgICA8TGluZSBkYXRhS2V5PVwicHJldmlvdXNcIiBzdHJva2U9XCIjOTRBM0I4XCIgc3Ryb2tlRGFzaGFycmF5PVwiNSA1XCIgc3Ryb2tlV2lkdGg9ezJ9IHR5cGU9XCJtb25vdG9uZVwiIC8+XG4gICAgICAgICAgICAgIDwvTGluZUNoYXJ0PlxuICAgICAgICAgICAgKSA6IHR5cGUgPT09IFwicGllXCIgPyAoXG4gICAgICAgICAgICAgIDxQaWVDaGFydD5cbiAgICAgICAgICAgICAgICA8UGllIGRhdGE9e2RhdGF9IGRhdGFLZXk9XCJ2YWx1ZVwiIGlubmVyUmFkaXVzPXs1OH0gb3V0ZXJSYWRpdXM9ezkwfSBwYWRkaW5nQW5nbGU9ezR9PlxuICAgICAgICAgICAgICAgICAge2RhdGEubWFwKChlbnRyeSwgaW5kZXgpID0+IChcbiAgICAgICAgICAgICAgICAgICAgPENlbGwgZmlsbD17Y2hhcnRDb2xvcnNbaW5kZXggJSBjaGFydENvbG9ycy5sZW5ndGhdfSBrZXk9e2VudHJ5Lm5hbWV9IC8+XG4gICAgICAgICAgICAgICAgICApKX1cbiAgICAgICAgICAgICAgICA8L1BpZT5cbiAgICAgICAgICAgICAgICA8VG9vbHRpcCAvPlxuICAgICAgICAgICAgICA8L1BpZUNoYXJ0PlxuICAgICAgICAgICAgKSA6IChcbiAgICAgICAgICAgICAgPEFyZWFDaGFydCBkYXRhPXtkYXRhfT5cbiAgICAgICAgICAgICAgICA8ZGVmcz5cbiAgICAgICAgICAgICAgICAgIDxsaW5lYXJHcmFkaWVudCBpZD1cInJldmVudWVGaWxsXCIgeDE9XCIwXCIgeDI9XCIwXCIgeTE9XCIwXCIgeTI9XCIxXCI+XG4gICAgICAgICAgICAgICAgICAgIDxzdG9wIG9mZnNldD1cIjUlXCIgc3RvcENvbG9yPVwiIzI1NjNFQlwiIHN0b3BPcGFjaXR5PXswLjM1fSAvPlxuICAgICAgICAgICAgICAgICAgICA8c3RvcCBvZmZzZXQ9XCI5NSVcIiBzdG9wQ29sb3I9XCIjMjU2M0VCXCIgc3RvcE9wYWNpdHk9ezB9IC8+XG4gICAgICAgICAgICAgICAgICA8L2xpbmVhckdyYWRpZW50PlxuICAgICAgICAgICAgICAgIDwvZGVmcz5cbiAgICAgICAgICAgICAgICA8Q2FydGVzaWFuR3JpZCBzdHJva2U9XCIjRTJFOEYwXCIgc3Ryb2tlRGFzaGFycmF5PVwiMyAzXCIgdmVydGljYWw9e2ZhbHNlfSAvPlxuICAgICAgICAgICAgICAgIDxYQXhpcyBkYXRhS2V5PVwibmFtZVwiIHN0cm9rZT1cIiM2NDc0OEJcIiAvPlxuICAgICAgICAgICAgICAgIDxZQXhpcyBzdHJva2U9XCIjNjQ3NDhCXCIgLz5cbiAgICAgICAgICAgICAgICA8VG9vbHRpcCAvPlxuICAgICAgICAgICAgICAgIDxBcmVhIGRhdGFLZXk9e2RhdGFLZXl9IGZpbGw9XCJ1cmwoI3JldmVudWVGaWxsKVwiIHN0cm9rZT1cIiMyNTYzRUJcIiBzdHJva2VXaWR0aD17M30gdHlwZT1cIm1vbm90b25lXCIgLz5cbiAgICAgICAgICAgICAgPC9BcmVhQ2hhcnQ+XG4gICAgICAgICAgICApfVxuICAgICAgICAgICAgPC9SZXNwb25zaXZlQ29udGFpbmVyPlxuICAgICAgICAgICl9XG4gICAgICAgIDwvZGl2PlxuICAgICAgPC9DYXJkQ29udGVudD5cbiAgICA8L0NhcmQ+XG4gICk7XG59XG4iXSwiZmlsZSI6IkM6L1VzZXJzL25hdGhpL09uZURyaXZlL0Rlc2t0b3AvVHVyZi9mcm9udGVuZC9zcmMvY29tcG9uZW50cy9zaGFyZWQvQ2hhcnRQYW5lbC5qc3gifQ==

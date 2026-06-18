@@ -23,6 +23,16 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    businessName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    address: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     password: {
       type: String,
       required: [true, "Password is required"],
@@ -34,8 +44,30 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "owner", "admin"],
       default: "user",
     },
+    accountStatus: {
+      type: String,
+      enum: ["active", "pending", "rejected", "suspended"],
+      default: "active",
+      index: true,
+    },
+    approvedAt: Date,
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     profileImage: {
       type: String,
+      default: "",
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [300, "Bio cannot exceed 300 characters"],
       default: "",
     },
     walletBalance: {
@@ -48,6 +80,36 @@ const userSchema = new mongoose.Schema(
       enum: ["Starter", "Gold", "Elite", "Venue Pro", "Admin"],
       default: "Starter",
     },
+    membershipUpdatedAt: Date,
+    membershipHistory: [
+      {
+        plan: {
+          type: String,
+          enum: ["Starter", "Gold", "Elite"],
+          required: true,
+        },
+        amount: {
+          type: Number,
+          min: 0,
+          default: 0,
+        },
+        reference: {
+          type: String,
+          trim: true,
+          default: "",
+        },
+        upgradedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    favorites: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Turf",
+      },
+    ],
     passwordResetToken: String,
     passwordResetExpires: Date,
   },

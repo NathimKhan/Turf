@@ -21,6 +21,7 @@ const swaggerSpec = {
     { name: "Events" },
     { name: "Tournaments" },
     { name: "Notifications" },
+    { name: "Favorites" },
     { name: "Owner" },
     { name: "Admin" },
   ],
@@ -48,7 +49,10 @@ const swaggerSpec = {
           name: { type: "string" },
           email: { type: "string", format: "email" },
           phone: { type: "string" },
+          businessName: { type: "string" },
+          address: { type: "string" },
           role: { type: "string", enum: ["user", "owner", "admin"] },
+          accountStatus: { type: "string", enum: ["active", "pending", "rejected", "suspended"] },
           profileImage: { type: "string" },
           walletBalance: { type: "number" },
           membershipPlan: { type: "string" },
@@ -80,6 +84,7 @@ const swaggerSpec = {
           totalReviews: { type: "number" },
           ownerId: { type: "string" },
           isApproved: { type: "boolean" },
+          moderationStatus: { type: "string", enum: ["pending", "approved", "rejected", "suspended"] },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },
@@ -95,8 +100,8 @@ const swaggerSpec = {
           slotEndTime: { type: "string", example: "19:00" },
           hoursBooked: { type: "number" },
           totalAmount: { type: "number" },
-          paymentStatus: { type: "string", enum: ["pending", "paid", "failed"] },
-          bookingStatus: { type: "string", enum: ["upcoming", "completed", "cancelled"] },
+          paymentStatus: { type: "string", enum: ["pending", "paid", "failed", "refunded"] },
+          bookingStatus: { type: "string", enum: ["pending", "confirmed", "completed", "cancelled"] },
           createdAt: { type: "string", format: "date-time" },
         },
       },
@@ -108,7 +113,7 @@ const swaggerSpec = {
           bookingId: { type: "string" },
           amount: { type: "number" },
           paymentMethod: { type: "string", enum: ["UPI", "Card", "Cash"] },
-          paymentStatus: { type: "string", enum: ["pending", "paid", "failed"] },
+          paymentStatus: { type: "string", enum: ["pending", "paid", "failed", "refunded"] },
           transactionId: { type: "string" },
           createdAt: { type: "string", format: "date-time" },
         },
@@ -180,8 +185,11 @@ const swaggerSpec = {
                 properties: {
                   name: { type: "string" },
                   email: { type: "string", format: "email" },
-                  password: { type: "string", minLength: 6 },
+                  password: { type: "string", minLength: 8 },
+                  confirmPassword: { type: "string", minLength: 8 },
                   phone: { type: "string" },
+                  businessName: { type: "string" },
+                  address: { type: "string" },
                   role: { type: "string", enum: ["user", "owner"] },
                 },
               },
@@ -211,6 +219,13 @@ const swaggerSpec = {
           },
         },
         responses: { 200: { description: "Logged in" }, 401: { description: "Invalid credentials" } },
+      },
+    },
+    "/auth/register-owner": {
+      post: {
+        tags: ["Auth"],
+        summary: "Submit a pending turf owner application",
+        responses: { 201: { description: "Owner application submitted" } },
       },
     },
     "/auth/logout": {
@@ -405,8 +420,33 @@ const swaggerSpec = {
       put: {
         tags: ["Turfs"],
         security: [{ bearerAuth: [] }],
-        summary: "Owner/admin update turf slot schedule",
+        summary: "Owner/admin update dynamic turf schedule rules",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  slotMinutes: { type: "number", enum: [30, 60, 90, 120] },
+                  bufferMinutes: { type: "number", enum: [0, 15, 30] },
+                  weeklyAvailability: { type: "object" },
+                  blackoutDates: { type: "array", items: { type: "string", format: "date" } },
+                  blackouts: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        date: { type: "string", format: "date" },
+                        reason: { type: "string", example: "Maintenance" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         responses: { 200: { description: "Slots updated" } },
       },
     },
@@ -471,7 +511,7 @@ const swaggerSpec = {
       post: {
         tags: ["Payments"],
         security: [{ bearerAuth: [] }],
-        summary: "Create fake successful demo payment",
+        summary: "Process payment through the configured provider",
         requestBody: {
           required: true,
           content: {
@@ -494,7 +534,7 @@ const swaggerSpec = {
       post: {
         tags: ["Payments"],
         security: [{ bearerAuth: [] }],
-        summary: "Frontend-compatible alias for fake payment creation",
+        summary: "Checkout through the configured payment provider",
         responses: { 201: { description: "Payment successful" } },
       },
     },
@@ -639,6 +679,125 @@ const swaggerSpec = {
         security: [{ bearerAuth: [] }],
         summary: "Owner dashboard totals and earnings",
         responses: { 200: { description: "Owner dashboard fetched" } },
+      },
+    },
+    "/owner/reviews": {
+      get: {
+        tags: ["Owner"],
+        security: [{ bearerAuth: [] }],
+        summary: "Reviews for venues owned by the current owner",
+        responses: { 200: { description: "Owner reviews fetched" } },
+      },
+    },
+    "/favorites": {
+      get: {
+        tags: ["Favorites"],
+        security: [{ bearerAuth: [] }],
+        summary: "List current user's favorite venues",
+        responses: { 200: { description: "Favorites fetched" } },
+      },
+    },
+    "/favorites/{turfId}": {
+      post: {
+        tags: ["Favorites"],
+        security: [{ bearerAuth: [] }],
+        summary: "Save a venue as favorite",
+        parameters: [{ name: "turfId", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Favorite saved" } },
+      },
+      delete: {
+        tags: ["Favorites"],
+        security: [{ bearerAuth: [] }],
+        summary: "Remove a favorite venue",
+        parameters: [{ name: "turfId", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Favorite removed" } },
+      },
+    },
+    "/turfs/meta": {
+      get: {
+        tags: ["Turfs"],
+        summary: "Dynamic search locations, sports, and amenities",
+        responses: { 200: { description: "Search metadata fetched" } },
+      },
+    },
+    "/turfs/mine": {
+      get: {
+        tags: ["Turfs"],
+        security: [{ bearerAuth: [] }],
+        summary: "List venues owned by the current turf owner",
+        responses: { 200: { description: "Owner turfs fetched" } },
+      },
+    },
+    "/turfs/{id}/availability": {
+      get: {
+        tags: ["Turfs"],
+        summary: "Get dynamic availability timeline and optionally validate a custom time",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } },
+          { name: "date", in: "query", required: true, schema: { type: "string", format: "date" } },
+          { name: "startTime", in: "query", required: false, schema: { type: "string", example: "18:15" } },
+          { name: "endTime", in: "query", required: false, schema: { type: "string", example: "19:15" } },
+        ],
+        responses: { 200: { description: "Availability fetched" } },
+      },
+    },
+    "/bookings/{id}/status": {
+      patch: {
+        tags: ["Bookings"],
+        security: [{ bearerAuth: [] }],
+        summary: "Owner/admin confirm, cancel, or complete a booking",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Booking status updated" } },
+      },
+    },
+    "/admin/owners": {
+      get: {
+        tags: ["Admin"],
+        security: [{ bearerAuth: [] }],
+        summary: "List turf owner applications",
+        responses: { 200: { description: "Turf owners fetched" } },
+      },
+    },
+    "/admin/owners/{id}/status": {
+      patch: {
+        tags: ["Admin"],
+        security: [{ bearerAuth: [] }],
+        summary: "Approve, reject, suspend, or reopen an owner application",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Owner status updated" } },
+      },
+    },
+    "/admin/turfs/{id}/status": {
+      patch: {
+        tags: ["Admin"],
+        security: [{ bearerAuth: [] }],
+        summary: "Moderate venue publication status",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "Venue status updated" } },
+      },
+    },
+    "/admin/settings": {
+      get: {
+        tags: ["Admin"],
+        security: [{ bearerAuth: [] }],
+        summary: "List persisted platform settings",
+        responses: { 200: { description: "Settings fetched" } },
+      },
+    },
+    "/admin/venue-schedules": {
+      get: {
+        tags: ["Admin"],
+        security: [{ bearerAuth: [] }],
+        summary: "List venue schedule rules for platform oversight",
+        responses: { 200: { description: "Venue schedules fetched" } },
+      },
+    },
+    "/admin/conflict-logs": {
+      get: {
+        tags: ["Admin"],
+        security: [{ bearerAuth: [] }],
+        summary: "List recent booking and availability conflict logs",
+        responses: { 200: { description: "Conflict logs fetched" } },
       },
     },
     "/admin/dashboard": {

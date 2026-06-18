@@ -1,11 +1,12 @@
 import { Link, Outlet } from "react-router-dom";
-import { Bell, Heart, Plus } from "lucide-react";
+import { Heart, Plus } from "lucide-react";
 import { athleteNav, publicNav } from "../../constants/routes.js";
 import { Button } from "../../components/ui/button.jsx";
 import { BrandLogo } from "../../components/shared/BrandLogo.jsx";
 import { PageTransition } from "../../components/shared/Motion.jsx";
 import { SideNav } from "../../components/shared/SideNav.jsx";
 import { UserMenu } from "../../components/shared/UserMenu.jsx";
+import { NotificationBell } from "../../components/shared/NotificationBell.jsx";
 
 export function PortalLayout() {
   return (
@@ -27,9 +28,7 @@ export function PortalLayout() {
               <Plus size={16} />
               New Booking
             </Button>
-            <Link className="hidden rounded-full p-2 text-ink-muted hover:bg-surface-low sm:inline-flex" title="Notifications" to="/notifications">
-              <Bell size={20} />
-            </Link>
+            <NotificationBell className="hidden sm:inline-flex" fallbackHref="/notifications" title="Notifications" />
             <Link className="hidden rounded-full p-2 text-ink-muted hover:bg-surface-low sm:inline-flex" title="Saved venues" to="/favorites">
               <Heart size={20} />
             </Link>

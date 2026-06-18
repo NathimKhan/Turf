@@ -23,6 +23,21 @@ const notificationSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    type: {
+      type: String,
+      enum: ["booking", "payment", "revenue", "membership", "venue", "review", "system"],
+      default: "system",
+      index: true,
+    },
+    targetUrl: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: false },

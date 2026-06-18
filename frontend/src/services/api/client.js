@@ -2,9 +2,7 @@ import axios from "axios";
 import { authService } from "../authService.js";
 
 export const apiClient = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_URL ||
-    (import.meta.env.DEV ? "/api" : "http://localhost:5000/api"),
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   timeout: 12000,
   withCredentials: true,
 });
@@ -27,3 +25,7 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+export function responseData(response) {
+  return response.data?.data || {};
+}

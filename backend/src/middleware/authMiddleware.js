@@ -26,6 +26,17 @@ async function protect(req, res, next) {
       throw error;
     }
 
+    if (user.accountStatus && user.accountStatus !== "active") {
+      const messages = {
+        pending: "Your account is awaiting approval",
+        rejected: "Your account application was rejected",
+        suspended: "Your account has been suspended",
+      };
+      const error = new Error(messages[user.accountStatus] || "Your account is not active");
+      error.statusCode = 403;
+      throw error;
+    }
+
     req.user = user;
     next();
   } catch (error) {
@@ -46,7 +57,19 @@ function authorizeRoles(...roles) {
   };
 }
 
+async function optionalProtect(req, res, next) {
+  const hasBearerToken = req.headers.authorization?.startsWith("Bearer ");
+  const hasCookieToken = Boolean(req.cookies?.token);
+
+  if (!hasBearerToken && !hasCookieToken) {
+    return next();
+  }
+
+  return protect(req, res, next);
+}
+
 module.exports = {
   authorizeRoles,
+  optionalProtect,
   protect,
 };

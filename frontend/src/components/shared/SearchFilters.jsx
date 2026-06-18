@@ -1,27 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, SlidersHorizontal } from "lucide-react";
 import { Badge } from "../ui/badge.jsx";
 import { Button } from "../ui/button.jsx";
 import { Card, CardContent } from "../ui/card.jsx";
+import { Input } from "../ui/input.jsx";
 
-const filterGroups = [
-  { label: "Sport", options: ["Football", "Cricket", "Tennis", "Basketball"] },
-  { label: "Price", options: ["Any", "$0-$50", "$50-$80", "$80+"] },
-  { label: "Distance", options: ["Any", "Under 1 mi", "Under 3 mi", "Under 5 mi"] },
-  { label: "Amenities", options: ["Flood Lights", "Indoor AC", "Parking", "Cafe"] },
-];
-
-export function SearchFilters({ compact = false }) {
-  const [selectedFilters, setSelectedFilters] = useState({
-    Amenities: "Flood Lights",
-    Distance: "Under 3 mi",
-    Price: "Any",
-    Sport: "Football",
+export function SearchFilters({
+  compact = false,
+  initialFilters = {},
+  metadata = {},
+  onApply = () => {},
+}) {
+  const [filters, setFilters] = useState({
+    date: initialFilters.date || "",
+    location: initialFilters.location || "",
+    sport: initialFilters.sport || "",
   });
 
-  function selectFilter(group, option) {
-    setSelectedFilters((current) => ({ ...current, [group]: option }));
-  }
+  useEffect(() => {
+    setFilters({
+      date: initialFilters.date || "",
+      location: initialFilters.location || "",
+      sport: initialFilters.sport || "",
+    });
+  }, [initialFilters.date, initialFilters.location, initialFilters.sport]);
+
+  const groups = [
+    { key: "sport", label: "Sport", options: metadata.sports || [] },
+    { key: "location", label: "Location", options: metadata.cities || metadata.locations || [] },
+  ];
 
   return (
     <Card className={compact ? "shadow-none" : "h-max"}>
@@ -33,13 +40,22 @@ export function SearchFilters({ compact = false }) {
           </div>
           <SlidersHorizontal className="text-ink-soft" size={20} />
         </div>
-        {filterGroups.map((group) => (
-          <div key={group.label}>
+        {groups.map((group) => (
+          <div key={group.key}>
             <p className="text-sm font-black">{group.label}</p>
             <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold ${
+                  !filters[group.key] ? "border-primary bg-primary text-white" : "border-surface-border bg-white"
+                }`}
+                onClick={() => setFilters((current) => ({ ...current, [group.key]: "" }))}
+                type="button"
+              >
+                {!filters[group.key] && <Check size={13} />}
+                Any
+              </button>
               {group.options.map((option) => {
-                const active = selectedFilters[group.label] === option;
-
+                const active = filters[group.key] === option;
                 return (
                   <button
                     className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
@@ -48,7 +64,7 @@ export function SearchFilters({ compact = false }) {
                         : "border-surface-border bg-white text-ink-muted hover:border-primary hover:text-primary"
                     }`}
                     key={option}
-                    onClick={() => selectFilter(group.label, option)}
+                    onClick={() => setFilters((current) => ({ ...current, [group.key]: option }))}
                     type="button"
                   >
                     {active && <Check size={13} />}
@@ -59,14 +75,26 @@ export function SearchFilters({ compact = false }) {
             </div>
           </div>
         ))}
+        <label className="block">
+          <span className="text-sm font-black">Date</span>
+          <Input
+            className="mt-2"
+            min={new Date().toISOString().slice(0, 10)}
+            onChange={(event) => setFilters((current) => ({ ...current, date: event.target.value }))}
+            type="date"
+            value={filters.date}
+          />
+        </label>
         <div className="flex flex-wrap gap-2 border-t border-surface-border pt-4">
-          {Object.entries(selectedFilters).map(([label, value]) => (
+          {Object.entries(filters).filter(([, value]) => value).map(([label, value]) => (
             <Badge key={label} variant="primary">
               {label}: {value}
             </Badge>
           ))}
         </div>
-        <Button className="w-full">Apply Filters</Button>
+        <Button className="w-full" onClick={() => onApply(filters)}>
+          Apply Filters
+        </Button>
       </CardContent>
     </Card>
   );

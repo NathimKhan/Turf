@@ -3,7 +3,10 @@ const { param } = require("express-validator");
 const {
   createTurf,
   deleteTurf,
+  getMyTurfs,
   getTurfById,
+  getTurfAvailability,
+  getTurfMetadata,
   getTurfs,
   getTurfsByCity,
   searchTurfs,
@@ -12,17 +15,31 @@ const {
   updateTurf,
   updateTurfSlots,
 } = require("../controllers/turfController");
-const { protect } = require("../middleware/authMiddleware");
+const { optionalProtect, protect } = require("../middleware/authMiddleware");
 const { validateRequest } = require("../middleware/errorMiddleware");
 const ownerOrAdmin = require("../middleware/ownerMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
 
-router.get("/", getTurfs);
-router.get("/search", searchTurfs);
-router.get("/city/:city", getTurfsByCity);
-router.get("/:id", param("id").isMongoId().withMessage("Valid turf id is required"), validateRequest, getTurfById);
+router.get("/", optionalProtect, getTurfs);
+router.get("/search", optionalProtect, searchTurfs);
+router.get("/meta", getTurfMetadata);
+router.get("/mine", protect, ownerOrAdmin, getMyTurfs);
+router.get("/city/:city", optionalProtect, getTurfsByCity);
+router.get(
+  "/:id/availability",
+  param("id").isMongoId().withMessage("Valid turf id is required"),
+  validateRequest,
+  getTurfAvailability,
+);
+router.get(
+  "/:id",
+  optionalProtect,
+  param("id").isMongoId().withMessage("Valid turf id is required"),
+  validateRequest,
+  getTurfById,
+);
 router.post("/", protect, ownerOrAdmin, upload.array("images", 8), turfValidation, validateRequest, createTurf);
 router.put("/:id", protect, ownerOrAdmin, upload.array("images", 8), param("id").isMongoId(), turfUpdateValidation, validateRequest, updateTurf);
 router.put("/:id/slots", protect, ownerOrAdmin, param("id").isMongoId(), validateRequest, updateTurfSlots);
