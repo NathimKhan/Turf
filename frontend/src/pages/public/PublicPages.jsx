@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useMemo, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
@@ -18,6 +18,8 @@ import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Drawer } from "../../components/ui/drawer.jsx";
 import { Input, Textarea } from "../../components/ui/input.jsx";
 import { Modal } from "../../components/ui/modal.jsx";
+import { Skeleton } from "../../components/ui/skeleton.jsx";
+import { EmptyState } from "../../components/shared/EmptyState.jsx";
 import { EventCard } from "../../components/shared/EventCard.jsx";
 import { Reveal } from "../../components/shared/Motion.jsx";
 import { Pagination } from "../../components/shared/Pagination.jsx";
@@ -39,7 +41,6 @@ import {
   useTournaments,
 } from "../../hooks/usePlatform.js";
 import { useAuth } from "../../store/authContext.js";
-import { createDemoTurf } from "../../services/api/normalize.js";
 import { currency } from "../../utils/formatters.js";
 import { handleImageError } from "../../utils/media.js";
 import { notify } from "../../utils/notify.js";
@@ -59,25 +60,10 @@ function futureDate(days = 1) {
   return date.toISOString().slice(0, 10);
 }
 
-function availabilityButtonClass(slot) {
-  if (slot.status === "booked") return "bg-danger-soft text-danger";
-  if (slot.status === "pending") return "bg-warning-soft text-amber-700";
-  if (slot.status === "maintenance") return "bg-surface-low text-ink-muted";
-  if (slot.status === "blocked") return "bg-surface-low text-ink-muted";
-  return "bg-accent-soft text-accent-deep";
-}
-
-function rateForSport(turf = {}, sport = "") {
-  return Number(turf.sportRates?.[sport] ?? turf.price ?? 0);
-}
-
-function turfRouteId(turf = {}) {
-  return turf._id || turf.id || "";
-}
-
-function isRenderableLiveTurf(turf = {}) {
-  const status = String(turf.statusValue || turf.status || "").toUpperCase();
-  return Boolean(turfRouteId(turf)) && (turf.isLive || status === "LIVE" || status === "AVAILABLE");
+function availabilityButtonClass(slot, index) {
+  if (slot.status === "booked") return "bg-surface-low text-ink-muted";
+  if (slot.status === "blocked") return "bg-danger-soft text-danger";
+  return index === 1 ? "bg-primary text-white" : "bg-surface-low text-ink-muted";
 }
 
 function storedIncludes(key, id) {
@@ -121,8 +107,12 @@ function SearchPanel({ compact = false }) {
   }
 
   return (
-    <div className="glass-panel grid gap-3 rounded-2xl p-3 md:grid-cols-[1fr_1fr_1fr_auto]">
-      <label className="relative flex cursor-pointer items-center gap-3 rounded-xl bg-white/65 px-4 py-3 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
+    <div
+      className={`glass-panel grid min-w-0 max-w-full gap-3 rounded-2xl p-3 ${
+        compact ? "sm:grid-cols-2" : "md:grid-cols-[1fr_1fr_1fr_auto]"
+      }`}
+    >
+      <label className="relative flex min-w-0 cursor-pointer items-center gap-3 rounded-xl bg-white/65 px-4 py-3 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
         <Icon className="text-primary" name="MapPin" />
         <span className="min-w-0">
           <span className="block text-xs font-bold uppercase tracking-wider text-ink-soft">Select location</span>
@@ -142,7 +132,7 @@ function SearchPanel({ compact = false }) {
           ))}
         </select>
       </label>
-      <label className="relative flex cursor-pointer items-center gap-3 rounded-xl bg-white/65 px-4 py-3 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
+      <label className="relative flex min-w-0 cursor-pointer items-center gap-3 rounded-xl bg-white/65 px-4 py-3 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
         <Icon className="text-primary" name="Goal" />
         <span className="min-w-0">
           <span className="block text-xs font-bold uppercase tracking-wider text-ink-soft">Pick a sport</span>
@@ -162,7 +152,7 @@ function SearchPanel({ compact = false }) {
           ))}
         </select>
       </label>
-      <div className="relative flex cursor-pointer items-center gap-3 rounded-xl bg-white/65 px-4 py-3 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
+      <div className="relative flex min-w-0 cursor-pointer items-center gap-3 rounded-xl bg-white/65 px-4 py-3 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
         <Icon className="text-primary" name="CalendarDays" />
         <span className="min-w-0">
           <span className="block text-xs font-bold uppercase tracking-wider text-ink-soft">Choose date</span>
@@ -193,7 +183,7 @@ function SearchPanel({ compact = false }) {
         />
       </div>
       <Button
-        className={compact ? "" : "md:h-full"}
+        className={compact ? "sm:h-full" : "md:h-full"}
         as={Link}
         to={{ pathname: "/search", search: new URLSearchParams({ location, sport, date }).toString() }}
       >
@@ -219,39 +209,12 @@ export function LandingPage() {
     venues: turfs.filter((turf) => turf.sportsSupported.includes(name)).length,
     ...(sportVisuals[name] || { icon: "Goal", image: assetImages.stadium }),
   }));
-  const liveSlots = turfs.filter(isRenderableLiveTurf).slice(0, 4).map((turf) => ({
-    id: turfRouteId(turf),
+  const liveSlots = turfs.slice(0, 4).map((turf) => ({
+    id: turf.id,
     sport: turf.sport,
     time: "Check live slots",
-    turf,
     venue: turf.name,
   }));
-  const skylineCricketBox = turfs.find((turf) => turf.name === "Skyline Cricket Box");
-  const skylineCricketBoxId = turfRouteId(skylineCricketBox);
-  const sportSearchLink = (sport) => ({
-    pathname: "/search",
-    search: new URLSearchParams({ sport, date: futureDate() }).toString(),
-  });
-  const sportsInsights = [
-    { icon: "🏆", label: "Most Booked Sport", value: "Football", to: sportSearchLink("Football") },
-    { icon: "📈", label: "Fastest Growing", value: "Badminton", to: sportSearchLink("Badminton") },
-    { icon: "🔥", label: "Peak Booking Time", value: "6 PM - 9 PM", to: "/booking/slots" },
-    { icon: "⭐", label: "Top Rated Venue", value: "Skyline Cricket Box", to: `/venue/${skylineCricketBoxId || "demo-venue"}` },
-  ];
-
-  function handleLiveAvailabilityClick(event, turf) {
-    const turfId = turfRouteId(turf);
-    const route = `/venue/${turfId}`;
-
-    console.log("Selected turf:", turf);
-    console.log("Turf ID:", turf?._id);
-    console.log("Route:", route);
-
-    if (!turfId) {
-      event.preventDefault();
-      notify("Venue details unavailable");
-    }
-  }
 
   return (
     <main>
@@ -303,14 +266,15 @@ export function LandingPage() {
           subtitle="The city's most booked activities this week"
           title="Popular Sports"
         />
-        <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid min-h-[420px] w-full grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
           {sports.map((sport, index) => (
             <Reveal
+              className={index === 0 ? "xl:col-span-2 xl:row-span-2" : index === sports.length - 1 ? "xl:col-span-2" : ""}
               delay={index * 0.06}
               key={sport.name}
             >
               <Link
-                className="group relative block h-80 overflow-hidden rounded-2xl"
+                className="group relative block h-full min-h-48 overflow-hidden rounded-2xl"
                 to={{ pathname: "/search", search: new URLSearchParams({ sport: sport.name, date: futureDate() }).toString() }}
               >
                 <img alt={sport.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src={sport.image} />
@@ -323,29 +287,6 @@ export function LandingPage() {
               </Link>
             </Reveal>
           ))}
-          <Reveal delay={sports.length * 0.06} key="popular-sports-insights">
-            <Card className="min-h-80 overflow-visible lg:h-80">
-              <CardContent className="flex min-h-80 flex-col p-5 lg:h-full lg:min-h-0">
-                <div>
-                  <p className="text-lg font-black text-ink">Popular Sports Insights</p>
-                  <p className="mt-1 text-xs font-bold text-ink-muted">Live booking trends this week</p>
-                </div>
-                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex-1 lg:grid-cols-2">
-                  {sportsInsights.map((insight) => (
-                    <Link
-                      className="focus-ring min-w-0 rounded-xl bg-surface-low p-3 transition-colors hover:bg-primary-soft"
-                      key={insight.label}
-                      to={insight.to}
-                    >
-                      <span aria-hidden="true" className="text-lg">{insight.icon}</span>
-                      <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-ink-muted">{insight.label}</p>
-                      <p className="mt-0.5 text-sm font-black leading-tight text-ink">{insight.value}</p>
-                    </Link>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </Reveal>
         </div>
       </section>
 
@@ -358,7 +299,7 @@ export function LandingPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-4">
             {liveSlots.map((slot) => (
-              <Link key={slot.id} onClick={(event) => handleLiveAvailabilityClick(event, slot.turf)} to={`/venue/${slot.id}`}>
+              <Link key={slot.venue} to={`/venue/${slot.id}`}>
                 <Card interactive className="h-full">
                   <CardContent className="flex items-center justify-between p-4">
                     <div>
@@ -446,17 +387,159 @@ export function LandingPage() {
   );
 }
 
+function TurfCardSkeleton({ compact = false }) {
+  return (
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-surface-border bg-white shadow-soft">
+      <div className={compact ? "h-36 sm:h-40" : "h-44 sm:h-48 md:h-52"}>
+        <Skeleton className="h-full w-full rounded-none" />
+      </div>
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <div className="mt-auto flex items-center justify-between pt-5">
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScrollRow({ children, className = "" }) {
+  return (
+    <div className={`flex gap-4 overflow-x-auto px-1 pb-4 pt-2 no-scrollbar snap-x snap-mandatory ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function DiscoveryMiniCard({ item }) {
+  return (
+    <Card interactive className="h-full w-64 shrink-0 snap-start sm:w-72">
+      <Link className="flex h-full flex-col" to={item.href}>
+        <div className="relative h-32 shrink-0 overflow-hidden rounded-t-2xl sm:h-36">
+          <img
+            alt={item.title}
+            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+            loading="lazy"
+            onError={handleImageError}
+            src={item.image}
+          />
+          <Badge className="absolute left-3 top-3" variant="white">{item.type}</Badge>
+        </div>
+        <div className="flex flex-1 flex-col gap-2 p-4">
+          <h3 className="line-clamp-1 text-base font-black text-ink">{item.title}</h3>
+          <p className="flex items-center gap-1.5 text-xs font-bold text-ink-muted">
+            <CalendarDays size={14} />
+            {item.date}
+          </p>
+          <p className="mt-auto truncate text-xs font-bold text-ink-soft">{item.meta}</p>
+        </div>
+      </Link>
+    </Card>
+  );
+}
+
+function CommunityTile({ sport }) {
+  return (
+    <Link
+      className="group relative h-32 w-48 shrink-0 snap-start overflow-hidden rounded-2xl sm:h-36 sm:w-56"
+      to={{ pathname: "/search", search: new URLSearchParams({ sport: sport.name, date: futureDate() }).toString() }}
+    >
+      <img
+        alt={sport.name}
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+        loading="lazy"
+        src={sport.image}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+        <p className="flex items-center gap-1 text-xs font-bold text-white/75">
+          <Icon name="UsersRound" size={14} />
+          {sport.venues}+ venues
+        </p>
+        <h3 className="mt-1 text-lg font-black">{sport.name}</h3>
+      </div>
+    </Link>
+  );
+}
+
 export function ExplorePage() {
-  const { data: turfResult = { turfs: [] } } = useTurfs({ limit: 100 });
+  const { data: turfResult = { turfs: [] }, isError: turfsError, isLoading: turfsLoading } = useTurfs({ limit: 100 });
   const { data: metadata = {} } = useTurfMetadata();
+  const { data: events = [] } = useEvents();
+  const { data: tournaments = [] } = useTournaments();
   const turfs = turfResult.turfs;
+
   const sports = (metadata.sports || []).map((name) => ({
     name,
-    ...(sportVisuals[name] || { icon: "Goal" }),
+    venues: turfs.filter((turf) => turf.sportsSupported?.includes(name)).length,
+    ...(sportVisuals[name] || { icon: "Goal", image: assetImages.stadium }),
   }));
 
+  const trending = useMemo(
+    () =>
+      [...turfs]
+        .sort((a, b) => b.rating * (b.reviews || 1) - a.rating * (a.reviews || 1))
+        .slice(0, 6),
+    [turfs],
+  );
+
+  const topRated = useMemo(() => [...turfs].sort((a, b) => b.rating - a.rating).slice(0, 5), [turfs]);
+
+  const recommended = useMemo(() => {
+    const seenSports = new Set();
+    const picks = [];
+    for (const turf of [...turfs].sort((a, b) => b.rating - a.rating)) {
+      const key = turf.sport || "general";
+      if (seenSports.has(key)) continue;
+      seenSports.add(key);
+      picks.push(turf);
+    }
+    for (const turf of turfs) {
+      if (picks.length >= 6) break;
+      if (!picks.includes(turf)) picks.push(turf);
+    }
+    return picks.slice(0, 6);
+  }, [turfs]);
+
+  const nearbyGrounds = useMemo(() => {
+    const counts = {};
+    turfs.forEach((turf) => {
+      const city = turf.city || turf.distance;
+      if (city) counts[city] = (counts[city] || 0) + 1;
+    });
+    const topCity = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const grouped = topCity ? turfs.filter((turf) => (turf.city || turf.distance) === topCity) : turfs;
+    return { city: topCity, grounds: grouped.slice(0, 6) };
+  }, [turfs]);
+
+  const upcoming = useMemo(() => {
+    const tournamentItems = tournaments
+      .filter((tournament) => tournament.status === "Registration Open")
+      .map((tournament) => ({
+        date: tournament.date,
+        href: `/tournaments/${tournament.id}`,
+        id: `tournament-${tournament.id}`,
+        image: assetImages.event,
+        meta: `${tournament.teams} teams · ${tournament.prize || "Open prize pool"}`,
+        title: tournament.title,
+        type: "Tournament",
+      }));
+    const eventItems = events.map((event) => ({
+      date: event.date,
+      href: `/events/${event.id}`,
+      id: `event-${event.id}`,
+      image: event.image,
+      meta: event.venue || "TURFX venue",
+      title: event.title,
+      type: "Event",
+    }));
+    return [...tournamentItems, ...eventItems].slice(0, 8);
+  }, [events, tournaments]);
+
   return (
-    <main className="page-shell py-8">
+    <main className="page-shell py-8 sm:py-10">
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.35fr]">
         <section className="min-w-0">
           <p className="muted-label text-primary">TURFX Discovery</p>
@@ -465,7 +548,7 @@ export function ExplorePage() {
           <div className="mt-6">
             <SearchPanel compact />
           </div>
-          <div className="mt-5 flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+          <div className="mt-4 flex min-w-0 flex-wrap gap-3 px-1 pb-3 pt-2">
             {sports.map((sport) => (
               <Button
                 as={Link}
@@ -479,29 +562,137 @@ export function ExplorePage() {
             ))}
           </div>
         </section>
-        <section className="relative min-h-80 min-w-0 overflow-hidden rounded-3xl border border-surface-border">
-          <img alt="Map preview" className="h-full min-h-80 w-full object-cover grayscale" src={assetImages.map} />
+        <section className="relative min-h-64 min-w-0 overflow-hidden rounded-3xl border border-surface-border bg-white shadow-soft sm:min-h-80 lg:min-h-[420px]">
+          <img alt="Map preview of nearby venues" className="absolute inset-0 h-full w-full object-cover grayscale" src={assetImages.map} />
           <div className="absolute inset-0 bg-primary/10" />
-          <div className="absolute bottom-5 left-5 right-5 flex gap-3 overflow-x-auto no-scrollbar">
-            {turfs.slice(0, 3).map((turf) => (
-              <Card className="min-w-64 bg-white/90 backdrop-blur" key={turf.id}>
-                <CardContent className="flex items-center gap-3 p-3">
-                  <img alt={turf.name} className="h-12 w-12 rounded-lg object-cover" onError={handleImageError} src={turf.image} />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-black">{turf.name}</p>
-                    <p className="text-xs text-ink-muted">{turf.distance} away</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Badge className="absolute left-4 top-4 sm:left-5 sm:top-5" variant="white">
+            Nearby venues
+          </Badge>
         </section>
       </div>
-      <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {turfs.map((turf) => (
-          <TurfCard key={turf.id} turf={turf} />
-        ))}
-      </div>
+
+      {turfsLoading ? (
+        <section className="mt-14">
+          <Skeleton className="h-7 w-48" />
+          <ScrollRow className="mt-5">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div className="w-64 shrink-0 sm:w-72" key={index}>
+                <TurfCardSkeleton compact />
+              </div>
+            ))}
+          </ScrollRow>
+        </section>
+      ) : (
+        <>
+          {Boolean(trending.length) && (
+            <section className="mt-14">
+              <SectionHeader subtitle="The most booked venues by athletes this week" title="🔥 Trending Now" />
+              <ScrollRow>
+                {trending.map((turf) => (
+                  <div className="w-64 shrink-0 snap-start sm:w-72" key={turf.id}>
+                    <TurfCard compact turf={turf} />
+                  </div>
+                ))}
+              </ScrollRow>
+            </section>
+          )}
+
+          {Boolean(recommended.length) && (
+            <section className="mt-14">
+              <SectionHeader subtitle="A curated mix of top venues across your favorite sports" title="⭐ Recommended For You" />
+              <ScrollRow>
+                {recommended.map((turf) => (
+                  <div className="w-64 shrink-0 snap-start sm:w-72" key={turf.id}>
+                    <TurfCard compact turf={turf} />
+                  </div>
+                ))}
+              </ScrollRow>
+            </section>
+          )}
+
+          {Boolean(topRated.length) && (
+            <section className="mt-14">
+              <SectionHeader subtitle="Highest-reviewed venues, ranked by athlete ratings" title="🏆 Top Rated Venues" />
+              <ScrollRow>
+                {topRated.map((turf, index) => (
+                  <div className="w-64 shrink-0 snap-start sm:w-72" key={turf.id}>
+                    <TurfCard compact rank={index + 1} turf={turf} />
+                  </div>
+                ))}
+              </ScrollRow>
+            </section>
+          )}
+
+          {Boolean(nearbyGrounds.grounds.length) && (
+            <section className="mt-14">
+              <SectionHeader
+                subtitle={nearbyGrounds.city ? `Popular venues around ${nearbyGrounds.city}` : "Popular venues close to you"}
+                title="📍 Nearby Grounds"
+              />
+              <ScrollRow>
+                {nearbyGrounds.grounds.map((turf) => (
+                  <div className="w-64 shrink-0 snap-start sm:w-72" key={turf.id}>
+                    <TurfCard compact turf={turf} />
+                  </div>
+                ))}
+              </ScrollRow>
+            </section>
+          )}
+        </>
+      )}
+
+      {Boolean(upcoming.length) && (
+        <section className="mt-14">
+          <SectionHeader
+            action={
+              <Button as={Link} to="/tournaments" variant="ghost">
+                View All <ChevronRight size={16} />
+              </Button>
+            }
+            subtitle="Compete or spectate at the city's best upcoming matchups"
+            title="🎯 Weekend Tournaments & Events"
+          />
+          <ScrollRow>
+            {upcoming.map((item) => (
+              <DiscoveryMiniCard item={item} key={item.id} />
+            ))}
+          </ScrollRow>
+        </section>
+      )}
+
+      {Boolean(sports.length) && (
+        <section className="mt-14">
+          <SectionHeader subtitle="Join a community of athletes built around the sport you love" title="Sports Communities" />
+          <ScrollRow>
+            {sports.map((sport) => (
+              <CommunityTile key={sport.name} sport={sport} />
+            ))}
+          </ScrollRow>
+        </section>
+      )}
+
+      <section className="mt-14">
+        <SectionHeader subtitle="Every approved venue currently listed on TURFX" title="All Venues" />
+        {turfsLoading ? (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <TurfCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : turfs.length ? (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {turfs.map((turf) => (
+              <TurfCard key={turf.id} turf={turf} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            description={turfsError ? "Check the API connection and try again." : "New venues are reviewed and added regularly. Please check back soon."}
+            icon="Search"
+            title={turfsError ? "Venues could not be loaded" : "No venues available yet"}
+          />
+        )}
+      </section>
     </main>
   );
 }
@@ -559,18 +750,13 @@ export function SearchResultsPage() {
             ))}
           </div>
           {!turfs.length && (
-            <Card>
-              <CardContent className="text-center">
-                <Search className="mx-auto text-primary" />
-                <h2 className="mt-3 text-xl font-black">{isError ? "Venues could not be loaded" : "No venues match these filters"}</h2>
-                <p className="mt-2 text-sm text-ink-muted">
-                  {isError ? "Check the API connection and try again." : "Clear a filter or choose another date to continue."}
-                </p>
-                <Button className="mt-5" onClick={() => applyFilters({ date: futureDate(), location: "", sport: "" })}>
-                  Reset Filters
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyState
+              actionLabel="Reset Filters"
+              description={isError ? "Check the API connection and try again." : "Clear a filter or choose another date to continue."}
+              icon="Search"
+              onAction={() => applyFilters({ date: futureDate(), location: "", sport: "" })}
+              title={isError ? "Venues could not be loaded" : "No venues match these filters"}
+            />
           )}
           <div className="mt-8">
             <Pagination
@@ -590,17 +776,13 @@ export function SearchResultsPage() {
 
 export function VenueDetailsPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const requireBooking = useBookingGuard();
   const { user } = useAuth();
   const { data: favorites = [] } = useFavorites(Boolean(user));
   const favoriteMutation = useFavoriteMutation();
   const [date, setDate] = useState(futureDate());
-  const [selectedSport, setSelectedSport] = useState("");
-  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const [mediaMode, setMediaMode] = useState("");
-  const { data: resolvedTurf, isLoading } = useTurf(id);
-  const turf = resolvedTurf || createDemoTurf();
+  const { data: turf, isError, isLoading } = useTurf(id);
   const { data: availability = { slots: [], timeline: [] } } = useTurfAvailability(id, date);
   const { data: similarResult = { turfs: [] } } = useTurfs({
     limit: 4,
@@ -610,45 +792,20 @@ export function VenueDetailsPage() {
     () => Array.from({ length: 4 }, (_, index) => futureDate(index + 1)),
     [],
   );
-  const configuredSports = useMemo(() => turf?.sportsSupported || [], [turf]);
-  const selectedRate = rateForSport(turf, selectedSport || turf?.sport);
-  const bookingSearch = new URLSearchParams({
-    date,
-    sport: selectedSport || turf.sport || "",
-    venue: turf.id,
-  }).toString();
 
-  useEffect(() => {
-    if (!isLoading) {
-      setLoadingTimedOut(false);
-      return undefined;
-    }
-
-    const timer = setTimeout(() => setLoadingTimedOut(true), 2000);
-    return () => clearTimeout(timer);
-  }, [id, isLoading]);
-
-  useEffect(() => {
-    if (loadingTimedOut && isLoading && !resolvedTurf) {
-      navigate("/explore", { replace: true });
-    }
-  }, [isLoading, loadingTimedOut, navigate, resolvedTurf]);
-
-  useEffect(() => {
-    if (!configuredSports.length) return;
-    if (!configuredSports.includes(selectedSport)) {
-      setSelectedSport(configuredSports[0]);
-    }
-  }, [configuredSports, selectedSport]);
-
-  if (isLoading && !loadingTimedOut) {
+  if (isLoading) {
     return <main className="page-shell py-16 text-center text-ink-muted">Loading venue...</main>;
   }
-  if (isLoading && loadingTimedOut) {
-    return <main className="page-shell py-16 text-center text-ink-muted">Opening Explore Venues...</main>;
+  if (isError || !turf) {
+    return (
+      <main className="page-shell py-16 text-center">
+        <h1 className="text-3xl font-black">Venue not found</h1>
+        <p className="mt-3 text-ink-muted">This venue may be unavailable or awaiting approval.</p>
+        <Button as={Link} className="mt-5" to="/explore">Explore Venues</Button>
+      </main>
+    );
   }
   const isFavorite = favorites.some((favorite) => favorite.id === turf.id);
-  const isDemoVenue = turf.isDemo || turf.id === "demo-venue";
   const visibleAvailability = (availability.timeline?.length ? availability.timeline : availability.slots || []).map((slot) => ({
     reason: slot.reason || (slot.status === "available" ? "Available" : slot.status),
     status: slot.status || "available",
@@ -656,135 +813,115 @@ export function VenueDetailsPage() {
   }));
 
   return (
-    <main className="page-shell py-6 md:py-8">
-      <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(340px,380px)]">
-        <div className="min-w-0 space-y-6">
-          <div className="relative h-[320px] overflow-hidden rounded-2xl sm:h-[360px] lg:h-[420px]">
-            <img alt={turf.name} className="h-full w-full object-cover" onError={handleImageError} src={turf.gallery[0]} />
-            <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-              <Button onClick={() => setMediaMode("tour")} variant="dark">
-                <Icon name="CircleGauge" />
-                View 360 Tour
-              </Button>
-              <Button onClick={() => setMediaMode("photos")} variant="outline" className="bg-white/90">
-                <Icon name="Image" />
-                View all photos
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h1 className="text-3xl font-black tracking-normal md:text-4xl">{turf.name}</h1>
-              <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
-                <MapPin size={16} />
-                {turf.location}
-                <span>-</span>
-                <Star className="fill-warning text-warning" size={16} />
-                {turf.rating} ({turf.reviews} reviews)
-              </p>
-            </div>
-            <Button
-              aria-label={isFavorite ? "Remove favorite" : "Save favorite"}
-              onClick={() => {
-                if (!user) {
-                  requireBooking(`/venue/${turf.id}`);
-                  return;
-                }
-                if (isDemoVenue) {
-                  notify(isFavorite ? "Venue removed from favorites." : "Venue saved to favorites.");
-                  return;
-                }
-                favoriteMutation.mutate(
-                  { id: turf.id, favorite: !isFavorite },
-                  { onSuccess: () => notify(isFavorite ? "Venue removed from favorites." : "Venue saved to favorites.") },
-                );
-              }}
-              size="icon"
-              variant="outline"
-            >
-              <Icon name="Heart" />
+    <main className="page-shell py-8">
+      <section className="grid gap-4 lg:grid-cols-[1.4fr_0.75fr]">
+        <div className="relative min-h-[420px] overflow-hidden rounded-2xl">
+          <img alt={turf.name} className="h-full w-full object-cover" onError={handleImageError} src={turf.gallery[0]} />
+          <div className="absolute bottom-5 left-5 flex gap-2">
+            <Button onClick={() => setMediaMode("tour")} variant="dark">
+              <Icon name="CircleGauge" />
+              View 360 Tour
+            </Button>
+            <Button onClick={() => setMediaMode("photos")} variant="outline" className="bg-white/90">
+              <Icon name="Image" />
+              View all photos
             </Button>
           </div>
-
-          <section>
+        </div>
+        <div className="grid gap-4">
+          {turf.gallery.slice(1, 3).map((image) => (
+            <img alt={turf.name} className="h-48 w-full rounded-2xl object-cover lg:h-full" key={image} onError={handleImageError} src={image} />
+          ))}
+        </div>
+      </section>
+      <section className="mt-10 grid gap-8 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-8">
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h1 className="text-4xl font-black tracking-normal">{turf.name}</h1>
+                <p className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
+                  <MapPin size={16} />
+                  {turf.location}
+                  <span>-</span>
+                  <Star className="fill-warning text-warning" size={16} />
+                  {turf.rating} ({turf.reviews} reviews)
+                </p>
+              </div>
+              <Button
+                aria-label={isFavorite ? "Remove favorite" : "Save favorite"}
+                onClick={() => {
+                  if (!user) {
+                    requireBooking(`/venue/${turf.id}`);
+                    return;
+                  }
+                  favoriteMutation.mutate(
+                    { id: turf.id, favorite: !isFavorite },
+                    { onSuccess: () => notify(isFavorite ? "Venue removed from favorites." : "Venue saved to favorites.") },
+                  );
+                }}
+                size="icon"
+                variant="outline"
+              >
+                <Icon name="Heart" />
+              </Button>
+            </div>
+          </div>
+          <div>
             <h2 className="text-xl font-black">Facilities & Amenities</h2>
-            <div className="mt-4 grid auto-rows-fr grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {turf.amenities.map((amenity) => (
-                <Card className="h-full" key={amenity}>
-                  <CardContent className="h-full p-4">
+                <Card key={amenity}>
+                  <CardContent className="p-4">
                     <Icon className="text-primary" name="ShieldCheck" />
                     <p className="mt-3 text-sm font-bold">{amenity}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </section>
-
-          <section>
+          </div>
+          <div>
             <h2 className="text-xl font-black">The Arena Experience</h2>
-            <p className="mt-3 max-w-none leading-7 text-ink-muted">
+            <p className="mt-3 max-w-3xl leading-7 text-ink-muted">
               Experience world-class play on premium synthetic surfaces, broadcast-grade lights, climate controlled support spaces,
               and fast digital check-in built for repeated weekly play.
             </p>
-          </section>
-
-          <Card className="w-full bg-primary-soft/50">
+          </div>
+          <Card className="bg-primary-soft/50">
             <CardContent>
               <p className="muted-label text-primary">Ground Rules</p>
               <div className="mt-4 space-y-2 text-sm text-ink-muted">
                 {["No metal studs allowed on the surface.", "Arrive 15 minutes before your slot.", "Bibs and professional balls provided."].map((rule) => (
                   <p className="flex items-center gap-2" key={rule}>
-                    <Check className="shrink-0 text-accent" size={16} />
+                    <Check className="text-accent" size={16} />
                     {rule}
                   </p>
                 ))}
               </div>
             </CardContent>
           </Card>
-
-          <section>
+          <div>
             <h2 className="text-xl font-black">Location & Access</h2>
-            <div className="relative mt-4 h-[250px] overflow-hidden rounded-xl">
+            <div className="relative mt-4 h-72 overflow-hidden rounded-2xl">
               <img alt="Venue map" className="h-full w-full object-cover grayscale" src={assetImages.map} />
               <div className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-white shadow-lift">
                 <MapPin size={22} />
               </div>
             </div>
-          </section>
-
-          <section className="mt-6">
-            <SectionHeader title="Similar High-Performance Venues" />
-            <div className="grid gap-5 md:grid-cols-3">
-              {similarResult.turfs.filter((item) => item.id !== turf.id).slice(0, 3).map((item) => (
-                <TurfCard compact key={item.id} turf={item} />
-              ))}
-            </div>
-          </section>
+          </div>
         </div>
-
-        <aside className="w-full self-start lg:sticky lg:top-[calc(var(--navbar-height,80px)+20px)] lg:h-fit lg:max-h-[calc(100vh-var(--navbar-height,80px)-40px)] lg:max-w-[360px] lg:justify-self-end lg:overflow-y-auto">
+        <aside className="lg:sticky lg:top-24 lg:h-max">
           <Card>
             <CardContent>
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-3xl font-black">{currency(selectedRate)}</p>
+                  <p className="text-3xl font-black">{currency(turf.price)}</p>
                   <p className="text-sm text-ink-muted">per hour</p>
                 </div>
                 <Badge variant="secondary">Members save 15%</Badge>
               </div>
-              <p className="muted-label mt-6">Select Sport</p>
-              <select
-                className="focus-ring mt-3 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm"
-                onChange={(event) => setSelectedSport(event.target.value)}
-                value={selectedSport || turf.sport}
-              >
-                {configuredSports.map((sport) => (
-                  <option key={sport} value={sport}>{sport}</option>
-                ))}
-              </select>
               <p className="muted-label mt-6">Select Date</p>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="mt-3 grid grid-cols-4 gap-2">
                 {dates.map((option) => (
                   <button
                     className={`rounded-lg border p-3 text-xs font-black ${date === option ? "border-primary bg-primary text-white" : "border-surface-border bg-white"}`}
@@ -796,13 +933,13 @@ export function VenueDetailsPage() {
                 ))}
               </div>
               <p className="muted-label mt-6">Available Slots</p>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {visibleAvailability.map((slot) => (
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {visibleAvailability.map((slot, index) => (
                   <button
-                    className={`rounded-lg px-3 py-2 text-left text-xs font-bold ${availabilityButtonClass(slot)}`}
+                    className={`rounded-lg px-3 py-2 text-left text-xs font-bold ${availabilityButtonClass(slot, index)}`}
                     disabled={slot.status !== "available"}
                     key={`${slot.startTime}-${slot.endTime}`}
-                    onClick={() => requireBooking(`/booking/slots?${bookingSearch}`)}
+                    onClick={() => requireBooking(`/booking/slots?venue=${turf.id}&date=${date}`)}
                     type="button"
                   >
                     {slot.startTime}-{slot.endTime}
@@ -811,7 +948,7 @@ export function VenueDetailsPage() {
                 ))}
               </div>
               {!visibleAvailability.length && <p className="mt-3 text-sm text-ink-muted">No slots are available for this date.</p>}
-              <Button as={Link} className="mt-6 w-full" to={`/booking/slots?${bookingSearch}`}>
+              <Button as={Link} className="mt-6 w-full" to={`/booking/slots?venue=${turf.id}&date=${date}`}>
                 Reserve Now
                 <ChevronRight size={17} />
               </Button>
@@ -819,6 +956,14 @@ export function VenueDetailsPage() {
             </CardContent>
           </Card>
         </aside>
+      </section>
+      <section className="mt-14">
+        <SectionHeader title="Similar High-Performance Venues" />
+        <div className="grid gap-5 md:grid-cols-3">
+          {similarResult.turfs.filter((item) => item.id !== turf.id).slice(0, 3).map((item) => (
+            <TurfCard compact key={item.id} turf={item} />
+          ))}
+        </div>
       </section>
       <Modal onOpenChange={(open) => !open && setMediaMode("")} open={Boolean(mediaMode)} title={mediaMode === "tour" ? `${turf.name} 360 Tour` : `${turf.name} Gallery`}>
         <div className={mediaMode === "photos" ? "grid gap-3 sm:grid-cols-2" : ""}>
