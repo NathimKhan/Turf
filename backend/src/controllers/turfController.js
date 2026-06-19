@@ -1,17 +1,28 @@
 const { body, param } = require("express-validator");
+const AuditLog = require("../models/AuditLog");
 const Turf = require("../models/Turf");
 const Booking = require("../models/Booking");
 const Notification = require("../models/Notification");
 const User = require("../models/User");
+const {
+  isOwnerActive,
+  isVenueLive,
+  normalizeVenueStatus,
+} = require("../utils/approval");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 const {
   buildAvailabilityTimeline,
+  configuredSportsForTurf,
   generateScheduledSlots,
   isBlackoutDate,
   isValidTime,
+  getMinimumBookingMinutes,
+  getStartIntervalMinutes,
+  getSlotMinutes,
   minutes,
   normalizeDate,
   scheduleRangesForDate,
+  sportRateForTurf,
   validateSlotRequest,
 } = require("../services/availabilityService");
 const { recordBookingConflict } = require("../services/conflictLogService");
@@ -33,6 +44,21 @@ function parseArray(value) {
   }
 
   return [value];
+}
+
+function parseObject(value) {
+  if (!value) return {};
+  if (value instanceof Map) return Object.fromEntries(value);
+  if (typeof value === "object") return value;
+
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    const error = new Error("Sport rates must be valid JSON");
+    error.statusCode = 400;
+    throw error;
+  }
 }
 
 function fileUrls(req) {
@@ -103,6 +129,26 @@ function normalizeSchedulePayload(payload = {}) {
     next.slotMinutes = slotMinutes;
   }
 
+  if (payload.startIntervalMinutes !== undefined) {
+    const startIntervalMinutes = Number(payload.startIntervalMinutes);
+    if (![15, 30, 60].includes(startIntervalMinutes)) {
+      const error = new Error("Start interval must be 15, 30, or 60 minutes");
+      error.statusCode = 400;
+      throw error;
+    }
+    next.startIntervalMinutes = startIntervalMinutes;
+  }
+
+  if (payload.minimumBookingMinutes !== undefined) {
+    const minimumBookingMinutes = Number(payload.minimumBookingMinutes);
+    if (minimumBookingMinutes < 60 || minimumBookingMinutes % 30 !== 0) {
+      const error = new Error("Minimum booking duration is 1 hour");
+      error.statusCode = 400;
+      throw error;
+    }
+    next.minimumBookingMinutes = minimumBookingMinutes;
+  }
+
   if (payload.bufferMinutes !== undefined) {
     const bufferMinutes = Number(payload.bufferMinutes);
     if (![0, 15, 30].includes(bufferMinutes)) {
@@ -154,8 +200,52 @@ function normalizeSchedulePayload(payload = {}) {
   return next;
 }
 
+function normalizeSportRatesPayload(value, sports, basePrice, existingRates = {}) {
+  const payloadRates = parseObject(value);
+  const savedRates = parseObject(existingRates);
+  const rates = {};
+  const fallbackRate = Number(basePrice || 0);
+
+  sports.forEach((sport) => {
+    const rate = Number(payloadRates[sport] ?? savedRates[sport] ?? fallbackRate);
+    if (Number.isNaN(rate) || rate < 0) {
+      const error = new Error("Sport rates must be positive numbers");
+      error.statusCode = 400;
+      throw error;
+    }
+    rates[sport] = rate;
+  });
+
+  return rates;
+}
+
 function canManageTurf(user, turf) {
   return user.role === "admin" || String(turf.ownerId) === String(user._id);
+}
+
+function liveVenueFilter() {
+  return {
+    isApproved: true,
+    $or: [
+      { status: "LIVE" },
+      { moderationStatus: "approved" },
+      { status: { $exists: false } },
+    ],
+  };
+}
+
+async function activeVenueOwnerIds() {
+  const owners = await User.find({
+    $or: [
+      { role: "admin" },
+      {
+        role: "owner",
+        $or: [{ approvalStatus: "ACTIVE" }, { accountStatus: "active" }],
+      },
+    ],
+  }).select("_id");
+
+  return owners.map((owner) => owner._id);
 }
 
 const turfValidation = [
@@ -210,6 +300,8 @@ const getTurfs = asyncHandler(async (req, res) => {
 
   if (!includeUnapproved || req.user?.role !== "admin") {
     filter.isApproved = true;
+    filter.$and = [liveVenueFilter()];
+    filter.ownerId = { $in: await activeVenueOwnerIds() };
   }
 
   if (city) filter.city = { $regex: city, $options: "i" };
@@ -275,7 +367,7 @@ const getTurfsByCity = asyncHandler(async (req, res) => {
 });
 
 const getTurfById = asyncHandler(async (req, res) => {
-  const turf = await Turf.findById(req.params.id).populate("ownerId", "name email phone businessName");
+  const turf = await Turf.findById(req.params.id).populate("ownerId", "name email phone businessName approvalStatus accountStatus role");
 
   if (!turf) {
     const error = new Error("Turf not found");
@@ -287,7 +379,7 @@ const getTurfById = asyncHandler(async (req, res) => {
   const canViewUnapproved =
     req.user?.role === "admin" || (req.user && String(ownerId) === String(req.user._id));
 
-  if (!turf.isApproved && !canViewUnapproved) {
+  if ((!isVenueLive(turf) || !isOwnerActive(turf.ownerId)) && !canViewUnapproved) {
     const error = new Error("Turf not found");
     error.statusCode = 404;
     throw error;
@@ -297,11 +389,12 @@ const getTurfById = asyncHandler(async (req, res) => {
 });
 
 const getTurfMetadata = asyncHandler(async (req, res) => {
+  const ownerIds = await activeVenueOwnerIds();
   const [cities, locations, sports, amenities] = await Promise.all([
-    Turf.distinct("city", { isApproved: true }),
-    Turf.distinct("location", { isApproved: true }),
-    Turf.distinct("sportsSupported", { isApproved: true }),
-    Turf.distinct("amenities", { isApproved: true }),
+    Turf.distinct("city", { ...liveVenueFilter(), ownerId: { $in: ownerIds } }),
+    Turf.distinct("location", { ...liveVenueFilter(), ownerId: { $in: ownerIds } }),
+    Turf.distinct("sportsSupported", { ...liveVenueFilter(), ownerId: { $in: ownerIds } }),
+    Turf.distinct("amenities", { ...liveVenueFilter(), ownerId: { $in: ownerIds } }),
   ]);
 
   return successResponse(res, "Turf search metadata fetched", {
@@ -322,9 +415,9 @@ const getMyTurfs = asyncHandler(async (req, res) => {
 });
 
 const getTurfAvailability = asyncHandler(async (req, res) => {
-  const turf = await Turf.findById(req.params.id);
+  const turf = await Turf.findById(req.params.id).populate("ownerId", "approvalStatus accountStatus role");
 
-  if (!turf || !turf.isApproved) {
+  if (!turf || !isVenueLive(turf) || !isOwnerActive(turf.ownerId)) {
     const error = new Error("Turf not found");
     error.statusCode = 404;
     throw error;
@@ -336,7 +429,7 @@ const getTurfAvailability = asyncHandler(async (req, res) => {
     turfId: turf._id,
     bookingDate,
     bookingStatus: { $in: ["pending", "confirmed", "checked_in", "upcoming"] },
-  }).select("slotStartTime slotEndTime");
+  }).select("slotStartTime slotEndTime bookingStatus paymentStatus sport");
 
   const timeline = buildAvailabilityTimeline(turf, bookingDate, bookings);
   const availableSlots = timeline.filter((slot) => slot.status === "available");
@@ -374,10 +467,14 @@ const getTurfAvailability = asyncHandler(async (req, res) => {
     isBlackoutDate: isBlackoutDate(turf, bookingDate),
     rules: {
       bufferMinutes: turf.schedule?.bufferMinutes || 0,
+      minimumBookingMinutes: getMinimumBookingMinutes(turf),
       ranges: scheduleRangesForDate(turf, bookingDate),
-      slotMinutes: turf.schedule?.slotMinutes || 60,
+      slotMinutes: getSlotMinutes(turf),
+      sportRates: Object.fromEntries(configuredSportsForTurf(turf).map((sport) => [sport, sportRateForTurf(turf, sport)])),
+      sportsSupported: configuredSportsForTurf(turf),
+      startIntervalMinutes: getStartIntervalMinutes(turf),
     },
-    slotMinutes: turf.schedule?.slotMinutes || 60,
+    slotMinutes: getSlotMinutes(turf),
     timeline,
     request,
     slots: availableSlots,
@@ -386,6 +483,9 @@ const getTurfAvailability = asyncHandler(async (req, res) => {
 
 const createTurf = asyncHandler(async (req, res) => {
   const images = [...parseArray(req.body.images), ...fileUrls(req)];
+  const sportsSupported = parseArray(req.body.sportsSupported || req.body.sport);
+  const pricePerHour = Number(req.body.pricePerHour);
+  const sportRates = normalizeSportRatesPayload(req.body.sportRates, sportsSupported, pricePerHour);
 
   const turf = await Turf.create({
     name: req.body.name,
@@ -394,21 +494,21 @@ const createTurf = asyncHandler(async (req, res) => {
     address: req.body.address,
     city: req.body.city,
     state: req.body.state,
-    sportsSupported: parseArray(req.body.sportsSupported || req.body.sport),
-    pricePerHour: req.body.pricePerHour,
+    sportsSupported,
+    pricePerHour,
+    sportRates,
     images,
     amenities: parseArray(req.body.amenities),
     ownerId: req.user._id,
-    isApproved: req.user.role === "admin" ? parseBoolean(req.body.isApproved, true) : false,
-    moderationStatus:
+    status:
       req.user.role === "admin" && parseBoolean(req.body.isApproved, true)
-        ? "approved"
-        : "pending",
+        ? normalizeVenueStatus(req.body.status || "LIVE")
+        : "PENDING",
     schedule: parseSchedule(req.body.schedule),
   });
 
-  if (!turf.isApproved) {
-    const admins = await User.find({ role: "admin", accountStatus: "active" }).select("_id");
+  if (!isVenueLive(turf)) {
+    const admins = await User.find({ role: "admin" }).select("_id");
     if (admins.length) {
       await Notification.insertMany(
         admins.map((admin) => ({
@@ -421,9 +521,17 @@ const createTurf = asyncHandler(async (req, res) => {
         })),
       );
     }
+
+    await AuditLog.create({
+      action: "SUBMITTED",
+      actorId: req.user._id,
+      entityId: turf._id,
+      entityType: "VENUE",
+      status: turf.status,
+    });
   }
 
-  return successResponse(res, "Turf created", { turf }, 201);
+  return successResponse(res, isVenueLive(turf) ? "Turf created" : "Venue submitted for approval.", { turf }, 201);
 });
 
 const updateTurf = asyncHandler(async (req, res) => {
@@ -452,6 +560,15 @@ const updateTurf = asyncHandler(async (req, res) => {
     turf.sportsSupported = parseArray(req.body.sportsSupported || req.body.sport);
   }
 
+  if (req.body.sportRates !== undefined || req.body.pricePerHour !== undefined || req.body.sportsSupported || req.body.sport) {
+    turf.sportRates = normalizeSportRatesPayload(
+      req.body.sportRates,
+      turf.sportsSupported || [],
+      turf.pricePerHour,
+      turf.sportRates,
+    );
+  }
+
   if (req.body.amenities) {
     turf.amenities = parseArray(req.body.amenities);
   }
@@ -466,6 +583,22 @@ const updateTurf = asyncHandler(async (req, res) => {
   }
 
   await turf.save();
+
+  if (req.user.role === "owner") {
+    const admins = await User.find({ role: "admin" }).select("_id");
+    if (admins.length) {
+      await Notification.insertMany(
+        admins.map((admin) => ({
+          userId: admin._id,
+          title: "Venue updated",
+          message: `${turf.name} was updated by ${req.user.businessName || req.user.name}.`,
+          metadata: { turfId: turf._id, ownerId: req.user._id },
+          targetUrl: "/admin/turfs",
+          type: "venue",
+        })),
+      );
+    }
+  }
 
   if (turf.isApproved) {
     const followers = await User.find({ favorites: turf._id }).select("_id");

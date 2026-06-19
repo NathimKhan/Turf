@@ -1,5 +1,6 @@
 frontend/node_modules/
 frontend/dist/
+frontend/stitch_turf/
 frontend/*.log
 frontend/.env
 
@@ -8,5 +9,8 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 backend/.env
 
+.codex-logs/
+test-results/
+*.log
 .DS_Store
 Thumbs.db

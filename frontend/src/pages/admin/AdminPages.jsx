@@ -66,6 +66,46 @@ function scheduleSummary(schedule = {}) {
   return uniqueRanges.length ? uniqueRanges.join(", ") : "Closed";
 }
 
+function formatOwnerApprovalStatus(status = "") {
+  const normalized = String(status || "").toUpperCase();
+  const statusMap = {
+    ACTIVE: "APPROVED",
+    APPROVED: "APPROVED",
+    PENDING: "PENDING",
+    REJECTED: "REJECTED",
+    SUSPENDED: "SUSPENDED",
+    active: "APPROVED",
+    pending: "PENDING",
+    rejected: "REJECTED",
+    suspended: "SUSPENDED",
+  };
+
+  return statusMap[normalized] || statusMap[String(status)] || "PENDING";
+}
+
+function ownerDisplayStatus(owner = {}) {
+  return formatOwnerApprovalStatus(owner.approvalStatus || owner.accountStatus);
+}
+
+function OwnerApprovalStatusBadge({ status }) {
+  const displayStatus = formatOwnerApprovalStatus(status);
+  const variants = {
+    APPROVED: "success",
+    PENDING: "warning",
+    REJECTED: "danger",
+    SUSPENDED: "warning",
+  };
+  const classNames = {
+    SUSPENDED: "bg-orange-100 text-orange-700",
+  };
+
+  return (
+    <Badge className={classNames[displayStatus]} variant={variants[displayStatus] || "default"}>
+      {displayStatus}
+    </Badge>
+  );
+}
+
 function AdminShell({ children, rows = [], columns = [], subtitle, title }) {
   const { data: dashboard = {} } = useAnalytics();
 
@@ -95,19 +135,64 @@ function AdminShell({ children, rows = [], columns = [], subtitle, title }) {
 
 export function AdminDashboardPage() {
   const { data: dashboard = {} } = useAnalytics();
+  const ownerMutation = useOwnerStatusMutation();
+  const turfMutation = useTurfStatusMutation();
   const rows = (dashboard.recentActivities || []).map((activity) => [
     new Date(activity.createdAt).toLocaleString(),
     activity.type,
     activity.message,
     "Active",
   ]);
+  const pendingOwnerRows = (dashboard.pendingOwnerApplications || []).map((owner) => [
+    owner.businessName || owner.name,
+    owner.email,
+    owner.phone || "Not provided",
+    new Date(owner.createdAt).toLocaleDateString(),
+    <div className="flex flex-wrap gap-2" key={`${owner._id}-pending-owner-actions`}>
+      <Button onClick={() => ownerMutation.mutate({ id: owner._id, status: "ACTIVE" })} size="sm">Approve</Button>
+      <Button onClick={() => ownerMutation.mutate({ id: owner._id, status: "REJECTED" })} size="sm" variant="outline">Reject</Button>
+      <Button as={Link} size="sm" to="/admin/owners" variant="ghost">View Details</Button>
+    </div>,
+  ]);
+  const pendingVenueRows = (dashboard.pendingVenueApplications || []).map((turf) => [
+    turf.name,
+    turf.ownerId?.businessName || turf.ownerId?.name || "Owner",
+    turf.sportsSupported?.[0] || "Sport",
+    turf.location || turf.city,
+    new Date(turf.createdAt).toLocaleDateString(),
+    <div className="flex flex-wrap gap-2" key={`${turf._id}-pending-venue-actions`}>
+      <Button onClick={() => turfMutation.mutate({ id: turf._id, status: "LIVE" })} size="sm">Approve</Button>
+      <Button onClick={() => turfMutation.mutate({ id: turf._id, status: "REJECTED" })} size="sm" variant="outline">Reject</Button>
+      <Button as={Link} size="sm" to="/admin/turfs" variant="ghost">View Details</Button>
+    </div>,
+  ]);
+
   return (
     <AdminShell
-      columns={["Time", "Type", "Activity", "Status"]}
-      rows={rows}
       subtitle={`${dashboard.pendingOwners || 0} owner applications and ${dashboard.pendingTurfs || 0} venues await review.`}
       title="Global Dashboard"
-    />
+    >
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <StatsCard icon="UserPlus" label="Pending Owners" to="/admin/owners" value={String(dashboard.pendingOwners || 0)} tone="warning" />
+        <StatsCard icon="Clock" label="Pending Venues" to="/admin/turfs" value={String(dashboard.pendingTurfs || 0)} tone="secondary" />
+        <StatsCard icon="BadgeCheck" label="Live Venues" to="/admin/turfs" value={String(dashboard.liveVenues || 0)} tone="accent" />
+        <StatsCard icon="X" label="Rejected Venues" to="/admin/turfs" value={String(dashboard.rejectedVenues || 0)} tone="warning" />
+      </div>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <section>
+          <h2 className="mb-4 text-xl font-black">Pending Turf Owners</h2>
+          <DataTable columns={["Name", "Email", "Phone", "Created", "Actions"]} emptyMessage="No pending turf owners." rows={pendingOwnerRows} />
+        </section>
+        <section>
+          <h2 className="mb-4 text-xl font-black">Pending Venues</h2>
+          <DataTable columns={["Venue", "Owner", "Sport", "Location", "Created", "Actions"]} emptyMessage="No pending venues." rows={pendingVenueRows} />
+        </section>
+      </div>
+      <div className="mt-6">
+        <h2 className="mb-4 text-xl font-black">Recent Activity</h2>
+        <DataTable columns={["Time", "Type", "Activity", "Status"]} rows={rows} />
+      </div>
+    </AdminShell>
   );
 }
 
@@ -218,19 +303,36 @@ export function UserManagementPage() {
 export function TurfOwnerManagementPage() {
   const { data = {} } = useAdminOwners({ limit: 100 });
   const mutation = useOwnerStatusMutation();
-  const rows = (data.owners || []).map((owner) => [
-    owner.businessName || owner.name,
-    owner.email,
-    owner.accountStatus,
-    <div className="flex flex-wrap gap-2" key={`${owner._id}-actions`}>
-      <Button onClick={() => mutation.mutate({ id: owner._id, status: "active" })} size="sm">
-        {owner.accountStatus === "suspended" || owner.accountStatus === "rejected" ? "Reactivate" : "Approve"}
-      </Button>
-      {owner.accountStatus !== "rejected" && <Button onClick={() => mutation.mutate({ id: owner._id, status: "rejected" })} size="sm" variant="outline">Reject</Button>}
-      <Button onClick={() => mutation.mutate({ id: owner._id, status: "suspended" })} size="sm" variant="danger">Suspend</Button>
-    </div>,
-  ]);
-  return <AdminShell columns={["Business", "Email", "Status", "Actions"]} rows={rows} subtitle="Approve, reject, or suspend turf owner applications." title="Turf Owner Management" />;
+  const rows = (data.owners || []).map((owner) => {
+    const displayStatus = ownerDisplayStatus(owner);
+
+    return [
+      owner.businessName || owner.name,
+      owner.email,
+      owner.phone || "Not provided",
+      <OwnerApprovalStatusBadge key={`${owner._id}-status`} status={displayStatus} />,
+      new Date(owner.createdAt).toLocaleDateString(),
+      <div className="flex flex-wrap gap-2" key={`${owner._id}-actions`}>
+        {displayStatus !== "APPROVED" && (
+          <Button onClick={() => mutation.mutate({ id: owner._id, status: "ACTIVE" })} size="sm">
+            Approve
+          </Button>
+        )}
+        {["APPROVED", "PENDING"].includes(displayStatus) && (
+          <Button onClick={() => mutation.mutate({ id: owner._id, status: "REJECTED" })} size="sm" variant="outline">
+            Reject
+          </Button>
+        )}
+        <Button as={Link} size="sm" to="/admin/owners" variant="ghost">View Details</Button>
+        {["APPROVED", "PENDING"].includes(displayStatus) && (
+          <Button onClick={() => mutation.mutate({ id: owner._id, status: "SUSPENDED" })} size="sm" variant="danger">
+            Suspend
+          </Button>
+        )}
+      </div>,
+    ];
+  });
+  return <AdminShell columns={["Business", "Email", "Phone", "Status", "Created", "Actions"]} rows={rows} subtitle="Approve, reject, or suspend turf owner applications." title="Turf Owner Management" />;
 }
 
 export function TurfManagementPage() {
@@ -238,17 +340,20 @@ export function TurfManagementPage() {
   const mutation = useTurfStatusMutation();
   const rows = turfs.map((turf) => [
     turf.name,
-    turf.city,
+    turf.ownerId?.businessName || turf.ownerId?.name || "Owner",
+    turf.sport,
+    turf.location || turf.city,
     turf.status,
     <div className="flex flex-wrap gap-2" key={`${turf.id}-actions`}>
-      <Button onClick={() => mutation.mutate({ id: turf.id, status: "approved" })} size="sm">
+      <Button onClick={() => mutation.mutate({ id: turf.id, status: "LIVE" })} size="sm">
         {["Suspended", "Rejected"].includes(turf.status) ? "Reactivate" : "Approve"}
       </Button>
-      <Button onClick={() => mutation.mutate({ id: turf.id, status: "rejected" })} size="sm" variant="outline">Reject</Button>
-      <Button onClick={() => mutation.mutate({ id: turf.id, status: "suspended" })} size="sm" variant="danger">Suspend</Button>
+      <Button onClick={() => mutation.mutate({ id: turf.id, status: "REJECTED" })} size="sm" variant="outline">Reject</Button>
+      <Button as={Link} size="sm" to="/admin/turfs" variant="ghost">View Details</Button>
+      <Button onClick={() => mutation.mutate({ id: turf.id, status: "SUSPENDED" })} size="sm" variant="danger">Suspend</Button>
     </div>,
   ]);
-  return <AdminShell columns={["Venue", "City", "Status", "Actions"]} rows={rows} subtitle="Moderate venue visibility and marketplace status." title="Venue Management" />;
+  return <AdminShell columns={["Venue", "Owner", "Sport", "Location", "Status", "Actions"]} rows={rows} subtitle="Moderate venue visibility and marketplace status." title="Venue Management" />;
 }
 
 export function BookingManagementPage() {
@@ -539,7 +644,7 @@ export function TournamentManagementPage() {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <Input onChange={update("title")} placeholder="Tournament title" value={form.title} />
             <select className="focus-ring h-11 rounded-lg border border-surface-outline bg-white px-3 text-sm" onChange={update("sport")} value={form.sport}>
-              {["Football", "Cricket", "Badminton", "Volleyball", "Basketball"].map((sport) => <option key={sport}>{sport}</option>)}
+              {["Football", "Cricket", "Volleyball", "Basketball", "Badminton", "Tennis"].map((sport) => <option key={sport}>{sport}</option>)}
             </select>
             <Input onChange={update("startDate")} type="date" value={form.startDate} />
             <Input onChange={update("endDate")} type="date" value={form.endDate} />

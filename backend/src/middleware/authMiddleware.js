@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { approvalStatusForUser, canAuthenticateUser } = require("../utils/approval");
 
 async function protect(req, res, next) {
   try {
@@ -26,19 +27,25 @@ async function protect(req, res, next) {
       throw error;
     }
 
-    if (user.accountStatus && user.accountStatus !== "active") {
+    if (user.role === "admin" || user.role === "user") {
+      req.user = user;
+      return next();
+    }
+
+    const approvalStatus = approvalStatusForUser(user);
+    if (!canAuthenticateUser(user)) {
       const messages = {
-        pending: "Your account is awaiting approval",
-        rejected: "Your account application was rejected",
-        suspended: "Your account has been suspended",
+        PENDING: "Your account is awaiting approval",
+        REJECTED: "Your account application was rejected",
+        SUSPENDED: "Your account has been suspended",
       };
-      const error = new Error(messages[user.accountStatus] || "Your account is not active");
+      const error = new Error(messages[approvalStatus] || "Your account is not active");
       error.statusCode = 403;
       throw error;
     }
 
     req.user = user;
-    next();
+    return next();
   } catch (error) {
     error.statusCode = error.statusCode || 401;
     next(error);

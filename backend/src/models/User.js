@@ -1,6 +1,12 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
+const {
+  OWNER_ACCOUNT_STATUS_BY_APPROVAL,
+  OWNER_APPROVAL_BY_ACCOUNT_STATUS,
+  OWNER_APPROVAL_STATUSES,
+  normalizeOwnerApprovalStatus,
+} = require("../utils/approval");
 
 const userSchema = new mongoose.Schema(
   {
@@ -44,10 +50,16 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "owner", "admin"],
       default: "user",
     },
+    approvalStatus: {
+      type: String,
+      enum: OWNER_APPROVAL_STATUSES,
+      default: "PENDING",
+      index: true,
+    },
     accountStatus: {
       type: String,
       enum: ["active", "pending", "rejected", "suspended"],
-      default: "active",
+      default: "pending",
       index: true,
     },
     approvedAt: Date,
@@ -119,6 +131,45 @@ const userSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   },
 );
+
+userSchema.pre("validate", function syncApprovalStatus(next) {
+  if (this.role === "admin" || this.role === "user") {
+    this.approvalStatus = "ACTIVE";
+    this.accountStatus = "active";
+    return next();
+  }
+
+  const accountWasSet =
+    typeof this.$isDefault === "function"
+      ? !this.$isDefault("accountStatus")
+      : Boolean(this.accountStatus);
+  const approvalWasSet =
+    typeof this.$isDefault === "function"
+      ? !this.$isDefault("approvalStatus")
+      : Boolean(this.approvalStatus);
+
+  if (this.isModified("approvalStatus") && !this.isModified("accountStatus")) {
+    this.approvalStatus = normalizeOwnerApprovalStatus(this.approvalStatus);
+    this.accountStatus = OWNER_ACCOUNT_STATUS_BY_APPROVAL[this.approvalStatus];
+    return next();
+  }
+
+  if (this.isModified("accountStatus") && !this.isModified("approvalStatus")) {
+    this.accountStatus = String(this.accountStatus || "pending").toLowerCase();
+    this.approvalStatus = OWNER_APPROVAL_BY_ACCOUNT_STATUS[this.accountStatus] || "PENDING";
+    return next();
+  }
+
+  if (accountWasSet && !approvalWasSet) {
+    this.accountStatus = String(this.accountStatus || "pending").toLowerCase();
+    this.approvalStatus = OWNER_APPROVAL_BY_ACCOUNT_STATUS[this.accountStatus] || "PENDING";
+    return next();
+  }
+
+  this.approvalStatus = normalizeOwnerApprovalStatus(this.approvalStatus);
+  this.accountStatus = OWNER_ACCOUNT_STATUS_BY_APPROVAL[this.approvalStatus];
+  return next();
+});
 
 userSchema.virtual("membership").get(function getMembership() {
   return this.membershipPlan;

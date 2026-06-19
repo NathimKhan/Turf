@@ -51,6 +51,7 @@ async function bootstrapPlatformOwner() {
       email,
       password,
       role: "admin",
+      approvalStatus: "ACTIVE",
       accountStatus: "active",
       membershipPlan: "Admin",
     });
@@ -59,6 +60,7 @@ async function bootstrapPlatformOwner() {
 
   admin.name = name;
   admin.role = "admin";
+  admin.approvalStatus = "ACTIVE";
   admin.accountStatus = "active";
   admin.membershipPlan = "Admin";
 
@@ -153,6 +155,7 @@ async function bootstrapDemoData() {
     email: "admin@turfx.com",
     password: "Admin@123",
     role: "admin",
+    approvalStatus: "ACTIVE",
     accountStatus: "active",
     membershipPlan: "Admin",
   });
@@ -164,6 +167,7 @@ async function bootstrapDemoData() {
     email: "owner1@turfx.com",
     password: "Owner@123",
     role: "owner",
+    approvalStatus: "ACTIVE",
     accountStatus: "active",
     membershipPlan: "Venue Pro",
     approvedAt: new Date(),
@@ -176,6 +180,7 @@ async function bootstrapDemoData() {
     phone: "9123456780",
     bio: "Weekend football captain and TURFX Gold member.",
     role: "user",
+    approvalStatus: "ACTIVE",
     accountStatus: "active",
     membershipPlan: "Gold",
     walletBalance: 2500,
@@ -190,6 +195,7 @@ async function bootstrapDemoData() {
       city: "Mumbai",
       state: "Maharashtra",
       sportsSupported: ["Football"],
+      sportRates: { Football: 1800 },
       amenities: ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Seating Area"],
       pricePerHour: 1800,
       rating: 4.8,
@@ -203,6 +209,7 @@ async function bootstrapDemoData() {
       city: "Mumbai",
       state: "Maharashtra",
       sportsSupported: ["Cricket"],
+      sportRates: { Cricket: 1400 },
       amenities: ["Parking", "Drinking Water", "Flood Lights"],
       pricePerHour: 1400,
       rating: 4.6,
@@ -216,6 +223,7 @@ async function bootstrapDemoData() {
       city: "Pune",
       state: "Maharashtra",
       sportsSupported: ["Badminton", "Basketball"],
+      sportRates: { Badminton: 950, Basketball: 1200 },
       amenities: ["Washroom", "Drinking Water", "Seating Area"],
       pricePerHour: 950,
       rating: 4.7,
@@ -232,11 +240,14 @@ async function bootstrapDemoData() {
         {
           ...turf,
           ownerId: owner._id,
+          status: "LIVE",
           isApproved: true,
           moderationStatus: "approved",
           approvedAt: new Date(),
           approvedBy: admin._id,
           schedule: {
+            minimumBookingMinutes: 60,
+            startIntervalMinutes: 30,
             slotMinutes: 60,
             weeklyAvailability: {
               monday: ["06:00-23:00"],
@@ -264,6 +275,8 @@ async function bootstrapDemoData() {
     {
       userId: user._id,
       turfId: turfs[0]._id,
+      ownerId: turfs[0].ownerId,
+      sport: "Football",
       bookingDate: tomorrow,
       slotStartTime: "18:00",
     },
@@ -285,6 +298,8 @@ async function bootstrapDemoData() {
     {
       userId: user._id,
       turfId: turfs[1]._id,
+      ownerId: turfs[1].ownerId,
+      sport: "Cricket",
       bookingDate: completedDate,
       slotStartTime: "20:00",
     },

@@ -1,5 +1,7 @@
 const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DEFAULT_START_INTERVAL_MINUTES = 30;
+const MINIMUM_BOOKING_MINUTES = 60;
 
 function normalizeDate(input) {
   const date =
@@ -139,6 +141,33 @@ function getSlotMinutes(turf) {
   return Number(turf.schedule?.slotMinutes || 60);
 }
 
+function getStartIntervalMinutes(turf) {
+  const interval = Number(turf.schedule?.startIntervalMinutes || DEFAULT_START_INTERVAL_MINUTES);
+  return interval > 0 ? interval : DEFAULT_START_INTERVAL_MINUTES;
+}
+
+function getMinimumBookingMinutes(turf) {
+  const minimum = Number(turf.schedule?.minimumBookingMinutes || MINIMUM_BOOKING_MINUTES);
+  return Math.max(minimum, MINIMUM_BOOKING_MINUTES);
+}
+
+function mapToObject(value) {
+  if (!value) return {};
+  if (value instanceof Map) return Object.fromEntries(value);
+  if (typeof value.toObject === "function") return value.toObject();
+  return value;
+}
+
+function configuredSportsForTurf(turf) {
+  return (turf.sportsSupported || []).filter(Boolean);
+}
+
+function sportRateForTurf(turf, sport) {
+  const rates = mapToObject(turf.sportRates);
+  const selectedSport = sport || configuredSportsForTurf(turf)[0] || "";
+  return Number(rates?.[selectedSport] ?? turf.pricePerHour ?? 0);
+}
+
 function overlaps(startTime, endTime, compareStartTime, compareEndTime) {
   return minutes(startTime) < minutes(compareEndTime) && minutes(endTime) > minutes(compareStartTime);
 }
@@ -192,7 +221,8 @@ function uniqueSlots(slots) {
 }
 
 function generateScheduledSlots(turf, bookingDate, bookings = [], options = {}) {
-  const slotMinutes = getSlotMinutes(turf);
+  const slotMinutes = Number(options.durationMinutes || getSlotMinutes(turf) || getMinimumBookingMinutes(turf));
+  const startIntervalMinutes = Number(options.startIntervalMinutes || getStartIntervalMinutes(turf));
   const bufferMinutes = getBufferMinutes(turf);
   const slots = [];
 
@@ -202,7 +232,7 @@ function generateScheduledSlots(turf, bookingDate, bookings = [], options = {}) 
 
     const { end, start } = parsedRange;
 
-    for (let cursor = start; cursor + slotMinutes <= end; cursor += slotMinutes) {
+    for (let cursor = start; cursor + slotMinutes <= end; cursor += startIntervalMinutes) {
       slots.push({
         startTime: formatTime(cursor),
         endTime: formatTime(cursor + slotMinutes),
@@ -231,12 +261,23 @@ function generateScheduledSlots(turf, bookingDate, bookings = [], options = {}) 
 }
 
 function classifySlot(slot, bookings = [], bufferMinutes = 0, blockedReason = "") {
-  if (blockedReason) return { status: "blocked", reason: blockedReason };
+  if (blockedReason) {
+    return {
+      status: /maintenance/i.test(blockedReason) ? "maintenance" : "blocked",
+      reason: blockedReason,
+    };
+  }
 
   const booked = bookings.find((booking) =>
     overlaps(slot.startTime, slot.endTime, booking.slotStartTime, booking.slotEndTime),
   );
-  if (booked) return { status: "booked", reason: "Booked" };
+  if (booked) {
+    const pendingPayment = booked.bookingStatus === "pending" || booked.paymentStatus === "pending";
+    return {
+      status: pendingPayment ? "pending" : "booked",
+      reason: pendingPayment ? "Pending Payment" : "Booked",
+    };
+  }
 
   const buffered = bookings.find((booking) => {
     const window = expandedBookingWindow(booking, bufferMinutes);
@@ -274,8 +315,8 @@ function buildOccupancyKeys(turfId, bookingDate, startTime, endTime, bufferMinut
 }
 
 function validateSlotRequest(turf, bookingDate, startTime, endTime, bookings = []) {
-  const slotMinutes = getSlotMinutes(turf);
   const durationMinutes = calculateDurationMinutes(startTime, endTime);
+  const minimumBookingMinutes = getMinimumBookingMinutes(turf);
   const blackout = getBlackoutForDate(turf, bookingDate);
 
   if (blackout) {
@@ -287,10 +328,10 @@ function validateSlotRequest(turf, bookingDate, startTime, endTime, bookings = [
     };
   }
 
-  if (durationMinutes !== slotMinutes) {
+  if (durationMinutes < minimumBookingMinutes) {
     return {
       available: false,
-      message: `Bookings for this turf must be exactly ${slotMinutes} minutes`,
+      message: "Minimum booking duration is 1 hour",
       status: "invalid_duration",
       statusCode: 400,
     };
@@ -333,6 +374,8 @@ module.exports = {
   generateScheduledSlots,
   getBlackoutForDate,
   getBufferMinutes,
+  getMinimumBookingMinutes,
+  getStartIntervalMinutes,
   getSlotMinutes,
   isBlackoutDate,
   isSlotAvailableInSchedule,
@@ -341,5 +384,7 @@ module.exports = {
   normalizeDate,
   overlaps,
   scheduleRangesForDate,
+  sportRateForTurf,
+  configuredSportsForTurf,
   validateSlotRequest,
 };

@@ -9,7 +9,7 @@ function canManage(user, tournament) {
 const tournamentValidation = [
   body("title").trim().notEmpty().withMessage("Title is required"),
   body("description").trim().notEmpty().withMessage("Description is required"),
-  body("sport").isIn(["Football", "Cricket", "Badminton", "Volleyball", "Basketball"]).withMessage("Invalid sport"),
+  body("sport").isIn(["Football", "Cricket", "Volleyball", "Basketball", "Badminton", "Tennis"]).withMessage("Invalid sport"),
   body("prizePool").isFloat({ min: 0 }).withMessage("Prize pool must be positive"),
   body("startDate").isISO8601().withMessage("Valid start date is required"),
   body("endDate").isISO8601().withMessage("Valid end date is required"),

@@ -11,6 +11,7 @@ process.env.PAYMENT_PROVIDER = "mock";
 
 const app = require("../src/server");
 const generateToken = require("../src/utils/generateToken");
+const AuditLog = require("../src/models/AuditLog");
 const Booking = require("../src/models/Booking");
 const BookingConflictLog = require("../src/models/BookingConflictLog");
 const Notification = require("../src/models/Notification");
@@ -29,12 +30,13 @@ let mongo;
 before(async () => {
   mongo = await MongoMemoryServer.create();
   await mongoose.connect(mongo.getUri());
-  await Promise.all([Booking.syncIndexes(), BookingConflictLog.syncIndexes(), Payment.syncIndexes(), Review.syncIndexes(), Turf.syncIndexes(), User.syncIndexes()]);
+  await Promise.all([AuditLog.syncIndexes(), Booking.syncIndexes(), BookingConflictLog.syncIndexes(), Payment.syncIndexes(), Review.syncIndexes(), Turf.syncIndexes(), User.syncIndexes()]);
 });
 
 beforeEach(async () => {
   await Promise.all([
     Booking.deleteMany(),
+    AuditLog.deleteMany(),
     BookingConflictLog.deleteMany(),
     Notification.deleteMany(),
     Payment.deleteMany(),
@@ -60,11 +62,58 @@ async function createAdmin() {
     email: "admin@test.local",
     password: "AdminPass1",
     role: "admin",
+    approvalStatus: "ACTIVE",
     accountStatus: "active",
     membershipPlan: "Admin",
   });
   return { admin, token: generateToken(admin._id) };
 }
+
+test("admins and users bypass approval status checks", async () => {
+  const admin = await User.create({
+    name: "Legacy Pending Admin",
+    email: "legacy-admin@test.local",
+    password: "AdminPass1",
+    role: "admin",
+    approvalStatus: "ACTIVE",
+    accountStatus: "active",
+    membershipPlan: "Admin",
+  });
+  await User.updateOne(
+    { _id: admin._id },
+    { $set: { approvalStatus: "PENDING", accountStatus: "pending" } },
+  );
+
+  const adminLogin = await request(app).post("/api/auth/login").send({
+    email: "legacy-admin@test.local",
+    password: "AdminPass1",
+  });
+  assert.equal(adminLogin.status, 200);
+
+  const adminDashboard = await request(app)
+    .get("/api/admin/dashboard")
+    .set(bearer(adminLogin.body.data.token));
+  assert.equal(adminDashboard.status, 200);
+
+  const user = await User.create({
+    name: "Legacy Pending User",
+    email: "legacy-user@test.local",
+    password: "UserPass1",
+    role: "user",
+    approvalStatus: "ACTIVE",
+    accountStatus: "active",
+  });
+  await User.updateOne(
+    { _id: user._id },
+    { $set: { approvalStatus: "PENDING", accountStatus: "pending" } },
+  );
+
+  const userLogin = await request(app).post("/api/auth/login").send({
+    email: "legacy-user@test.local",
+    password: "UserPass1",
+  });
+  assert.equal(userLogin.status, 200);
+});
 
 test("production user, owner, venue, booking, payment, and favorite workflows", async () => {
   const userRegistration = await request(app).post("/api/auth/register").send({
@@ -78,6 +127,8 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
   assert.ok(userRegistration.body.data.token);
   const userToken = userRegistration.body.data.token;
 
+  const { token: adminToken } = await createAdmin();
+
   const ownerRegistration = await request(app).post("/api/auth/register-owner").send({
     name: "Venue Owner",
     businessName: "Venue Company",
@@ -89,21 +140,44 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
   });
   assert.equal(ownerRegistration.status, 201);
   assert.equal(ownerRegistration.body.data.user.accountStatus, "pending");
-  assert.equal(ownerRegistration.body.data.token, undefined);
+  assert.equal(ownerRegistration.body.data.user.approvalStatus, "PENDING");
+  assert.ok(ownerRegistration.body.data.token);
 
   const pendingLogin = await request(app).post("/api/auth/login").send({
     email: "owner@test.local",
     password: "OwnerPass1",
   });
-  assert.equal(pendingLogin.status, 403);
+  assert.equal(pendingLogin.status, 200);
+  const pendingOwnerToken = pendingLogin.body.data.token;
 
-  const { token: adminToken } = await createAdmin();
+  const pendingOwnerDashboard = await request(app).get("/api/owner/dashboard").set(bearer(pendingOwnerToken));
+  assert.equal(pendingOwnerDashboard.status, 200);
+  assert.equal(pendingOwnerDashboard.body.data.approvalStatus, "PENDING");
+  assert.deepEqual(pendingOwnerDashboard.body.data.disabledSections, ["addVenue", "availability", "bookings", "revenue"]);
+
+  const blockedPendingVenueCreation = await request(app)
+    .post("/api/turfs")
+    .set(bearer(pendingOwnerToken))
+    .send({
+      name: "Blocked Pending Arena",
+      description: "A pending owner should not be able to submit venues yet.",
+      location: "Central District",
+      address: "1 Pending Road",
+      city: "Mumbai",
+      state: "Maharashtra",
+      sportsSupported: ["Football"],
+      amenities: ["Parking"],
+      pricePerHour: 800,
+    });
+  assert.equal(blockedPendingVenueCreation.status, 403);
+
   const ownerId = ownerRegistration.body.data.user._id;
   const approval = await request(app)
     .patch(`/api/admin/owners/${ownerId}/status`)
     .set(bearer(adminToken))
-    .send({ status: "active" });
+    .send({ status: "ACTIVE" });
   assert.equal(approval.status, 200);
+  assert.equal(approval.body.data.owner.approvalStatus, "ACTIVE");
 
   const ownerLogin = await request(app).post("/api/auth/login").send({
     email: "owner@test.local",
@@ -129,6 +203,22 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
   assert.equal(turfCreation.status, 201);
   const turfId = turfCreation.body.data.turf._id;
   assert.equal(turfCreation.body.data.turf.isApproved, false);
+  assert.equal(turfCreation.body.data.turf.status, "PENDING");
+
+  const hiddenBeforeApproval = await request(app).get("/api/turfs");
+  assert.equal(hiddenBeforeApproval.status, 200);
+  assert.equal(hiddenBeforeApproval.body.data.turfs.length, 0);
+
+  const bookingBeforeVenueApproval = await request(app)
+    .post("/api/bookings")
+    .set(bearer(userToken))
+    .send({
+      turfId,
+      bookingDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      slotStartTime: "18:00",
+      slotEndTime: "19:00",
+    });
+  assert.equal(bookingBeforeVenueApproval.status, 403);
 
   const selfApprovalAttempt = await request(app)
     .put(`/api/turfs/${turfId}`)
@@ -140,9 +230,14 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
   const turfApproval = await request(app)
     .patch(`/api/admin/turfs/${turfId}/status`)
     .set(bearer(adminToken))
-    .send({ status: "approved" });
+    .send({ status: "LIVE" });
   assert.equal(turfApproval.status, 200);
   assert.equal(turfApproval.body.data.turf.isApproved, true);
+  assert.equal(turfApproval.body.data.turf.status, "LIVE");
+
+  const visibleAfterApproval = await request(app).get("/api/turfs");
+  assert.equal(visibleAfterApproval.status, 200);
+  assert.equal(visibleAfterApproval.body.data.turfs.length, 1);
 
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const availability = await request(app).get(`/api/turfs/${turfId}/availability`).query({ date });
@@ -291,12 +386,27 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
   const ownerNotifications = await request(app).get("/api/notifications").set(bearer(ownerToken));
   assert.equal(ownerNotifications.status, 200);
   assert.ok(ownerNotifications.body.data.notifications.some((notification) =>
+    notification.title === "Account Approved" && notification.targetUrl === "/owner/dashboard"));
+  assert.ok(ownerNotifications.body.data.notifications.some((notification) =>
+    notification.title === "Venue Approved" && notification.targetUrl === `/owner/turfs/${turfId}`));
+  assert.ok(ownerNotifications.body.data.notifications.some((notification) =>
     /credited/i.test(notification.title) && notification.targetUrl === "/owner/revenue"));
 
   const platformNotifications = await request(app).get("/api/notifications").set(bearer(adminToken));
   assert.equal(platformNotifications.status, 200);
   assert.ok(platformNotifications.body.data.notifications.some((notification) =>
+    notification.title === "New Turf Owner registered" && notification.targetUrl === "/admin/owners"));
+  assert.ok(platformNotifications.body.data.notifications.some((notification) =>
+    notification.title === "Venue awaiting approval" && notification.targetUrl === "/admin/turfs"));
+  assert.ok(platformNotifications.body.data.notifications.some((notification) =>
     notification.title === "Platform fee received" && notification.targetUrl === "/admin/revenue"));
+
+  const auditLogs = await request(app).get("/api/admin/audit-logs").set(bearer(adminToken));
+  assert.equal(auditLogs.status, 200);
+  assert.ok(auditLogs.body.data.logs.some((log) =>
+    log.entityType === "USER" && log.entityId === ownerId && log.action === "APPROVED"));
+  assert.ok(auditLogs.body.data.logs.some((log) =>
+    log.entityType === "VENUE" && log.entityId === turfId && log.action === "APPROVED"));
 
   const broadcast = await request(app)
     .post("/api/notifications")
@@ -317,6 +427,99 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
     .put(`/api/notifications/${adminNotifications.body.data.notifications[0]._id}/read`)
     .set(bearer(adminToken));
   assert.equal(markRead.status, 200);
+});
+
+test("platform owner can reject owner applications and venues", async () => {
+  const { token: adminToken } = await createAdmin();
+  const user = await User.create({
+    name: "Reject Flow User",
+    email: "reject-user@test.local",
+    password: "UserPass1",
+    role: "user",
+    accountStatus: "active",
+  });
+
+  const ownerRegistration = await request(app).post("/api/auth/register-owner").send({
+    name: "Rejected Owner",
+    businessName: "Rejected Venue Company",
+    address: "9 Review Road",
+    phone: "9876500000",
+    email: "rejected-owner@test.local",
+    password: "OwnerPass1",
+    confirmPassword: "OwnerPass1",
+  });
+  assert.equal(ownerRegistration.status, 201);
+
+  const ownerRejection = await request(app)
+    .patch(`/api/admin/owners/${ownerRegistration.body.data.user._id}/status`)
+    .set(bearer(adminToken))
+    .send({ status: "REJECTED", reason: "Documents could not be verified." });
+  assert.equal(ownerRejection.status, 200);
+  assert.equal(ownerRejection.body.data.owner.approvalStatus, "REJECTED");
+
+  const rejectedOwnerLogin = await request(app).post("/api/auth/login").send({
+    email: "rejected-owner@test.local",
+    password: "OwnerPass1",
+  });
+  assert.equal(rejectedOwnerLogin.status, 403);
+
+  const activeOwner = await User.create({
+    name: "Venue Reject Owner",
+    email: "venue-reject-owner@test.local",
+    password: "OwnerPass1",
+    role: "owner",
+    accountStatus: "active",
+  });
+  const ownerToken = generateToken(activeOwner._id);
+  const venueCreation = await request(app)
+    .post("/api/turfs")
+    .set(bearer(ownerToken))
+    .send({
+      name: "Rejected Arena",
+      description: "A venue used to validate rejection workflow.",
+      location: "Central District",
+      address: "44 Review Street",
+      city: "Mumbai",
+      state: "Maharashtra",
+      sportsSupported: ["Football"],
+      amenities: ["Parking"],
+      pricePerHour: 1100,
+    });
+  assert.equal(venueCreation.status, 201);
+
+  const venueRejection = await request(app)
+    .patch(`/api/admin/turfs/${venueCreation.body.data.turf._id}/status`)
+    .set(bearer(adminToken))
+    .send({ status: "REJECTED", reason: "Photos were incomplete." });
+  assert.equal(venueRejection.status, 200);
+  assert.equal(venueRejection.body.data.turf.status, "REJECTED");
+
+  const publicTurfs = await request(app).get("/api/turfs");
+  assert.equal(publicTurfs.status, 200);
+  assert.equal(publicTurfs.body.data.turfs.length, 0);
+
+  const rejectedVenueBooking = await request(app)
+    .post("/api/bookings")
+    .set(bearer(generateToken(user._id)))
+    .send({
+      turfId: venueCreation.body.data.turf._id,
+      bookingDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      slotStartTime: "18:00",
+      slotEndTime: "19:00",
+    });
+  assert.equal(rejectedVenueBooking.status, 403);
+
+  const ownerNotifications = await request(app).get("/api/notifications").set(bearer(ownerToken));
+  assert.equal(ownerNotifications.status, 200);
+  assert.ok(ownerNotifications.body.data.notifications.some((notification) =>
+    notification.title === "Venue Rejected" && /Photos were incomplete/.test(notification.message)));
+
+  const auditLogs = await request(app).get("/api/admin/audit-logs").set(bearer(adminToken));
+  assert.equal(auditLogs.status, 200);
+  assert.ok(auditLogs.body.data.logs.some((log) =>
+    log.entityType === "USER" && log.action === "REJECTED" && /Documents/.test(log.reason)));
+  assert.ok(auditLogs.body.data.logs.some((log) =>
+    log.entityType === "VENUE" && log.action === "REJECTED" && /Photos/.test(log.reason)));
 });
 
 test("owners cannot manage venues belonging to another owner", async () => {
@@ -423,7 +626,11 @@ test("dynamic booking engine supports buffers and flexible start times", async (
     address: "30 Dynamic Road",
     city: "Mumbai",
     state: "Maharashtra",
-    sportsSupported: ["Football"],
+    sportsSupported: ["Football", "Cricket"],
+    sportRates: {
+      Cricket: 1800,
+      Football: 1400,
+    },
     amenities: ["Parking"],
     pricePerHour: 1000,
     ownerId: owner._id,
@@ -431,6 +638,8 @@ test("dynamic booking engine supports buffers and flexible start times", async (
     moderationStatus: "approved",
     schedule: {
       bufferMinutes: 15,
+      minimumBookingMinutes: 60,
+      startIntervalMinutes: 30,
       slotMinutes: 60,
       weeklyAvailability: {
         monday: ["06:00-23:00"],
@@ -444,21 +653,28 @@ test("dynamic booking engine supports buffers and flexible start times", async (
     },
   });
   const bookingDate = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  const reserve = (user, slotStartTime, slotEndTime) =>
+  const reserve = (user, slotStartTime, slotEndTime, sport = "Football") =>
     request(app)
       .post("/api/bookings")
       .set(bearer(generateToken(user._id)))
       .send({
         turfId: turf._id,
         bookingDate,
+        sport,
         slotStartTime,
         slotEndTime,
       });
 
+  const tooShort = await reserve(userC, "09:00", "09:30");
+  assert.equal(tooShort.status, 400);
+  assert.match(tooShort.body.message, /Minimum booking duration is 1 hour/);
+
   const firstBooking = await reserve(userA, "11:00", "12:00");
   assert.equal(firstBooking.status, 201);
+  assert.equal(firstBooking.body.data.booking.sport, "Football");
+  assert.equal(firstBooking.body.data.booking.totalAmount, 1400);
 
-  const overlap = await reserve(userB, "11:30", "12:30");
+  const overlap = await reserve(userB, "11:30", "12:30", "Cricket");
   assert.equal(overlap.status, 409);
   assert.match(overlap.body.message, /overlaps/i);
 
@@ -466,8 +682,10 @@ test("dynamic booking engine supports buffers and flexible start times", async (
   assert.equal(bufferConflict.status, 409);
   assert.match(bufferConflict.body.message, /buffer/i);
 
-  const afterBuffer = await reserve(userB, "12:15", "13:15");
+  const afterBuffer = await reserve(userB, "12:15", "13:15", "Cricket");
   assert.equal(afterBuffer.status, 201);
+  assert.equal(afterBuffer.body.data.booking.sport, "Cricket");
+  assert.equal(afterBuffer.body.data.booking.totalAmount, 1800);
 
   const flexibleStart = await reserve(userC, "18:45", "19:45");
   assert.equal(flexibleStart.status, 201);
@@ -496,13 +714,17 @@ test("dynamic booking engine supports buffers and flexible start times", async (
   const blackoutAvailability = await request(app).get(`/api/turfs/${turf._id}/availability`).query({ date: blackoutDate });
   assert.equal(blackoutAvailability.status, 200);
   assert.equal(blackoutAvailability.body.data.isBlackoutDate, true);
-  assert.ok(blackoutAvailability.body.data.timeline.every((slot) => slot.status === "blocked"));
+  assert.ok(blackoutAvailability.body.data.timeline.every((slot) => slot.status === "maintenance"));
 
   const availability = await request(app).get(`/api/turfs/${turf._id}/availability`).query({ date: bookingDate });
   assert.equal(availability.status, 200);
+  assert.equal(availability.body.data.rules.minimumBookingMinutes, 60);
+  assert.equal(availability.body.data.rules.startIntervalMinutes, 30);
+  assert.equal(availability.body.data.rules.sportRates.Football, 1400);
+  assert.ok(availability.body.data.timeline.some((slot) => slot.startTime === "10:30"));
   assert.ok(availability.body.data.timeline.some((slot) => slot.startTime === "10:00" && slot.status === "blocked"));
-  assert.ok(availability.body.data.timeline.some((slot) => slot.startTime === "11:00" && slot.status === "booked"));
-  assert.ok(availability.body.data.timeline.some((slot) => slot.startTime === "12:15" && slot.status === "booked"));
+  assert.ok(availability.body.data.timeline.some((slot) => slot.startTime === "11:00" && slot.status === "pending"));
+  assert.ok(availability.body.data.timeline.some((slot) => slot.startTime === "12:15" && slot.status === "pending"));
   assert.ok(availability.body.data.timeline.some((slot) => slot.startTime === "13:30" && slot.status === "available"));
 
   const { token: adminToken } = await createAdmin();

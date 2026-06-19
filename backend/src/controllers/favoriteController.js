@@ -2,10 +2,29 @@ const Turf = require("../models/Turf");
 const User = require("../models/User");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 
+async function liveFavoriteFilter(extra = {}) {
+  const owners = await User.find({
+    $or: [
+      { role: "admin" },
+      {
+        role: "owner",
+        $or: [{ approvalStatus: "ACTIVE" }, { accountStatus: "active" }],
+      },
+    ],
+  }).select("_id");
+
+  return {
+    ...extra,
+    isApproved: true,
+    ownerId: { $in: owners.map((owner) => owner._id) },
+    $or: [{ status: "LIVE" }, { moderationStatus: "approved" }, { status: { $exists: false } }],
+  };
+}
+
 const getFavorites = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).populate({
     path: "favorites",
-    match: { isApproved: true },
+    match: await liveFavoriteFilter(),
     populate: { path: "ownerId", select: "name businessName" },
   });
 
@@ -13,7 +32,7 @@ const getFavorites = asyncHandler(async (req, res) => {
 });
 
 const addFavorite = asyncHandler(async (req, res) => {
-  const turf = await Turf.findOne({ _id: req.params.turfId, isApproved: true });
+  const turf = await Turf.findOne(await liveFavoriteFilter({ _id: req.params.turfId }));
 
   if (!turf) {
     const error = new Error("Turf not found");

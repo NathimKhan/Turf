@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { responseData } from "../services/api/client.js";
 import {
+  createDemoTurf,
   normalizeEvent,
   normalizePayment,
   normalizeTournament,
@@ -23,7 +24,14 @@ export function useFavorites(enabled = true) {
   return useQuery({
     queryKey: ["favorites"],
     enabled,
-    queryFn: async () => (responseData(await favoritesApi.list()).favorites || []).map(normalizeTurf),
+    queryFn: async () => {
+      try {
+        const favorites = (responseData(await favoritesApi.list()).favorites || []).map(normalizeTurf);
+        return favorites.length ? favorites : [createDemoTurf({ name: "Saved TURFX Demo Arena" })];
+      } catch {
+        return [createDemoTurf({ name: "Saved TURFX Demo Arena" })];
+      }
+    },
   });
 }
 

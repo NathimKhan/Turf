@@ -2,13 +2,16 @@ const { body } = require("express-validator");
 const Booking = require("../models/Booking");
 const Notification = require("../models/Notification");
 const Turf = require("../models/Turf");
+const { isOwnerActive, isVenueLive } = require("../utils/approval");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 const {
   buildOccupancyKeys,
   buildSlotKey,
   calculateHours,
+  configuredSportsForTurf,
   getBufferMinutes,
   normalizeDate,
+  sportRateForTurf,
   validateSlotRequest,
 } = require("../services/availabilityService");
 const { recordBookingConflict } = require("../services/conflictLogService");
@@ -18,7 +21,7 @@ async function findActiveBookings(turfId, bookingDate) {
     turfId,
     bookingDate,
     bookingStatus: { $in: ["pending", "confirmed", "checked_in", "upcoming"] },
-  }).select("slotStartTime slotEndTime bookingStatus");
+  }).select("slotStartTime slotEndTime bookingStatus paymentStatus");
 }
 
 const bookingValidation = [
@@ -26,11 +29,12 @@ const bookingValidation = [
   body("bookingDate").isISO8601().withMessage("Valid booking date is required"),
   body("slotStartTime").matches(/^([01]\d|2[0-3]):[0-5]\d$/).withMessage("Slot start time must be HH:mm"),
   body("slotEndTime").matches(/^([01]\d|2[0-3]):[0-5]\d$/).withMessage("Slot end time must be HH:mm"),
+  body("sport").optional().trim().notEmpty().withMessage("Sport cannot be empty"),
 ];
 
 const createBooking = asyncHandler(async (req, res) => {
   const { turfId, bookingDate, slotStartTime, slotEndTime } = req.body;
-  const turf = await Turf.findById(turfId);
+  const turf = await Turf.findById(turfId).populate("ownerId", "approvalStatus accountStatus role");
 
   if (!turf) {
     const error = new Error("Turf not found");
@@ -38,7 +42,7 @@ const createBooking = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  if (!turf.isApproved && req.user.role !== "admin" && String(turf.ownerId) !== String(req.user._id)) {
+  if (!isVenueLive(turf) || !isOwnerActive(turf.ownerId)) {
     const error = new Error("This turf is not available for booking yet");
     error.statusCode = 403;
     throw error;
@@ -47,9 +51,17 @@ const createBooking = asyncHandler(async (req, res) => {
   const dateOnly = normalizeDate(bookingDate);
   const hoursBooked = calculateHours(slotStartTime, slotEndTime);
   const today = normalizeDate(new Date());
+  const configuredSports = configuredSportsForTurf(turf);
+  const selectedSport = req.body.sport || configuredSports[0] || "";
 
   if (dateOnly < today) {
     const error = new Error("Past dates cannot be booked");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!selectedSport || !configuredSports.includes(selectedSport)) {
+    const error = new Error("Selected sport is not available at this venue");
     error.statusCode = 400;
     throw error;
   }
@@ -72,16 +84,20 @@ const createBooking = asyncHandler(async (req, res) => {
     throw error;
   }
 
+  const hourlyRate = sportRateForTurf(turf, selectedSport);
+  const ownerId = turf.ownerId?._id || turf.ownerId;
   let booking;
   try {
     booking = await Booking.create({
       userId: req.user._id,
       turfId,
+      ownerId,
+      sport: selectedSport,
       bookingDate: dateOnly,
       slotStartTime,
       slotEndTime,
       hoursBooked,
-      totalAmount: Number((hoursBooked * turf.pricePerHour).toFixed(2)),
+      totalAmount: Number((hoursBooked * hourlyRate).toFixed(2)),
       bookingStatus: "pending",
       occupancyKeys: buildOccupancyKeys(turfId, dateOnly, slotStartTime, slotEndTime, getBufferMinutes(turf)),
       slotKey: buildSlotKey(turfId, dateOnly, slotStartTime, slotEndTime),
@@ -120,15 +136,15 @@ const createBooking = asyncHandler(async (req, res) => {
     {
       userId: req.user._id,
       title: "Booking created",
-      message: `${turf.name} is reserved for ${slotStartTime}-${slotEndTime}. Complete payment to confirm it.`,
+      message: `${turf.name} is reserved for ${selectedSport} from ${slotStartTime}-${slotEndTime}. Complete payment to confirm it.`,
       metadata: { bookingId: booking._id, turfId },
       targetUrl: `/bookings/${booking._id}`,
       type: "booking",
     },
     {
-      userId: turf.ownerId,
+      userId: ownerId,
       title: "New booking request",
-      message: `${req.user.name} requested ${turf.name} for ${slotStartTime}-${slotEndTime}.`,
+      message: `${req.user.name} requested ${selectedSport} at ${turf.name} for ${slotStartTime}-${slotEndTime}.`,
       metadata: { bookingId: booking._id, turfId },
       targetUrl: "/owner/bookings",
       type: "booking",
@@ -149,7 +165,7 @@ const getMyBookings = asyncHandler(async (req, res) => {
   }
 
   const bookings = await Booking.find(filter)
-    .populate("turfId", "name city location images pricePerHour sportsSupported")
+    .populate("turfId", "name city location images pricePerHour sportRates sportsSupported")
     .populate("userId", "name email phone")
     .sort({ bookingDate: -1, slotStartTime: -1 });
 
@@ -158,7 +174,7 @@ const getMyBookings = asyncHandler(async (req, res) => {
 
 const getBookingById = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id)
-    .populate("turfId", "name city location images pricePerHour sportsSupported ownerId")
+    .populate("turfId", "name city location images pricePerHour sportRates sportsSupported ownerId")
     .populate("userId", "name email phone");
 
   if (!booking) {
@@ -249,6 +265,12 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
   const isOwner = String(booking.turfId.ownerId) === String(req.user._id);
   if (!isOwner && req.user.role !== "admin") {
     const error = new Error("You cannot update this booking");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  if (isOwner && !isOwnerActive(req.user)) {
+    const error = new Error("Your account is pending approval from Platform Owner.");
     error.statusCode = 403;
     throw error;
   }

@@ -3,6 +3,7 @@ const Booking = require("../models/Booking");
 const Notification = require("../models/Notification");
 const Payment = require("../models/Payment");
 const User = require("../models/User");
+const { isOwnerActive, isVenueLive } = require("../utils/approval");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 const { getPaymentProvider } = require("../services/paymentService");
 
@@ -37,7 +38,11 @@ const paymentValidation = [
 const createPayment = asyncHandler(async (req, res) => {
   const { bookingId, paymentMethod = "UPI" } = req.body;
   const booking = await Booking.findById(bookingId)
-    .populate("turfId", "name ownerId city location")
+    .populate({
+      path: "turfId",
+      populate: { path: "ownerId", select: "approvalStatus accountStatus role" },
+      select: "name ownerId city location status isApproved moderationStatus",
+    })
     .populate("userId", "name email");
 
   if (!booking) {
@@ -60,11 +65,18 @@ const createPayment = asyncHandler(async (req, res) => {
     throw error;
   }
 
+  if (!isVenueLive(booking.turfId) || !isOwnerActive(booking.turfId.ownerId)) {
+    const error = new Error("This venue is not accepting payments because it is not live.");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const ownerId = booking.turfId.ownerId?._id || booking.turfId.ownerId;
   const existingPayment = await Payment.findOne({ bookingId, paymentStatus: "paid" });
   if (existingPayment) {
     if (!existingPayment.platformFee && !existingPayment.ownerRevenue) {
       Object.assign(existingPayment, revenueSplit(existingPayment.amount));
-      existingPayment.ownerId = existingPayment.ownerId || booking.turfId.ownerId;
+      existingPayment.ownerId = existingPayment.ownerId || ownerId;
       existingPayment.venueId = existingPayment.venueId || booking.turfId._id;
       existingPayment.paidAt = existingPayment.paidAt || existingPayment.createdAt || new Date();
       await existingPayment.save();
@@ -77,7 +89,7 @@ const createPayment = asyncHandler(async (req, res) => {
   const payment = await Payment.create({
     userId: booking.userId._id || booking.userId,
     bookingId,
-    ownerId: booking.turfId.ownerId,
+    ownerId,
     venueId: booking.turfId._id,
     amount: booking.totalAmount,
     ...split,
@@ -137,7 +149,7 @@ const createPayment = asyncHandler(async (req, res) => {
           type: "booking",
         },
         {
-          userId: booking.turfId.ownerId,
+          userId: ownerId,
           title: `${rupees(payment.ownerRevenue)} credited to your venue`,
           message: `Booking ${String(booking._id).slice(-8).toUpperCase()} at ${booking.turfId.name} is paid. Platform fee: ${rupees(payment.platformFee)}.`,
           metadata: { bookingId: booking._id, paymentId: payment._id, transactionId: payment.transactionId },
@@ -149,7 +161,7 @@ const createPayment = asyncHandler(async (req, res) => {
   ];
 
   if (payment.paymentStatus === "paid") {
-    const admins = await User.find({ role: "admin", accountStatus: "active" }).select("_id");
+    const admins = await User.find({ role: "admin" }).select("_id");
     notifications.push(
       ...admins.map((admin) => ({
         userId: admin._id,

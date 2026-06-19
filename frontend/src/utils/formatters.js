@@ -1,5 +1,5 @@
-export function currency(value, currencyCode = "USD") {
-  return new Intl.NumberFormat("en-US", {
+export function currency(value, currencyCode = "INR") {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: currencyCode,
     maximumFractionDigits: value % 1 === 0 ? 0 : 2,

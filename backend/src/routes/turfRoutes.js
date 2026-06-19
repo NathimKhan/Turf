@@ -18,6 +18,7 @@ const {
 const { optionalProtect, protect } = require("../middleware/authMiddleware");
 const { validateRequest } = require("../middleware/errorMiddleware");
 const ownerOrAdmin = require("../middleware/ownerMiddleware");
+const { activeOwnerOrAdmin } = require("../middleware/ownerMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
@@ -40,9 +41,9 @@ router.get(
   validateRequest,
   getTurfById,
 );
-router.post("/", protect, ownerOrAdmin, upload.array("images", 8), turfValidation, validateRequest, createTurf);
-router.put("/:id", protect, ownerOrAdmin, upload.array("images", 8), param("id").isMongoId(), turfUpdateValidation, validateRequest, updateTurf);
-router.put("/:id/slots", protect, ownerOrAdmin, param("id").isMongoId(), validateRequest, updateTurfSlots);
-router.delete("/:id", protect, ownerOrAdmin, param("id").isMongoId().withMessage("Valid turf id is required"), validateRequest, deleteTurf);
+router.post("/", protect, activeOwnerOrAdmin, upload.array("images", 8), turfValidation, validateRequest, createTurf);
+router.put("/:id", protect, activeOwnerOrAdmin, upload.array("images", 8), param("id").isMongoId(), turfUpdateValidation, validateRequest, updateTurf);
+router.put("/:id/slots", protect, activeOwnerOrAdmin, param("id").isMongoId(), validateRequest, updateTurfSlots);
+router.delete("/:id", protect, activeOwnerOrAdmin, param("id").isMongoId().withMessage("Valid turf id is required"), validateRequest, deleteTurf);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 # TURFX Backend
 
-Complete Node.js, Express, MongoDB, and JWT backend for the TURFX turf booking frontend.
+Node.js, Express, MongoDB, and JWT backend for the TURFX turf booking frontend.
 
 ## Tech Stack
 
@@ -59,38 +59,11 @@ EMAIL_FROM="TURFX <no-reply@turfx.local>"
 
 If SMTP values are empty, Nodemailer uses JSON transport so forgot-password still runs during development.
 
-## Production Bootstrap
+## Local Seed
 
 `npm run seed` is idempotent and does not delete application data. It creates
 or verifies one Platform Owner from `ADMIN_NAME`, `ADMIN_EMAIL`, and
 `ADMIN_PASSWORD`, then upserts baseline platform settings.
-
-Set `ADMIN_ROTATE_PASSWORD=true` only when intentionally rotating the bootstrap
-account password.
-
-## MongoDB Atlas Setup
-
-1. Create a MongoDB Atlas project and a free cluster.
-2. Add a database user with read/write permissions.
-3. Add your current IP for local development, or `0.0.0.0/0` for Render access.
-4. Copy the Node.js connection string.
-5. Replace username, password, and database name in `MONGO_URI`.
-6. Run `npm run seed` locally or from a Render shell after deployment.
-
-## Render Deployment
-
-1. Push this repository to GitHub.
-2. In Render, create a Blueprint from the repository using the root `render.yaml`.
-3. Set these secret values in Render:
-   - `MONGO_URI`
-   - `JWT_SECRET`
-   - `CLIENT_URL` with your Netlify frontend URL
-   - `API_BASE_URL` with the Render backend URL
-   - `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `SUPPORT_EMAIL`
-   - SMTP values if you want real email delivery
-4. Deploy the service.
-5. Open `https://your-render-service.onrender.com/api/docs` to verify Swagger.
-6. Run `npm run seed` from Render Shell once to bootstrap the Platform Owner.
 
 ## API Response Format
 

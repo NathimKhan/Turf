@@ -1,6 +1,13 @@
 const mongoose = require("mongoose");
+const {
+  VENUE_STATUSES,
+  isVenueLive,
+  normalizeVenueStatus,
+  venueModerationStatus,
+  venueStatusLabel,
+} = require("../utils/approval");
 
-const allowedSports = ["Football", "Cricket", "Badminton", "Volleyball", "Basketball"];
+const allowedSports = ["Football", "Cricket", "Volleyball", "Basketball", "Badminton", "Tennis"];
 const allowedAmenities = ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Seating Area"];
 
 const turfSchema = new mongoose.Schema(
@@ -49,6 +56,14 @@ const turfSchema = new mongoose.Schema(
       required: [true, "Price per hour is required"],
       min: [0, "Price must be positive"],
     },
+    sportRates: {
+      type: Map,
+      of: {
+        type: Number,
+        min: [0, "Sport rate must be positive"],
+      },
+      default: {},
+    },
     images: [
       {
         type: String,
@@ -78,6 +93,12 @@ const turfSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    status: {
+      type: String,
+      enum: VENUE_STATUSES,
+      default: "PENDING",
+      index: true,
+    },
     isApproved: {
       type: Boolean,
       default: false,
@@ -100,6 +121,14 @@ const turfSchema = new mongoose.Schema(
     },
     schedule: {
       slotMinutes: {
+        type: Number,
+        default: 60,
+      },
+      startIntervalMinutes: {
+        type: Number,
+        default: 30,
+      },
+      minimumBookingMinutes: {
         type: Number,
         default: 60,
       },
@@ -145,6 +174,30 @@ const turfSchema = new mongoose.Schema(
   },
 );
 
+turfSchema.pre("validate", function syncVenueStatus(next) {
+  const statusIsDefault =
+    typeof this.$isDefault === "function"
+      ? this.$isDefault("status")
+      : !this.status;
+  const legacyStatus = this.moderationStatus
+    ? normalizeVenueStatus(this.moderationStatus)
+    : this.isApproved
+      ? "LIVE"
+      : "PENDING";
+  const shouldUseLegacy =
+    statusIsDefault &&
+    (this.isModified("isApproved") || this.isModified("moderationStatus") || this.isApproved || this.moderationStatus);
+  const nextStatus = shouldUseLegacy
+    ? legacyStatus
+    : normalizeVenueStatus(this.status || legacyStatus);
+
+  this.status = nextStatus;
+  this.isApproved = nextStatus === "LIVE";
+  this.moderationStatus = venueModerationStatus(nextStatus);
+
+  return next();
+});
+
 turfSchema.index({
   name: "text",
   city: "text",
@@ -157,7 +210,9 @@ turfSchema.virtual("sport").get(function getPrimarySport() {
 });
 
 turfSchema.virtual("price").get(function getPrice() {
-  return this.pricePerHour;
+  const rates = this.sportRates instanceof Map ? this.sportRates : new Map(Object.entries(this.sportRates || {}));
+  const primarySport = this.sportsSupported?.[0] || "";
+  return Number(rates.get(primarySport) ?? this.pricePerHour);
 });
 
 turfSchema.virtual("gallery").get(function getGallery() {
@@ -168,19 +223,10 @@ turfSchema.virtual("reviews").get(function getReviewCount() {
   return this.totalReviews;
 });
 
-turfSchema.virtual("status").get(function getStatus() {
-  const moderationStatus = this.moderationStatus || (this.isApproved ? "approved" : "pending");
-  const statusMap = {
-    approved: "published",
-    pending: "review",
-    rejected: "rejected",
-    suspended: "suspended",
-  };
-  return statusMap[moderationStatus] || "review";
-});
-
 turfSchema.methods.toJSON = function toJSON() {
   const turf = this.toObject({ virtuals: true });
+  turf.isLive = isVenueLive(turf);
+  turf.statusLabel = venueStatusLabel(turf.status);
   turf.locationDetails = {
     address: turf.address,
     city: turf.city,
@@ -191,6 +237,7 @@ turfSchema.methods.toJSON = function toJSON() {
       amount: turf.pricePerHour,
       currency: "INR",
     },
+    sportsHourly: turf.sportRates || {},
   };
   delete turf.__v;
   return turf;

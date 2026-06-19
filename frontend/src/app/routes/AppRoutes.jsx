@@ -93,8 +93,10 @@ export function AppRoutes() {
         <Route element={<PublicLayout />}>
           <Route element={<LandingPage />} index />
           <Route element={<ExplorePage />} path="/explore" />
+          <Route element={<ExplorePage />} path="/venues" />
           <Route element={<SearchResultsPage />} path="/search" />
           <Route element={<VenueDetailsPage />} path="/venue/:id" />
+          <Route element={<VenueDetailsPage />} path="/venues/:id" />
           <Route element={<VenueDetailsPage />} path="/booking/venue/:id" />
           <Route element={<MembershipsPage />} path="/memberships" />
           <Route element={<TournamentsPage />} path="/tournaments" />

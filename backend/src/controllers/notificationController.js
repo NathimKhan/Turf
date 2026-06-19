@@ -19,7 +19,9 @@ const notificationValidation = [
 
 const createNotification = asyncHandler(async (req, res) => {
   if (isBroadcastRequest(req)) {
-    const users = await User.find({ accountStatus: "active" }).select("_id");
+    const users = await User.find({
+      $or: [{ approvalStatus: "ACTIVE" }, { accountStatus: "active" }],
+    }).select("_id");
     const notifications = users.length
       ? await Notification.insertMany(
           users.map((user) => ({

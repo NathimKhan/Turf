@@ -10,6 +10,10 @@ const updateUserValidation = [
     .optional()
     .isIn(["active", "pending", "rejected", "suspended"])
     .withMessage("Invalid account status"),
+  body("approvalStatus")
+    .optional()
+    .isIn(["PENDING", "ACTIVE", "REJECTED", "SUSPENDED"])
+    .withMessage("Invalid approval status"),
   body("walletBalance").optional().isFloat({ min: 0 }).withMessage("Wallet balance must be positive"),
 ];
 
@@ -80,6 +84,7 @@ const updateUser = asyncHandler(async (req, res) => {
     "profileImage",
     "walletBalance",
     "membershipPlan",
+    "approvalStatus",
     "accountStatus",
   ];
   allowedFields.forEach((field) => {

@@ -11,11 +11,23 @@ import { UserMenu } from "../../components/shared/UserMenu.jsx";
 import { authService } from "../../services/authService.js";
 import { useAuth } from "../../store/authContext.js";
 
+function approvalStatus(user) {
+  const value = user?.approvalStatus || user?.accountStatus || "ACTIVE";
+  const upper = String(value).toUpperCase();
+  if (upper === "ACTIVE" || upper === "PENDING" || upper === "REJECTED" || upper === "SUSPENDED") return upper;
+  if (String(value).toLowerCase() === "active") return "ACTIVE";
+  if (String(value).toLowerCase() === "pending") return "PENDING";
+  if (String(value).toLowerCase() === "rejected") return "REJECTED";
+  if (String(value).toLowerCase() === "suspended") return "SUSPENDED";
+  return "ACTIVE";
+}
+
 export function OwnerLayout() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const isPlatformOwner = authService.normalizeRole(user?.role) === "admin";
+  const ownerPending = !isPlatformOwner && approvalStatus(user) === "PENDING";
 
   function submitSearch(event) {
     event.preventDefault();
@@ -49,21 +61,38 @@ export function OwnerLayout() {
             </form>
             <div className="flex items-center gap-2">
               {!isPlatformOwner && (
-                <Button as={Link} size="sm" to="/owner/add-turf">
-                  Add Venue
-                </Button>
+                ownerPending ? (
+                  <Button disabled size="sm">
+                    Add Venue
+                  </Button>
+                ) : (
+                  <Button as={Link} size="sm" to="/owner/add-turf">
+                    Add Venue
+                  </Button>
+                )
               )}
               <NotificationBell
                 fallbackHref={isPlatformOwner ? "/admin/notifications" : "/owner/bookings"}
                 title={isPlatformOwner ? "Platform notifications" : "Booking notifications"}
               />
-              <Link
-                className="rounded-full p-2 text-ink-muted hover:bg-surface-low"
-                title={isPlatformOwner ? "System settings" : "Availability settings"}
-                to={isPlatformOwner ? "/admin/settings" : "/owner/slots"}
-              >
-                <Settings size={20} />
-              </Link>
+              {ownerPending ? (
+                <button
+                  className="rounded-full p-2 text-ink-muted opacity-50"
+                  disabled
+                  title="Availability disabled until approval"
+                  type="button"
+                >
+                  <Settings size={20} />
+                </button>
+              ) : (
+                <Link
+                  className="rounded-full p-2 text-ink-muted hover:bg-surface-low"
+                  title={isPlatformOwner ? "System settings" : "Availability settings"}
+                  to={isPlatformOwner ? "/admin/settings" : "/owner/slots"}
+                >
+                  <Settings size={20} />
+                </Link>
+              )}
               <UserMenu />
             </div>
           </div>

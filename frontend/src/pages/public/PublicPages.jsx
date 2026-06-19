@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
@@ -39,6 +39,7 @@ import {
   useTournaments,
 } from "../../hooks/usePlatform.js";
 import { useAuth } from "../../store/authContext.js";
+import { createDemoTurf } from "../../services/api/normalize.js";
 import { currency } from "../../utils/formatters.js";
 import { handleImageError } from "../../utils/media.js";
 import { notify } from "../../utils/notify.js";
@@ -58,10 +59,25 @@ function futureDate(days = 1) {
   return date.toISOString().slice(0, 10);
 }
 
-function availabilityButtonClass(slot, index) {
-  if (slot.status === "booked") return "bg-surface-low text-ink-muted";
-  if (slot.status === "blocked") return "bg-danger-soft text-danger";
-  return index === 1 ? "bg-primary text-white" : "bg-surface-low text-ink-muted";
+function availabilityButtonClass(slot) {
+  if (slot.status === "booked") return "bg-danger-soft text-danger";
+  if (slot.status === "pending") return "bg-warning-soft text-amber-700";
+  if (slot.status === "maintenance") return "bg-surface-low text-ink-muted";
+  if (slot.status === "blocked") return "bg-surface-low text-ink-muted";
+  return "bg-accent-soft text-accent-deep";
+}
+
+function rateForSport(turf = {}, sport = "") {
+  return Number(turf.sportRates?.[sport] ?? turf.price ?? 0);
+}
+
+function turfRouteId(turf = {}) {
+  return turf._id || turf.id || "";
+}
+
+function isRenderableLiveTurf(turf = {}) {
+  const status = String(turf.statusValue || turf.status || "").toUpperCase();
+  return Boolean(turfRouteId(turf)) && (turf.isLive || status === "LIVE" || status === "AVAILABLE");
 }
 
 function storedIncludes(key, id) {
@@ -203,12 +219,39 @@ export function LandingPage() {
     venues: turfs.filter((turf) => turf.sportsSupported.includes(name)).length,
     ...(sportVisuals[name] || { icon: "Goal", image: assetImages.stadium }),
   }));
-  const liveSlots = turfs.slice(0, 4).map((turf) => ({
-    id: turf.id,
+  const liveSlots = turfs.filter(isRenderableLiveTurf).slice(0, 4).map((turf) => ({
+    id: turfRouteId(turf),
     sport: turf.sport,
     time: "Check live slots",
+    turf,
     venue: turf.name,
   }));
+  const skylineCricketBox = turfs.find((turf) => turf.name === "Skyline Cricket Box");
+  const skylineCricketBoxId = turfRouteId(skylineCricketBox);
+  const sportSearchLink = (sport) => ({
+    pathname: "/search",
+    search: new URLSearchParams({ sport, date: futureDate() }).toString(),
+  });
+  const sportsInsights = [
+    { icon: "🏆", label: "Most Booked Sport", value: "Football", to: sportSearchLink("Football") },
+    { icon: "📈", label: "Fastest Growing", value: "Badminton", to: sportSearchLink("Badminton") },
+    { icon: "🔥", label: "Peak Booking Time", value: "6 PM - 9 PM", to: "/booking/slots" },
+    { icon: "⭐", label: "Top Rated Venue", value: "Skyline Cricket Box", to: `/venue/${skylineCricketBoxId || "demo-venue"}` },
+  ];
+
+  function handleLiveAvailabilityClick(event, turf) {
+    const turfId = turfRouteId(turf);
+    const route = `/venue/${turfId}`;
+
+    console.log("Selected turf:", turf);
+    console.log("Turf ID:", turf?._id);
+    console.log("Route:", route);
+
+    if (!turfId) {
+      event.preventDefault();
+      notify("Venue details unavailable");
+    }
+  }
 
   return (
     <main>
@@ -260,15 +303,14 @@ export function LandingPage() {
           subtitle="The city's most booked activities this week"
           title="Popular Sports"
         />
-        <div className="grid min-h-[420px] w-full grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {sports.map((sport, index) => (
             <Reveal
-              className={index === 0 ? "xl:col-span-2 xl:row-span-2" : index === sports.length - 1 ? "xl:col-span-2" : ""}
               delay={index * 0.06}
               key={sport.name}
             >
               <Link
-                className="group relative block h-full min-h-48 overflow-hidden rounded-2xl"
+                className="group relative block h-80 overflow-hidden rounded-2xl"
                 to={{ pathname: "/search", search: new URLSearchParams({ sport: sport.name, date: futureDate() }).toString() }}
               >
                 <img alt={sport.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src={sport.image} />
@@ -281,6 +323,29 @@ export function LandingPage() {
               </Link>
             </Reveal>
           ))}
+          <Reveal delay={sports.length * 0.06} key="popular-sports-insights">
+            <Card className="min-h-80 overflow-visible lg:h-80">
+              <CardContent className="flex min-h-80 flex-col p-5 lg:h-full lg:min-h-0">
+                <div>
+                  <p className="text-lg font-black text-ink">Popular Sports Insights</p>
+                  <p className="mt-1 text-xs font-bold text-ink-muted">Live booking trends this week</p>
+                </div>
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex-1 lg:grid-cols-2">
+                  {sportsInsights.map((insight) => (
+                    <Link
+                      className="focus-ring min-w-0 rounded-xl bg-surface-low p-3 transition-colors hover:bg-primary-soft"
+                      key={insight.label}
+                      to={insight.to}
+                    >
+                      <span aria-hidden="true" className="text-lg">{insight.icon}</span>
+                      <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-ink-muted">{insight.label}</p>
+                      <p className="mt-0.5 text-sm font-black leading-tight text-ink">{insight.value}</p>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </Reveal>
         </div>
       </section>
 
@@ -293,7 +358,7 @@ export function LandingPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-4">
             {liveSlots.map((slot) => (
-              <Link key={slot.venue} to={`/venue/${slot.id}`}>
+              <Link key={slot.id} onClick={(event) => handleLiveAvailabilityClick(event, slot.turf)} to={`/venue/${slot.id}`}>
                 <Card interactive className="h-full">
                   <CardContent className="flex items-center justify-between p-4">
                     <div>
@@ -525,13 +590,17 @@ export function SearchResultsPage() {
 
 export function VenueDetailsPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const requireBooking = useBookingGuard();
   const { user } = useAuth();
   const { data: favorites = [] } = useFavorites(Boolean(user));
   const favoriteMutation = useFavoriteMutation();
   const [date, setDate] = useState(futureDate());
+  const [selectedSport, setSelectedSport] = useState("");
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const [mediaMode, setMediaMode] = useState("");
-  const { data: turf, isError, isLoading } = useTurf(id);
+  const { data: resolvedTurf, isLoading } = useTurf(id);
+  const turf = resolvedTurf || createDemoTurf();
   const { data: availability = { slots: [], timeline: [] } } = useTurfAvailability(id, date);
   const { data: similarResult = { turfs: [] } } = useTurfs({
     limit: 4,
@@ -541,20 +610,45 @@ export function VenueDetailsPage() {
     () => Array.from({ length: 4 }, (_, index) => futureDate(index + 1)),
     [],
   );
+  const configuredSports = useMemo(() => turf?.sportsSupported || [], [turf]);
+  const selectedRate = rateForSport(turf, selectedSport || turf?.sport);
+  const bookingSearch = new URLSearchParams({
+    date,
+    sport: selectedSport || turf.sport || "",
+    venue: turf.id,
+  }).toString();
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingTimedOut(false);
+      return undefined;
+    }
+
+    const timer = setTimeout(() => setLoadingTimedOut(true), 2000);
+    return () => clearTimeout(timer);
+  }, [id, isLoading]);
+
+  useEffect(() => {
+    if (loadingTimedOut && isLoading && !resolvedTurf) {
+      navigate("/explore", { replace: true });
+    }
+  }, [isLoading, loadingTimedOut, navigate, resolvedTurf]);
+
+  useEffect(() => {
+    if (!configuredSports.length) return;
+    if (!configuredSports.includes(selectedSport)) {
+      setSelectedSport(configuredSports[0]);
+    }
+  }, [configuredSports, selectedSport]);
+
+  if (isLoading && !loadingTimedOut) {
     return <main className="page-shell py-16 text-center text-ink-muted">Loading venue...</main>;
   }
-  if (isError || !turf) {
-    return (
-      <main className="page-shell py-16 text-center">
-        <h1 className="text-3xl font-black">Venue not found</h1>
-        <p className="mt-3 text-ink-muted">This venue may be unavailable or awaiting approval.</p>
-        <Button as={Link} className="mt-5" to="/explore">Explore Venues</Button>
-      </main>
-    );
+  if (isLoading && loadingTimedOut) {
+    return <main className="page-shell py-16 text-center text-ink-muted">Opening Explore Venues...</main>;
   }
   const isFavorite = favorites.some((favorite) => favorite.id === turf.id);
+  const isDemoVenue = turf.isDemo || turf.id === "demo-venue";
   const visibleAvailability = (availability.timeline?.length ? availability.timeline : availability.slots || []).map((slot) => ({
     reason: slot.reason || (slot.status === "available" ? "Available" : slot.status),
     status: slot.status || "available",
@@ -562,115 +656,135 @@ export function VenueDetailsPage() {
   }));
 
   return (
-    <main className="page-shell py-8">
-      <section className="grid gap-4 lg:grid-cols-[1.4fr_0.75fr]">
-        <div className="relative min-h-[420px] overflow-hidden rounded-2xl">
-          <img alt={turf.name} className="h-full w-full object-cover" onError={handleImageError} src={turf.gallery[0]} />
-          <div className="absolute bottom-5 left-5 flex gap-2">
-            <Button onClick={() => setMediaMode("tour")} variant="dark">
-              <Icon name="CircleGauge" />
-              View 360 Tour
-            </Button>
-            <Button onClick={() => setMediaMode("photos")} variant="outline" className="bg-white/90">
-              <Icon name="Image" />
-              View all photos
-            </Button>
-          </div>
-        </div>
-        <div className="grid gap-4">
-          {turf.gallery.slice(1, 3).map((image) => (
-            <img alt={turf.name} className="h-48 w-full rounded-2xl object-cover lg:h-full" key={image} onError={handleImageError} src={image} />
-          ))}
-        </div>
-      </section>
-      <section className="mt-10 grid gap-8 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-8">
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h1 className="text-4xl font-black tracking-normal">{turf.name}</h1>
-                <p className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
-                  <MapPin size={16} />
-                  {turf.location}
-                  <span>-</span>
-                  <Star className="fill-warning text-warning" size={16} />
-                  {turf.rating} ({turf.reviews} reviews)
-                </p>
-              </div>
-              <Button
-                aria-label={isFavorite ? "Remove favorite" : "Save favorite"}
-                onClick={() => {
-                  if (!user) {
-                    requireBooking(`/venue/${turf.id}`);
-                    return;
-                  }
-                  favoriteMutation.mutate(
-                    { id: turf.id, favorite: !isFavorite },
-                    { onSuccess: () => notify(isFavorite ? "Venue removed from favorites." : "Venue saved to favorites.") },
-                  );
-                }}
-                size="icon"
-                variant="outline"
-              >
-                <Icon name="Heart" />
+    <main className="page-shell py-6 md:py-8">
+      <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(340px,380px)]">
+        <div className="min-w-0 space-y-6">
+          <div className="relative h-[320px] overflow-hidden rounded-2xl sm:h-[360px] lg:h-[420px]">
+            <img alt={turf.name} className="h-full w-full object-cover" onError={handleImageError} src={turf.gallery[0]} />
+            <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
+              <Button onClick={() => setMediaMode("tour")} variant="dark">
+                <Icon name="CircleGauge" />
+                View 360 Tour
+              </Button>
+              <Button onClick={() => setMediaMode("photos")} variant="outline" className="bg-white/90">
+                <Icon name="Image" />
+                View all photos
               </Button>
             </div>
           </div>
-          <div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-3xl font-black tracking-normal md:text-4xl">{turf.name}</h1>
+              <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+                <MapPin size={16} />
+                {turf.location}
+                <span>-</span>
+                <Star className="fill-warning text-warning" size={16} />
+                {turf.rating} ({turf.reviews} reviews)
+              </p>
+            </div>
+            <Button
+              aria-label={isFavorite ? "Remove favorite" : "Save favorite"}
+              onClick={() => {
+                if (!user) {
+                  requireBooking(`/venue/${turf.id}`);
+                  return;
+                }
+                if (isDemoVenue) {
+                  notify(isFavorite ? "Venue removed from favorites." : "Venue saved to favorites.");
+                  return;
+                }
+                favoriteMutation.mutate(
+                  { id: turf.id, favorite: !isFavorite },
+                  { onSuccess: () => notify(isFavorite ? "Venue removed from favorites." : "Venue saved to favorites.") },
+                );
+              }}
+              size="icon"
+              variant="outline"
+            >
+              <Icon name="Heart" />
+            </Button>
+          </div>
+
+          <section>
             <h2 className="text-xl font-black">Facilities & Amenities</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid auto-rows-fr grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-3">
               {turf.amenities.map((amenity) => (
-                <Card key={amenity}>
-                  <CardContent className="p-4">
+                <Card className="h-full" key={amenity}>
+                  <CardContent className="h-full p-4">
                     <Icon className="text-primary" name="ShieldCheck" />
                     <p className="mt-3 text-sm font-bold">{amenity}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </div>
-          <div>
+          </section>
+
+          <section>
             <h2 className="text-xl font-black">The Arena Experience</h2>
-            <p className="mt-3 max-w-3xl leading-7 text-ink-muted">
+            <p className="mt-3 max-w-none leading-7 text-ink-muted">
               Experience world-class play on premium synthetic surfaces, broadcast-grade lights, climate controlled support spaces,
               and fast digital check-in built for repeated weekly play.
             </p>
-          </div>
-          <Card className="bg-primary-soft/50">
+          </section>
+
+          <Card className="w-full bg-primary-soft/50">
             <CardContent>
               <p className="muted-label text-primary">Ground Rules</p>
               <div className="mt-4 space-y-2 text-sm text-ink-muted">
                 {["No metal studs allowed on the surface.", "Arrive 15 minutes before your slot.", "Bibs and professional balls provided."].map((rule) => (
                   <p className="flex items-center gap-2" key={rule}>
-                    <Check className="text-accent" size={16} />
+                    <Check className="shrink-0 text-accent" size={16} />
                     {rule}
                   </p>
                 ))}
               </div>
             </CardContent>
           </Card>
-          <div>
+
+          <section>
             <h2 className="text-xl font-black">Location & Access</h2>
-            <div className="relative mt-4 h-72 overflow-hidden rounded-2xl">
+            <div className="relative mt-4 h-[250px] overflow-hidden rounded-xl">
               <img alt="Venue map" className="h-full w-full object-cover grayscale" src={assetImages.map} />
               <div className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-white shadow-lift">
                 <MapPin size={22} />
               </div>
             </div>
-          </div>
+          </section>
+
+          <section className="mt-6">
+            <SectionHeader title="Similar High-Performance Venues" />
+            <div className="grid gap-5 md:grid-cols-3">
+              {similarResult.turfs.filter((item) => item.id !== turf.id).slice(0, 3).map((item) => (
+                <TurfCard compact key={item.id} turf={item} />
+              ))}
+            </div>
+          </section>
         </div>
-        <aside className="lg:sticky lg:top-24 lg:h-max">
+
+        <aside className="w-full self-start lg:sticky lg:top-[calc(var(--navbar-height,80px)+20px)] lg:h-fit lg:max-h-[calc(100vh-var(--navbar-height,80px)-40px)] lg:max-w-[360px] lg:justify-self-end lg:overflow-y-auto">
           <Card>
             <CardContent>
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-3xl font-black">{currency(turf.price)}</p>
+                  <p className="text-3xl font-black">{currency(selectedRate)}</p>
                   <p className="text-sm text-ink-muted">per hour</p>
                 </div>
                 <Badge variant="secondary">Members save 15%</Badge>
               </div>
+              <p className="muted-label mt-6">Select Sport</p>
+              <select
+                className="focus-ring mt-3 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm"
+                onChange={(event) => setSelectedSport(event.target.value)}
+                value={selectedSport || turf.sport}
+              >
+                {configuredSports.map((sport) => (
+                  <option key={sport} value={sport}>{sport}</option>
+                ))}
+              </select>
               <p className="muted-label mt-6">Select Date</p>
-              <div className="mt-3 grid grid-cols-4 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {dates.map((option) => (
                   <button
                     className={`rounded-lg border p-3 text-xs font-black ${date === option ? "border-primary bg-primary text-white" : "border-surface-border bg-white"}`}
@@ -682,13 +796,13 @@ export function VenueDetailsPage() {
                 ))}
               </div>
               <p className="muted-label mt-6">Available Slots</p>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {visibleAvailability.map((slot, index) => (
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {visibleAvailability.map((slot) => (
                   <button
-                    className={`rounded-lg px-3 py-2 text-left text-xs font-bold ${availabilityButtonClass(slot, index)}`}
+                    className={`rounded-lg px-3 py-2 text-left text-xs font-bold ${availabilityButtonClass(slot)}`}
                     disabled={slot.status !== "available"}
                     key={`${slot.startTime}-${slot.endTime}`}
-                    onClick={() => requireBooking(`/booking/slots?venue=${turf.id}&date=${date}`)}
+                    onClick={() => requireBooking(`/booking/slots?${bookingSearch}`)}
                     type="button"
                   >
                     {slot.startTime}-{slot.endTime}
@@ -697,7 +811,7 @@ export function VenueDetailsPage() {
                 ))}
               </div>
               {!visibleAvailability.length && <p className="mt-3 text-sm text-ink-muted">No slots are available for this date.</p>}
-              <Button as={Link} className="mt-6 w-full" to={`/booking/slots?venue=${turf.id}&date=${date}`}>
+              <Button as={Link} className="mt-6 w-full" to={`/booking/slots?${bookingSearch}`}>
                 Reserve Now
                 <ChevronRight size={17} />
               </Button>
@@ -705,14 +819,6 @@ export function VenueDetailsPage() {
             </CardContent>
           </Card>
         </aside>
-      </section>
-      <section className="mt-14">
-        <SectionHeader title="Similar High-Performance Venues" />
-        <div className="grid gap-5 md:grid-cols-3">
-          {similarResult.turfs.filter((item) => item.id !== turf.id).slice(0, 3).map((item) => (
-            <TurfCard compact key={item.id} turf={item} />
-          ))}
-        </div>
       </section>
       <Modal onOpenChange={(open) => !open && setMediaMode("")} open={Boolean(mediaMode)} title={mediaMode === "tour" ? `${turf.name} 360 Tour` : `${turf.name} Gallery`}>
         <div className={mediaMode === "photos" ? "grid gap-3 sm:grid-cols-2" : ""}>

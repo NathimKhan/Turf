@@ -1,3 +1,4 @@
+const AuditLog = require("../models/AuditLog");
 const Booking = require("../models/Booking");
 const BookingConflictLog = require("../models/BookingConflictLog");
 const Notification = require("../models/Notification");
@@ -5,9 +6,33 @@ const Payment = require("../models/Payment");
 const PlatformSetting = require("../models/PlatformSetting");
 const Turf = require("../models/Turf");
 const User = require("../models/User");
+const {
+  OWNER_ACCOUNT_STATUS_BY_APPROVAL,
+  normalizeOwnerAccountStatus,
+  normalizeOwnerApprovalStatus,
+  normalizeVenueStatus,
+} = require("../utils/approval");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 
 const PLATFORM_FEE_RATE = 0.1;
+
+function pendingOwnerFilter() {
+  return {
+    role: "owner",
+    $or: [{ approvalStatus: "PENDING" }, { accountStatus: "pending" }],
+  };
+}
+
+function pendingVenueFilter() {
+  return {
+    isApproved: false,
+    $or: [
+      { status: "PENDING" },
+      { moderationStatus: "pending" },
+      { status: { $exists: false }, moderationStatus: { $exists: false } },
+    ],
+  };
+}
 
 const getAdminDashboard = asyncHandler(async (req, res) => {
   const [
@@ -21,6 +46,10 @@ const getAdminDashboard = asyncHandler(async (req, res) => {
     recentPayments,
     pendingOwners,
     pendingTurfs,
+    liveVenues,
+    rejectedVenues,
+    pendingOwnerApplications,
+    pendingVenueApplications,
   ] = await Promise.all([
     User.countDocuments({ role: "user" }),
     User.countDocuments({ role: "owner" }),
@@ -45,7 +74,7 @@ const getAdminDashboard = asyncHandler(async (req, res) => {
         },
       },
     ]),
-    User.find().sort({ createdAt: -1 }).limit(5).select("name email role createdAt"),
+    User.find().sort({ createdAt: -1 }).limit(5).select("name email role createdAt approvalStatus accountStatus"),
     Booking.find()
       .populate("userId", "name email")
       .populate("turfId", "name city")
@@ -56,11 +85,24 @@ const getAdminDashboard = asyncHandler(async (req, res) => {
       .populate("bookingId", "turfId totalAmount")
       .sort({ createdAt: -1 })
       .limit(5),
-    User.countDocuments({ role: "owner", accountStatus: "pending" }),
+    User.countDocuments(pendingOwnerFilter()),
+    Turf.countDocuments(pendingVenueFilter()),
     Turf.countDocuments({
-      isApproved: false,
-      $or: [{ moderationStatus: "pending" }, { moderationStatus: { $exists: false } }],
+      isApproved: true,
+      $or: [{ status: "LIVE" }, { moderationStatus: "approved" }, { status: { $exists: false } }],
     }),
+    Turf.countDocuments({
+      $or: [{ status: "REJECTED" }, { moderationStatus: "rejected" }],
+    }),
+    User.find(pendingOwnerFilter())
+      .select("name businessName email phone approvalStatus accountStatus createdAt")
+      .sort({ createdAt: -1 })
+      .limit(10),
+    Turf.find(pendingVenueFilter())
+      .populate("ownerId", "name email businessName")
+      .select("name city location sportsSupported ownerId status moderationStatus createdAt")
+      .sort({ createdAt: -1 })
+      .limit(10),
   ]);
 
   const recentActivities = [
@@ -94,6 +136,10 @@ const getAdminDashboard = asyncHandler(async (req, res) => {
     totalRevenue: revenueResult[0]?.platformRevenue || revenueResult[0]?.grossRevenue || 0,
     pendingOwners,
     pendingTurfs,
+    liveVenues,
+    rejectedVenues,
+    pendingOwnerApplications,
+    pendingVenueApplications,
     recentActivities,
   });
 });
@@ -103,19 +149,27 @@ const getOwners = asyncHandler(async (req, res) => {
   const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
   const safePage = Math.max(Number(page) || 1, 1);
   const filter = { role: "owner" };
+  const andFilters = [];
 
-  if (status) filter.accountStatus = status;
+  if (status) {
+    const approvalStatus = normalizeOwnerApprovalStatus(status);
+    andFilters.push({ $or: [
+      { approvalStatus },
+      { accountStatus: normalizeOwnerAccountStatus(status) },
+    ] });
+  }
   if (search) {
-    filter.$or = [
+    andFilters.push({ $or: [
       { name: { $regex: search, $options: "i" } },
       { businessName: { $regex: search, $options: "i" } },
       { email: { $regex: search, $options: "i" } },
-    ];
+    ] });
   }
+  if (andFilters.length) filter.$and = andFilters;
 
   const [owners, total] = await Promise.all([
     User.find(filter)
-      .select("name businessName email phone address accountStatus rejectionReason approvedAt createdAt")
+      .select("name businessName email phone address approvalStatus accountStatus rejectionReason approvedAt createdAt")
       .sort({ createdAt: -1 })
       .skip((safePage - 1) * safeLimit)
       .limit(safeLimit),
@@ -142,25 +196,37 @@ const updateOwnerStatus = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const status = req.body.status;
-  owner.accountStatus = status;
-  owner.rejectionReason = status === "rejected" ? req.body.reason || "Application did not meet platform requirements." : "";
-  owner.approvedAt = status === "active" ? new Date() : undefined;
-  owner.approvedBy = status === "active" ? req.user._id : undefined;
+  const status = normalizeOwnerApprovalStatus(req.body.status);
+  owner.approvalStatus = status;
+  owner.accountStatus = OWNER_ACCOUNT_STATUS_BY_APPROVAL[status];
+  owner.rejectionReason = status === "REJECTED" ? req.body.reason || "Application did not meet platform requirements." : "";
+  owner.approvedAt = status === "ACTIVE" ? new Date() : undefined;
+  owner.approvedBy = status === "ACTIVE" ? req.user._id : undefined;
   await owner.save();
 
   const titles = {
-    active: "Turf owner account approved",
-    rejected: "Turf owner application update",
-    suspended: "Turf owner account suspended",
-    pending: "Turf owner application under review",
+    ACTIVE: "Account Approved",
+    PENDING: "Turf owner application under review",
+    REJECTED: "Account Rejected",
+    SUSPENDED: "Turf owner account suspended",
   };
   const messages = {
-    active: "Your turf owner account is approved. You can now sign in and manage venues.",
-    rejected: owner.rejectionReason,
-    suspended: "Your turf owner account has been suspended. Contact platform support for assistance.",
-    pending: "Your turf owner application is under review.",
+    ACTIVE: "Your turf owner account is approved. You can now manage venues.",
+    PENDING: "Your turf owner application is under review.",
+    REJECTED: owner.rejectionReason,
+    SUSPENDED: "Your turf owner account has been suspended. Contact platform support for assistance.",
   };
+
+  if (["ACTIVE", "REJECTED", "SUSPENDED"].includes(status)) {
+    await AuditLog.create({
+      action: status === "ACTIVE" ? "APPROVED" : status,
+      actorId: req.user._id,
+      entityId: owner._id,
+      entityType: "USER",
+      reason: owner.rejectionReason || req.body.reason || "",
+      status,
+    });
+  }
 
   await Notification.create({
     userId: owner._id,
@@ -183,23 +249,53 @@ const moderateTurf = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const status = req.body.status;
-  turf.moderationStatus = status;
-  turf.isApproved = status === "approved";
-  turf.rejectionReason = status === "rejected" ? req.body.reason || "Venue did not meet platform requirements." : "";
-  turf.approvedAt = status === "approved" ? new Date() : undefined;
-  turf.approvedBy = status === "approved" ? req.user._id : undefined;
+  const status = normalizeVenueStatus(req.body.status);
+  turf.status = status;
+  turf.rejectionReason = status === "REJECTED" ? req.body.reason || "Venue did not meet platform requirements." : "";
+  turf.approvedAt = status === "LIVE" ? new Date() : undefined;
+  turf.approvedBy = status === "LIVE" ? req.user._id : undefined;
   await turf.save();
+
+  if (["LIVE", "REJECTED", "SUSPENDED"].includes(status)) {
+    await AuditLog.create({
+      action: status === "LIVE" ? "APPROVED" : status,
+      actorId: req.user._id,
+      entityId: turf._id,
+      entityType: "VENUE",
+      reason: turf.rejectionReason || req.body.reason || "",
+      status,
+    });
+  }
+
+  const notificationCopy = {
+    LIVE: {
+      title: "Venue Approved",
+      message: `${turf.name} is approved and visible to users.`,
+      targetUrl: `/owner/turfs/${turf._id}`,
+    },
+    PENDING: {
+      title: "Venue submitted for review",
+      message: `${turf.name} is pending Platform Owner review.`,
+      targetUrl: "/owner/turfs",
+    },
+    REJECTED: {
+      title: "Venue Rejected",
+      message: `${turf.name} was rejected.${turf.rejectionReason ? ` ${turf.rejectionReason}` : ""}`,
+      targetUrl: "/owner/turfs",
+    },
+    SUSPENDED: {
+      title: "Venue Suspended",
+      message: `${turf.name} has been suspended. Contact platform support for assistance.`,
+      targetUrl: "/owner/turfs",
+    },
+  };
 
   await Notification.create({
     userId: turf.ownerId,
-    title: `Venue ${status}`,
-    message:
-      status === "approved"
-        ? `${turf.name} is approved and visible to users.`
-        : `${turf.name} is ${status}.${turf.rejectionReason ? ` ${turf.rejectionReason}` : ""}`,
+    title: notificationCopy[status].title,
+    message: notificationCopy[status].message,
     metadata: { turfId: turf._id, status },
-    targetUrl: status === "approved" ? `/owner/turfs/${turf._id}` : "/owner/turfs",
+    targetUrl: notificationCopy[status].targetUrl,
     type: "venue",
   });
 
@@ -214,11 +310,26 @@ const getSettings = asyncHandler(async (req, res) => {
 const getVenueSchedules = asyncHandler(async (req, res) => {
   const schedules = await Turf.find()
     .populate("ownerId", "name email businessName")
-    .select("name city ownerId isApproved moderationStatus schedule")
+    .select("name city ownerId isApproved moderationStatus status schedule")
     .sort({ name: 1 })
     .limit(100);
 
   return successResponse(res, "Venue schedules fetched", { schedules });
+});
+
+const getAuditLogs = asyncHandler(async (req, res) => {
+  const safeLimit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+  const filter = {};
+
+  if (req.query.entityType) filter.entityType = String(req.query.entityType).toUpperCase();
+  if (req.query.entityId) filter.entityId = req.query.entityId;
+
+  const logs = await AuditLog.find(filter)
+    .populate("actorId", "name email role")
+    .sort({ createdAt: -1 })
+    .limit(safeLimit);
+
+  return successResponse(res, "Audit logs fetched", { logs });
 });
 
 const getConflictLogs = asyncHandler(async (req, res) => {
@@ -258,6 +369,7 @@ const updateSetting = asyncHandler(async (req, res) => {
 
 module.exports = {
   getAdminDashboard,
+  getAuditLogs,
   getConflictLogs,
   getOwners,
   getSettings,

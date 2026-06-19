@@ -72,7 +72,7 @@ const swaggerSpec = {
           state: { type: "string" },
           sportsSupported: {
             type: "array",
-            items: { type: "string", enum: ["Football", "Cricket", "Badminton", "Volleyball", "Basketball"] },
+            items: { type: "string", enum: ["Football", "Cricket", "Volleyball", "Basketball", "Badminton", "Tennis"] },
           },
           pricePerHour: { type: "number" },
           images: { type: "array", items: { type: "string" } },

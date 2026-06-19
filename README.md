@@ -1,12 +1,11 @@
 # TURFX
 
-The project is split into two independent applications:
+Local MERN turf booking project. The app is split into two parts:
 
 ```text
 Turf/
 |-- frontend/   React and Vite client
 |-- backend/    Express and MongoDB API
-|-- render.yaml Backend deployment configuration
 `-- package.json
 ```
 
@@ -50,24 +49,3 @@ npm run dev:frontend
 
 The frontend runs at `http://localhost:5173` and proxies `/api` and `/uploads`
 to the backend at `http://localhost:5000`.
-
-## Prototype QA
-
-The complete issue ledger, route audit, interaction report, remaining
-limitations, and tutor demonstration script are in
-`docs/PROTOTYPE_COMPLETION_REPORT.md`.
-
-## Production
-
-Build the frontend with its deployed backend URL:
-
-```bash
-VITE_API_URL=https://your-api.example.com/api npm run build
-```
-
-On Windows PowerShell:
-
-```powershell
-$env:VITE_API_URL = "https://your-api.example.com/api"
-npm.cmd run build
-```

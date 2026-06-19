@@ -3,6 +3,11 @@ const { body } = require("express-validator");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const generateToken = require("../utils/generateToken");
+const {
+  OWNER_ACCOUNT_STATUS_BY_APPROVAL,
+  approvalStatusForUser,
+  canAuthenticateUser,
+} = require("../utils/approval");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 const { isEmailSimulationEnabled, sendPasswordResetEmail } = require("../services/emailService");
 
@@ -80,6 +85,7 @@ const register = asyncHandler(async (req, res) => {
     throw error;
   }
 
+  const approvalStatus = role === "owner" ? "PENDING" : "ACTIVE";
   const user = await User.create({
     name,
     email,
@@ -88,12 +94,13 @@ const register = asyncHandler(async (req, res) => {
     address,
     businessName,
     role,
-    accountStatus: role === "owner" ? "pending" : "active",
+    approvalStatus,
+    accountStatus: OWNER_ACCOUNT_STATUS_BY_APPROVAL[approvalStatus],
     membershipPlan: role === "owner" ? "Venue Pro" : "Starter",
   });
 
   if (role === "owner") {
-    const admins = await User.find({ role: "admin", accountStatus: "active" }).select("_id");
+    const admins = await User.find({ role: "admin" }).select("_id");
     if (admins.length) {
       await Notification.insertMany(
         admins.map((admin) => ({
@@ -107,10 +114,10 @@ const register = asyncHandler(async (req, res) => {
       );
     }
 
-    return successResponse(
+    return sendTokenResponse(
       res,
-      "Owner application submitted. A Platform Owner must approve it before you can sign in.",
-      { user },
+      user,
+      "Owner application submitted. Your account is pending approval from Platform Owner.",
       201,
     );
   }
@@ -128,13 +135,18 @@ const login = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  if (user.accountStatus && user.accountStatus !== "active") {
+  if (user.role === "admin" || user.role === "user") {
+    return sendTokenResponse(res, user, "Login successful");
+  }
+
+  const approvalStatus = approvalStatusForUser(user);
+  if (!canAuthenticateUser(user)) {
     const messages = {
-      pending: "Your turf owner application is awaiting approval",
-      rejected: user.rejectionReason || "Your turf owner application was rejected",
-      suspended: "Your account has been suspended. Contact platform support.",
+      PENDING: "Your turf owner application is awaiting approval",
+      REJECTED: user.rejectionReason || "Your turf owner application was rejected",
+      SUSPENDED: "Your account has been suspended. Contact platform support.",
     };
-    const error = new Error(messages[user.accountStatus] || "Your account is not active");
+    const error = new Error(messages[approvalStatus] || "Your account is not active");
     error.statusCode = 403;
     throw error;
   }
@@ -169,6 +181,22 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   await req.user.save();
+
+  if (req.user.role === "owner") {
+    const admins = await User.find({ role: "admin" }).select("_id");
+    if (admins.length) {
+      await Notification.insertMany(
+        admins.map((admin) => ({
+          userId: admin._id,
+          title: "Owner profile updated",
+          message: `${req.user.businessName || req.user.name} updated their owner profile.`,
+          metadata: { ownerId: req.user._id },
+          targetUrl: "/admin/owners",
+          type: "venue",
+        })),
+      );
+    }
+  }
 
   return successResponse(res, "Profile updated", { user: req.user });
 });

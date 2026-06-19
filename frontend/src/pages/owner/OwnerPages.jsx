@@ -29,8 +29,9 @@ import { currency } from "../../utils/formatters.js";
 import { downloadPaymentReceipt } from "../../utils/bookingPass.js";
 import { handleImageError } from "../../utils/media.js";
 import { notify } from "../../utils/notify.js";
+import { useAuth } from "../../store/authContext.js";
 
-const TURF_SPORT_OPTIONS = ["Football", "Cricket", "Badminton", "Volleyball", "Basketball"];
+const TURF_SPORT_OPTIONS = ["Football", "Cricket", "Volleyball", "Basketball", "Badminton", "Tennis"];
 const TURF_AMENITY_OPTIONS = ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Seating Area"];
 const DAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 const UTC_DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
@@ -123,6 +124,7 @@ const PROTOTYPE_PERFORMANCE_INSIGHTS = [
   { label: "Weekend Utilization", value: "92%" },
   { label: "Customer Satisfaction", value: "4.8/5" },
 ];
+// eslint-disable-next-line no-unused-vars
 const PEAK_QUICK_ACTIONS = [
   { href: "/owner/bookings", label: "View Bookings" },
   { href: "/owner/slots", label: "Manage Availability" },
@@ -151,6 +153,56 @@ function titleCase(value = "") {
   return value
     .replace(/_/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function approvalStatus(user, dashboard = {}) {
+  const value = dashboard.approvalStatus || user?.approvalStatus || user?.accountStatus || "ACTIVE";
+  const upper = String(value).toUpperCase();
+  if (["ACTIVE", "PENDING", "REJECTED", "SUSPENDED"].includes(upper)) return upper;
+  if (String(value).toLowerCase() === "active") return "ACTIVE";
+  if (String(value).toLowerCase() === "pending") return "PENDING";
+  if (String(value).toLowerCase() === "rejected") return "REJECTED";
+  if (String(value).toLowerCase() === "suspended") return "SUSPENDED";
+  return "ACTIVE";
+}
+
+function isOwnerPending(user, dashboard = {}) {
+  return approvalStatus(user, dashboard) === "PENDING";
+}
+
+function OwnerApprovalBanner({ dashboard = {} }) {
+  const { user } = useAuth();
+  if (!isOwnerPending(user, dashboard)) return null;
+
+  return (
+    <Card className="mb-6">
+      <CardContent>
+        <Badge variant="warning">Pending Approval</Badge>
+        <p className="mt-3 font-black text-ink">Your application is awaiting approval.</p>
+        <p className="mt-1 text-sm text-ink-muted">Add Venue, Availability, Bookings, and Revenue actions are disabled until approval.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function VenueStatusBadge({ status }) {
+  const statusValue = String(status || "PENDING").toUpperCase();
+  const variants = {
+    DRAFT: "default",
+    LIVE: "success",
+    PENDING: "warning",
+    REJECTED: "danger",
+    SUSPENDED: "danger",
+  };
+  const labels = {
+    DRAFT: "Draft",
+    LIVE: "Live",
+    PENDING: "Pending Approval",
+    REJECTED: "Rejected",
+    SUSPENDED: "Suspended",
+  };
+
+  return <Badge variant={variants[statusValue] || "warning"}>{labels[statusValue] || status}</Badge>;
 }
 
 function OptionGroup({ options, selected, onToggle }) {
@@ -190,13 +242,14 @@ function dayKeyForDate(dateValue) {
   return UTC_DAY_KEYS[date.getUTCDay()];
 }
 
-function buildPreviewSlots(startTime, endTime, slotMinutes) {
+function buildPreviewSlots(startTime, endTime, slotMinutes, startIntervalMinutes = 30) {
   const output = [];
   const start = timeToMinutes(startTime);
   const end = timeToMinutes(endTime);
   const duration = Number(slotMinutes) || 60;
+  const interval = Number(startIntervalMinutes) || 30;
 
-  for (let minute = start; minute + duration <= end; minute += duration) {
+  for (let minute = start; minute + duration <= end; minute += interval) {
     output.push({
       endTime: formatTime(minute + duration),
       reason: "Available",
@@ -430,6 +483,7 @@ function hourlyBookingCounts(bookings = []) {
   return [...counts.entries()].sort((first, second) => second[1] - first[1]);
 }
 
+// eslint-disable-next-line no-unused-vars
 function buildPeakBookingSummary({ bookings = [], payments = [] }) {
   if (!bookings.length) return PROTOTYPE_PEAK_BOOKING_SUMMARY;
 
@@ -455,6 +509,7 @@ function buildPeakBookingSummary({ bookings = [], payments = [] }) {
   ];
 }
 
+// eslint-disable-next-line no-unused-vars
 function buildPeakTimeAnalysis({ bookings = [], turfs = [] }) {
   if (!bookings.length) return PROTOTYPE_PEAK_TIME_ANALYSIS;
 
@@ -479,6 +534,7 @@ function buildPeakTimeAnalysis({ bookings = [], turfs = [] }) {
   ];
 }
 
+// eslint-disable-next-line no-unused-vars
 function buildUpcomingBookingRows(bookings = []) {
   if (!bookings.length) return PROTOTYPE_UPCOMING_BOOKINGS;
 
@@ -497,6 +553,7 @@ function buildUpcomingBookingRows(bookings = []) {
   return rows.length ? rows : PROTOTYPE_UPCOMING_BOOKINGS;
 }
 
+// eslint-disable-next-line no-unused-vars
 function buildTopVenueRows({ bookings = [], payments = [], turfs = [] }) {
   if (!bookings.length && !payments.length) return PROTOTYPE_TOP_VENUE_ROWS;
 
@@ -533,6 +590,7 @@ function buildTopVenueRows({ bookings = [], payments = [], turfs = [] }) {
   return rows.length ? rows : PROTOTYPE_TOP_VENUE_ROWS;
 }
 
+// eslint-disable-next-line no-unused-vars
 function buildPeakPerformanceInsights({ bookings = [], payments = [] }) {
   if (!bookings.length && !payments.length) return PROTOTYPE_PERFORMANCE_INSIGHTS;
 
@@ -774,10 +832,12 @@ function PerformanceBars({ bookings = [], turfs = [] }) {
 }
 
 export function OwnerDashboardPage() {
+  const { user } = useAuth();
   const { data: dashboard = {} } = useOwnerDashboard();
   const { data: bookings = [] } = useBookings();
   const { data: payments = [] } = usePayments();
   const { data: turfs = [] } = useMyTurfs();
+  const ownerPending = isOwnerPending(user, dashboard);
   const paidPayments = payments.filter(isPaidPayment);
   const monthlySeries = buildSixMonthRevenueSeries(dashboard.monthlyEarnings || []);
   const paymentSeries = buildPaymentRevenueSeries(paidPayments);
@@ -793,6 +853,17 @@ export function OwnerDashboardPage() {
   const revenueForecast = buildRevenueForecast({ bookings, dashboard, hasRevenueData, payments: paidPayments, turfs });
   const venueHighlights = buildVenueHighlights({ bookings, hasRevenueData, payments: paidPayments, turfs });
   const bookingInsights = buildBookingInsights(bookings, turfs);
+  const perSportRevenue = (dashboard.perSportRevenue || []).map((item) => ({
+    label: item.sport,
+    value: currency(item.revenue || 0),
+  }));
+  const bookingBreakdown = dashboard.bookingBreakdown || {};
+  const bookingStatusSummary = [
+    { label: "Today's Bookings", value: String(bookingBreakdown.today ?? 0) },
+    { label: "Upcoming Bookings", value: String(bookingBreakdown.upcoming ?? 0) },
+    { label: "Live Bookings", value: String(bookingBreakdown.live ?? 0) },
+    { label: "Cancelled Bookings", value: String(bookingBreakdown.cancelled ?? 0) },
+  ];
   const ownerKpis = [
     { label: "Total Revenue", value: currency(dashboardRevenue), trend: hasRevenueData ? "Paid bookings" : "Preview forecast", icon: "Banknote" },
     { label: "Bookings", value: String(dashboard.totalBookings || 0), trend: "All statuses", icon: "ClipboardList" },
@@ -813,7 +884,11 @@ export function OwnerDashboardPage() {
               <CalendarDays size={16} />
               Last 30 Days
             </Button>
-            <Button as={Link} to="/owner/add-turf">Quick Actions</Button>
+            {ownerPending ? (
+              <Button disabled>Quick Actions</Button>
+            ) : (
+              <Button as={Link} to="/owner/add-turf">Quick Actions</Button>
+            )}
             <Button as={Link} aria-label="Manage venues" size="icon" to="/owner/turfs" variant="outline">
               <MoreVertical />
             </Button>
@@ -823,6 +898,7 @@ export function OwnerDashboardPage() {
         subtitle="Venue performance, bookings, earnings, and availability across your portfolio."
         title="Turf Owner Dashboard"
       />
+      <OwnerApprovalBanner dashboard={dashboard} />
       <div className="metric-grid">
         {ownerKpis.map((kpi, index) => (
           <StatsCard delay={index * 0.06} icon={kpi.icon} key={kpi.label} label={kpi.label} trend={kpi.trend} value={kpi.value} />
@@ -879,6 +955,8 @@ export function OwnerDashboardPage() {
         </div>
         <div className="space-y-6">
           <PayoutPreviewCard rows={upcomingPayouts} />
+          <MetricSummaryCard items={bookingStatusSummary} title="Booking Status" />
+          {perSportRevenue.length > 0 && <MetricSummaryCard items={perSportRevenue} title="Per Sport Revenue" />}
           <MetricSummaryCard items={bookingInsights} title="Booking Insights" />
         </div>
       </div>
@@ -919,9 +997,11 @@ export function OwnerDashboardPage() {
 }
 
 export function MyTurfsPage() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const { data: allTurfs = [] } = useMyTurfs();
   const deleteTurf = useDeleteTurf();
+  const ownerPending = isOwnerPending(user);
   const search = (searchParams.get("search") || "").trim().toLowerCase();
   const turfs = allTurfs.filter((turf) =>
     !search || [turf.name, turf.city, turf.location, turf.format].some((value) => String(value || "").toLowerCase().includes(search)),
@@ -930,15 +1010,23 @@ export function MyTurfsPage() {
     <div>
       <PageTitle
         action={
-          <Button as={Link} to="/owner/add-turf">
-            <Plus size={16} />
-            Add New Venue
-          </Button>
+          ownerPending ? (
+            <Button disabled>
+              <Plus size={16} />
+              Add New Venue
+            </Button>
+          ) : (
+            <Button as={Link} to="/owner/add-turf">
+              <Plus size={16} />
+              Add New Venue
+            </Button>
+          )
         }
         eyebrow="Turf Owner Workspace"
         subtitle="Manage inventory, publish status, pricing, and performance."
         title="My Venues"
       />
+      <OwnerApprovalBanner />
       <div className="grid gap-5 lg:grid-cols-3">
         {turfs.map((turf) => (
           <TurfCard actionHref={`/owner/turfs/${turf.id}`} actionLabel="Manage" href={`/owner/turfs/${turf.id}`} key={turf.id} turf={turf} />
@@ -951,7 +1039,11 @@ export function MyTurfsPage() {
             <p className="mt-2 text-sm text-ink-muted">
               {search ? "Try a venue name, city, or sport." : "Submit your first venue to begin the approval flow."}
             </p>
-            {!search && <Button as={Link} className="mt-5" to="/owner/add-turf">Add Venue</Button>}
+            {!search && (
+              ownerPending
+                ? <Button className="mt-5" disabled>Add Venue</Button>
+                : <Button as={Link} className="mt-5" to="/owner/add-turf">Add Venue</Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -962,7 +1054,7 @@ export function MyTurfsPage() {
             turf.name,
             turf.sport,
             currency(turf.price),
-            turf.status,
+            <VenueStatusBadge key={`${turf.id}-status`} status={turf.statusValue} />,
             <div className="flex gap-2" key={`${turf.id}-actions`}>
               <Button as={Link} size="sm" to={`/owner/add-turf?edit=${turf.id}`} variant="outline">Edit</Button>
               <Button
@@ -1020,12 +1112,14 @@ export function TurfDetailsOwnerPage() {
 }
 
 export function AddTurfWizardPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit");
   const { data: editingTurf } = useTurf(editId);
   const createTurf = useCreateTurf();
   const updateTurf = useUpdateTurf();
+  const ownerPending = isOwnerPending(user);
   const [message, setMessage] = useState("");
   const [imagePreviews, setImagePreviews] = useState([]);
   const [form, setForm] = useState({
@@ -1036,6 +1130,7 @@ export function AddTurfWizardPage() {
     location: "",
     name: "",
     pricePerHour: "",
+    sportRates: {},
     sportsSupported: [],
     state: "",
   });
@@ -1050,6 +1145,7 @@ export function AddTurfWizardPage() {
       location: editingTurf.location || "",
       name: editingTurf.name || "",
       pricePerHour: String(editingTurf.price || ""),
+      sportRates: editingTurf.sportRates || {},
       sportsSupported: validOptions(editingTurf.sportsSupported || [], TURF_SPORT_OPTIONS),
       state: editingTurf.state || "",
     });
@@ -1062,16 +1158,37 @@ export function AddTurfWizardPage() {
   function toggleOption(field, option) {
     setForm((current) => {
       const selected = current[field];
+      const nextSelected = selected.includes(option) ? selected.filter((item) => item !== option) : [...selected, option];
+      const nextSportRates = field === "sportsSupported" && !selected.includes(option)
+        ? { ...current.sportRates, [option]: current.sportRates[option] || current.pricePerHour }
+        : current.sportRates;
       return {
         ...current,
-        [field]: selected.includes(option) ? selected.filter((item) => item !== option) : [...selected, option],
+        [field]: nextSelected,
+        sportRates: nextSportRates,
       };
     });
+  }
+
+  function updateSportRate(sport) {
+    return (event) => setForm((current) => ({
+      ...current,
+      sportRates: {
+        ...current.sportRates,
+        [sport]: event.target.value,
+      },
+    }));
   }
 
   async function submitVenue(event) {
     event.preventDefault();
     setMessage("");
+
+    if (ownerPending) {
+      setMessage("Your account is pending approval from Platform Owner.");
+      return;
+    }
+
     const sportsSupported = validOptions(form.sportsSupported, TURF_SPORT_OPTIONS);
     const amenities = validOptions(form.amenities, TURF_AMENITY_OPTIONS);
 
@@ -1088,6 +1205,9 @@ export function AddTurfWizardPage() {
     const cleanPayload = {
       ...form,
       amenities,
+      sportRates: Object.fromEntries(
+        sportsSupported.map((sport) => [sport, Number(form.sportRates[sport] || form.pricePerHour || 0)]),
+      ),
       sportsSupported,
     };
 
@@ -1095,7 +1215,7 @@ export function AddTurfWizardPage() {
 
     const payload = new FormData();
     Object.entries(cleanPayload).forEach(([key, value]) => {
-      if (key === "sportsSupported" || key === "amenities") {
+      if (key === "sportsSupported" || key === "amenities" || key === "sportRates") {
         payload.append(key, JSON.stringify(value));
       } else {
         payload.append(key, value);
@@ -1123,6 +1243,7 @@ export function AddTurfWizardPage() {
         subtitle="All publishing steps from the reference flow are represented and ready for API submission."
         title={editId ? "Edit venue" : "Launch a new venue"}
       />
+      <OwnerApprovalBanner />
       <Stepper current={3} steps={addTurfSteps} />
       <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_360px]">
         <Card>
@@ -1184,6 +1305,19 @@ export function AddTurfWizardPage() {
               <div className="mt-4 grid gap-4 md:grid-cols-3">
                 <Input readOnly value={form.pricePerHour ? `${currency(Number(form.pricePerHour))} / hour` : "Set base price above"} />
                 <Input readOnly value="60 minute slots" />
+                {form.sportsSupported.map((sport) => (
+                  <label key={sport}>
+                    <span className="text-sm font-bold">{sport} / hour</span>
+                    <Input
+                      className="mt-2"
+                      min="0"
+                      onChange={updateSportRate(sport)}
+                      placeholder={form.pricePerHour || "Hourly rate"}
+                      type="number"
+                      value={form.sportRates[sport] ?? ""}
+                    />
+                  </label>
+                ))}
                 <div className="md:col-span-3">
                   <p className="mb-2 text-sm font-bold text-ink">Amenities</p>
                   <OptionGroup
@@ -1200,8 +1334,8 @@ export function AddTurfWizardPage() {
               <p className="mt-2 text-sm text-ink-muted">
                 Preview validates required data, image coverage, price bands, slot rules, and publish readiness.
               </p>
-              <Button className="mt-5" disabled={createTurf.isPending || updateTurf.isPending} type="submit">
-                {createTurf.isPending || updateTurf.isPending ? "Submitting..." : editId ? "Save Venue" : "Submit for Approval"}
+              <Button className="mt-5" disabled={ownerPending || createTurf.isPending || updateTurf.isPending} type="submit">
+                {ownerPending ? "Pending Approval" : createTurf.isPending || updateTurf.isPending ? "Submitting..." : editId ? "Save Venue" : "Submit for Approval"}
               </Button>
               {message && <p className="mt-3 text-sm font-bold text-danger">{message}</p>}
             </section>
@@ -1229,12 +1363,15 @@ export function AddTurfWizardPage() {
 }
 
 export function SlotManagementPage() {
+  const { user } = useAuth();
   const { data: turfs = [] } = useMyTurfs();
   const updateSlots = useUpdateTurfSlots();
+  const ownerPending = isOwnerPending(user);
   const [turfId, setTurfId] = useState("");
   const [startTime, setStartTime] = useState("06:00");
   const [endTime, setEndTime] = useState("23:00");
   const [slotMinutes, setSlotMinutes] = useState(60);
+  const [startIntervalMinutes, setStartIntervalMinutes] = useState(30);
   const [bufferMinutes, setBufferMinutes] = useState(0);
   const [previewDate, setPreviewDate] = useState(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
   const [blackoutDate, setBlackoutDate] = useState("");
@@ -1248,7 +1385,10 @@ export function SlotManagementPage() {
   const previewIsBlackout = Boolean(previewBlackout);
   const previewDay = dayKeyForDate(previewDate);
   const previewDayEnabled = Boolean(previewDay && selectedDays[previewDay]);
-  const generatedSlots = useMemo(() => buildPreviewSlots(startTime, endTime, slotMinutes), [endTime, slotMinutes, startTime]);
+  const generatedSlots = useMemo(
+    () => buildPreviewSlots(startTime, endTime, slotMinutes, startIntervalMinutes),
+    [endTime, slotMinutes, startIntervalMinutes, startTime],
+  );
   const slots = useMemo(() => {
     if (!previewDayEnabled) return [];
     if (!previewIsBlackout) return generatedSlots;
@@ -1271,6 +1411,7 @@ export function SlotManagementPage() {
     setStartTime(nextStart || "06:00");
     setEndTime(nextEnd || "23:00");
     setSlotMinutes(Number(schedule.slotMinutes || 60));
+    setStartIntervalMinutes(Number(schedule.startIntervalMinutes || 30));
     setBufferMinutes(Number(schedule.bufferMinutes || 0));
     const savedBlackouts = schedule.blackouts?.length
       ? schedule.blackouts
@@ -1294,6 +1435,7 @@ export function SlotManagementPage() {
   }
 
   function addBlackoutDate() {
+    if (ownerPending) return;
     if (!blackoutDate) return;
     setBlackouts((current) => {
       const next = current.filter((blackout) => blackout.date !== blackoutDate);
@@ -1304,6 +1446,10 @@ export function SlotManagementPage() {
   }
 
   async function saveSchedule() {
+    if (ownerPending) {
+      notify("Your account is pending approval from Platform Owner.");
+      return;
+    }
     if (!selectedTurf) return;
     if (!generatedSlots.length) {
       notify("End time must allow at least one complete slot.");
@@ -1323,7 +1469,9 @@ export function SlotManagementPage() {
           blackoutDates: blackouts.map((blackout) => blackout.date),
           blackouts,
           bufferMinutes,
+          minimumBookingMinutes: 60,
           slotMinutes,
+          startIntervalMinutes,
           weeklyAvailability,
         },
       });
@@ -1336,11 +1484,12 @@ export function SlotManagementPage() {
   return (
     <div>
       <PageTitle
-        action={<Button disabled={!selectedTurf || updateSlots.isPending} onClick={saveSchedule}>Save Rules</Button>}
+        action={<Button disabled={ownerPending || !selectedTurf || updateSlots.isPending} onClick={saveSchedule}>Save Rules</Button>}
         eyebrow="Scheduling Engine"
         subtitle="Configure availability, pricing tiers, blackout windows, and recurring rules."
         title="Availability"
       />
+      <OwnerApprovalBanner />
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <Card>
           <CardContent>
@@ -1414,7 +1563,7 @@ export function SlotManagementPage() {
                 >
                   {BLACKOUT_REASON_OPTIONS.map((reason) => <option key={reason}>{reason}</option>)}
                 </select>
-                <Button onClick={addBlackoutDate} variant="outline">Add Blackout</Button>
+                <Button disabled={ownerPending} onClick={addBlackoutDate} variant="outline">Add Blackout</Button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {blackouts.map((blackout) => (
@@ -1458,6 +1607,8 @@ export function SlotManagementPage() {
             <div className="mt-5 space-y-4">
               {[
                 `${slotMinutes} minute slots`,
+                `${startIntervalMinutes} minute starts`,
+                "Minimum 1 hour",
                 `${bufferMinutes} minute buffer`,
                 `Open ${startTime} to ${endTime}`,
                 recurringSummary(selectedDays),
@@ -1554,7 +1705,7 @@ export function AnalyticsCenterPage() {
   ];
   return (
     <div>
-      <PageTitle eyebrow="Analytics Center" subtitle="Executive dashboards using Recharts and production-ready data shapes." title="Executive Analytics" />
+      <PageTitle eyebrow="Analytics Center" subtitle="Executive dashboards using Recharts and real booking data shapes." title="Executive Analytics" />
       <div className="metric-grid">
         {ownerKpis.map((kpi) => (
           <StatsCard icon={kpi.icon} key={kpi.label} label={kpi.label} trend={kpi.trend} value={kpi.value} />
@@ -1569,10 +1720,12 @@ export function AnalyticsCenterPage() {
 }
 
 export function RevenueDashboardPage() {
+  const { user } = useAuth();
   const { data: payments = [] } = usePayments();
   const { data: dashboard = {} } = useOwnerDashboard();
   const { data: bookings = [] } = useBookings();
   const { data: turfs = [] } = useMyTurfs();
+  const ownerPending = isOwnerPending(user, dashboard);
   const paid = payments.filter(isPaidPayment);
   const realMonthlyEarnings = dashboard.monthlyEarnings || [];
   const realRevenueSeries = buildSixMonthRevenueSeries(realMonthlyEarnings);
@@ -1619,6 +1772,7 @@ export function RevenueDashboardPage() {
       {payment.bookingIdValue && <Button as={Link} size="sm" to={`/bookings/${payment.bookingIdValue}`} variant="ghost">Booking</Button>}
       {payment.customer?._id && <Button as={Link} size="sm" to={`/owner/athletes/${payment.customer._id}`} variant="outline">Customer</Button>}
       <Button
+        disabled={ownerPending}
         onClick={async () => {
           await downloadPaymentReceipt(payment);
           notify("Receipt downloaded.");
@@ -1633,6 +1787,7 @@ export function RevenueDashboardPage() {
   return (
     <div>
       <PageTitle eyebrow="Finance" subtitle="Earnings, payouts, refunds, and revenue across your venues." title="Earnings" />
+      <OwnerApprovalBanner dashboard={dashboard} />
       <div className="metric-grid">
         <StatsCard icon="CircleDollarSign" label="Total Revenue" trend={hasEarningsData ? "Net earnings" : "Preview"} value={currency(totalRevenue)} />
         <StatsCard icon="CreditCard" label="Today's Revenue" trend="Today" value={currency(todayRevenue)} tone="secondary" />
@@ -1738,8 +1893,10 @@ export function RevenueDashboardPage() {
 }
 
 export function OwnerBookingsPage() {
+  const { user } = useAuth();
   const { data: bookings = [] } = useBookings();
   const updateStatus = useUpdateBookingStatus();
+  const ownerPending = isOwnerPending(user);
   return (
     <div>
       <PageTitle
@@ -1747,6 +1904,7 @@ export function OwnerBookingsPage() {
         subtitle="Manage reservations and payment status across your venues."
         title="Bookings"
       />
+      <OwnerApprovalBanner />
       <DataTable
         columns={["Booking", "Venue", "Schedule", "Status", "Actions"]}
         rows={bookings.map((booking) => [
@@ -1756,22 +1914,22 @@ export function OwnerBookingsPage() {
           booking.status,
           <div className="flex gap-2" key={`${booking.id}-actions`}>
             {booking.statusValue === "pending" && (
-              <Button onClick={() => updateStatus.mutate({ id: booking.id, status: "confirmed" })} size="sm">
+              <Button disabled={ownerPending} onClick={() => updateStatus.mutate({ id: booking.id, status: "confirmed" })} size="sm">
                 Confirm
               </Button>
             )}
             {booking.statusValue === "confirmed" && (
-              <Button onClick={() => updateStatus.mutate({ id: booking.id, status: "checked_in" })} size="sm">
+              <Button disabled={ownerPending} onClick={() => updateStatus.mutate({ id: booking.id, status: "checked_in" })} size="sm">
                 Check In
               </Button>
             )}
             {booking.statusValue === "checked_in" && (
-              <Button onClick={() => updateStatus.mutate({ id: booking.id, status: "completed" })} size="sm">
+              <Button disabled={ownerPending} onClick={() => updateStatus.mutate({ id: booking.id, status: "completed" })} size="sm">
                 Complete
               </Button>
             )}
             {!["cancelled", "completed", "checked_in"].includes(booking.statusValue) && (
-              <Button onClick={() => updateStatus.mutate({ id: booking.id, status: "cancelled" })} size="sm" variant="danger">
+              <Button disabled={ownerPending} onClick={() => updateStatus.mutate({ id: booking.id, status: "cancelled" })} size="sm" variant="danger">
                 Cancel
               </Button>
             )}

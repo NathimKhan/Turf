@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { z } from "zod";
 import { CalendarDays, Check, LockKeyhole, MapPin, ShieldCheck, Ticket } from "lucide-react";
-import { selectSlot, selectVenue, setBookingId } from "../../store/store.js";
+import { selectSlot, selectSport, selectVenue, setBookingId } from "../../store/store.js";
 import { useAuth } from "../../store/authContext.js";
 import { Badge } from "../../components/ui/badge.jsx";
 import { Button } from "../../components/ui/button.jsx";
@@ -18,7 +18,6 @@ import { useBooking } from "../../hooks/useBookings.js";
 import { useTurf, useTurfAvailability, useTurfs } from "../../hooks/useTurfs.js";
 import { bookingsApi } from "../../services/api/bookings.js";
 import { responseData } from "../../services/api/client.js";
-import { turfsApi } from "../../services/api/turfs.js";
 import { currency } from "../../utils/formatters.js";
 import { handleImageError } from "../../utils/media.js";
 
@@ -41,27 +40,232 @@ function formatTime(totalMinutes) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
+function formatTimeLabel(time) {
+  const [hours, minutes = 0] = String(time || "00:00").split(":").map(Number);
+  return new Date(2000, 0, 1, hours, minutes).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatDateLabel(value) {
+  if (!value) return "Select a date";
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function durationLabel(hours) {
+  const safeHours = Number(hours || 0);
+  if (!safeHours) return "Select duration";
+  return `${safeHours} Hour${safeHours === 1 ? "" : "s"}`;
+}
+
+function parseRanges(ranges = []) {
+  return ranges
+    .map((range) => {
+      const [startTime, endTime] = String(range || "").split("-");
+      const start = timeToMinutes(startTime);
+      const end = timeToMinutes(endTime);
+      if (!startTime || !endTime || Number.isNaN(start) || Number.isNaN(end) || end <= start) return null;
+      return { end, endTime, start, startTime };
+    })
+    .filter(Boolean);
+}
+
+function dayKeyForDate(dateValue) {
+  const date = new Date(`${dateValue}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return "";
+  return ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getUTCDay()];
+}
+
+function venueScheduleRanges(venue = {}, dateValue = "") {
+  const dayKey = dayKeyForDate(dateValue);
+  return venue.schedule?.weeklyAvailability?.[dayKey] || [];
+}
+
+function availabilityRanges(availability = {}, venue = {}, dateValue = "") {
+  const apiRanges = availability.rules?.ranges;
+  const fallbackRanges = venueScheduleRanges(venue, dateValue);
+
+  if (Array.isArray(apiRanges) && apiRanges.length && !availability.isFallback) {
+    return parseRanges(apiRanges);
+  }
+
+  if (fallbackRanges.length) {
+    return parseRanges(fallbackRanges);
+  }
+
+  if (Array.isArray(apiRanges)) return parseRanges(apiRanges);
+
+  return [];
+}
+
+function uniqueTimeOptions(values) {
+  return [...new Set(values)]
+    .sort((first, second) => timeToMinutes(first) - timeToMinutes(second))
+    .map((value) => ({ label: formatTimeLabel(value), value }));
+}
+
+function generateStartOptions(availability = {}, venue = {}, dateValue = "") {
+  const minimumBookingMinutes = Number(availability.rules?.minimumBookingMinutes || 60);
+  const intervalMinutes = Number(availability.rules?.startIntervalMinutes || 30);
+  const values = [];
+
+  availabilityRanges(availability, venue, dateValue).forEach((range) => {
+    for (let cursor = range.start; cursor + minimumBookingMinutes <= range.end; cursor += intervalMinutes) {
+      values.push(formatTime(cursor));
+    }
+  });
+
+  return uniqueTimeOptions(values);
+}
+
+function generateEndOptions(availability = {}, startTime = "", venue = {}, dateValue = "") {
+  if (!startTime) return [];
+  const start = timeToMinutes(startTime);
+  const minimumBookingMinutes = Number(availability.rules?.minimumBookingMinutes || 60);
+  const values = [];
+
+  availabilityRanges(availability, venue, dateValue)
+    .filter((range) => start >= range.start && start + minimumBookingMinutes <= range.end)
+    .forEach((range) => {
+      for (let cursor = start + minimumBookingMinutes; cursor <= range.end; cursor += minimumBookingMinutes) {
+        values.push(formatTime(cursor));
+      }
+    });
+
+  return uniqueTimeOptions(values);
+}
+
+function rateForSport(venue = {}, sport = "") {
+  return Number(venue.sportRates?.[sport] ?? venue.price ?? 0);
+}
+
+function availabilityStatusMessage(request = {}) {
+  if (request.available) return "Available";
+  if (["booked", "pending"].includes(request.status)) return "Already booked";
+  if (request.status === "invalid_duration") return request.message || "Minimum booking duration is 1 hour";
+  return "No availability for selected time";
+}
+
+function availabilitySlots(availability = {}) {
+  const timeline = availability.timeline?.length ? availability.timeline : availability.slots || [];
+  return timeline.map((slot) => ({
+    reason: slot.reason || (slot.status === "available" ? "Available" : slot.status),
+    status: slot.status || "available",
+    ...slot,
+  }));
+}
+
+function slotMatchesTime(slot, startTime, endTime) {
+  return slot.startTime === startTime && slot.endTime === endTime;
+}
+
+function slotsOverlap(slot, startTime, endTime) {
+  return timeToMinutes(slot.startTime) < timeToMinutes(endTime) && timeToMinutes(slot.endTime) > timeToMinutes(startTime);
+}
+
+function resolveBookingAvailability({ availability = {}, endTime = "", minimumBookingMinutes = 60, slots = [], startTime = "", venue = {}, date = "" }) {
+  if (!venue?.id) {
+    return {
+      available: false,
+      message: "Turf not found",
+      source: "venue",
+      status: "missing_venue",
+    };
+  }
+
+  if (!startTime || !endTime) {
+    return {
+      available: false,
+      message: "Choose a start and end time.",
+      source: "time",
+      status: "missing_time",
+    };
+  }
+
+  const durationMinutes = timeToMinutes(endTime) - timeToMinutes(startTime);
+  if (durationMinutes < minimumBookingMinutes) {
+    return {
+      available: false,
+      message: "Minimum booking duration is 1 hour",
+      source: "duration",
+      status: "invalid_duration",
+    };
+  }
+
+  const exactSlot = slots.find((slot) => slotMatchesTime(slot, startTime, endTime));
+  if (exactSlot) {
+    return {
+      available: exactSlot.status === "available",
+      message: exactSlot.status === "available" ? "Available" : availabilityStatusMessage(exactSlot),
+      reason: exactSlot.reason,
+      source: "availability",
+      status: exactSlot.status,
+    };
+  }
+
+  const ranges = availabilityRanges(availability, venue, date);
+  const insideOpenHours = ranges.some((range) => (
+    timeToMinutes(startTime) >= range.start && timeToMinutes(endTime) <= range.end
+  ));
+
+  if (!insideOpenHours) {
+    return {
+      available: false,
+      message: "No availability for selected time",
+      source: "schedule",
+      status: "closed",
+    };
+  }
+
+  const blockingSlot = slots.find((slot) => slot.status !== "available" && slotsOverlap(slot, startTime, endTime));
+  if (blockingSlot) {
+    return {
+      available: false,
+      message: availabilityStatusMessage(blockingSlot),
+      reason: blockingSlot.reason,
+      source: "availability",
+      status: blockingSlot.status,
+    };
+  }
+
+  return {
+    available: true,
+    message: "Available",
+    source: "schedule",
+    status: "available",
+  };
+}
+
+function bookingErrorMessage(error, hasVenue = false) {
+  const message = error.response?.data?.message || error.message || "";
+  if (hasVenue && /turf not found/i.test(message)) return "No availability for selected time";
+  if (/overlaps|already booked/i.test(message)) return "Already booked";
+  if (/closed|blocked|maintenance|buffer/i.test(message)) return "No availability for selected time";
+  return message;
+}
+
 function slotDurationHours(slot) {
   if (!slot?.startTime || !slot?.endTime) return 1;
   return Math.max((timeToMinutes(slot.endTime) - timeToMinutes(slot.startTime)) / 60, 0);
 }
 
-function slotStatusClass(slot, selected) {
-  if (selected?.startTime === slot.startTime && selected?.endTime === slot.endTime) {
-    return "border-primary bg-primary text-white shadow-lift";
-  }
-  if (slot.status === "booked") return "border-surface-border bg-surface-low text-ink-muted";
-  if (slot.status === "blocked") return "border-danger bg-danger-soft text-danger";
-  return "border-surface-border bg-white hover:border-primary";
-}
-
-function BookingSummary({ totalLabel = "Payment hold" }) {
+function BookingSummary({ previewDate = "", previewSlot = null, previewSport = "", totalLabel = "Payment hold" }) {
   const booking = useSelector((state) => state.booking);
-  const slotPrice = Number((booking.cart.price * slotDurationHours(booking.selectedSlot)).toFixed(2));
+  const displaySlot = previewSlot || booking.selectedSlot;
+  const displayDate = previewDate || booking.selectedDate;
+  const duration = slotDurationHours(displaySlot);
+  const hourlyRate = Number(displaySlot?.pricePerHour ?? booking.cart.price ?? 0);
+  const slotPrice = Number((hourlyRate * duration).toFixed(2));
   const total = slotPrice + booking.cart.serviceFee - booking.cart.discount;
-  const timeLabel = booking.selectedSlot?.endTime
-    ? `${booking.selectedSlot.startTime} - ${booking.selectedSlot.endTime}`
-    : booking.selectedSlot?.startTime || "Select a slot";
+  const timeLabel = displaySlot?.endTime
+    ? `${displaySlot.startTime} - ${displaySlot.endTime}`
+    : displaySlot?.startTime || "Select a slot";
+  const sportLabel = displaySlot?.sport || previewSport || booking.selectedSport || booking.cart.sport || "Select sport";
 
   return (
     <Card className="h-max">
@@ -71,11 +275,15 @@ function BookingSummary({ totalLabel = "Payment hold" }) {
         <div className="mt-5 space-y-3 text-sm text-ink-muted">
           <p className="flex items-center gap-2">
             <CalendarDays size={16} />
-            {booking.selectedDate} - {timeLabel}
+            {formatDateLabel(displayDate)} - {timeLabel}
           </p>
           <p className="flex items-center gap-2">
             <MapPin size={16} />
             {booking.cart.location || "Select a venue"}
+          </p>
+          <p className="flex items-center gap-2">
+            <Ticket size={16} />
+            {sportLabel} - {durationLabel(duration)}
           </p>
         </div>
         <div className="mt-6 space-y-3 border-t border-surface-border pt-5 text-sm">
@@ -108,73 +316,150 @@ export function SlotSelectionPage() {
   const { data: turfResult = { turfs: [] } } = useTurfs({ limit: 1 });
   const venueId = searchParams.get("venue") || turfResult.turfs[0]?.id;
   const [date, setDate] = useState(searchParams.get("date") || new Date(Date.now() + 86400000).toISOString().slice(0, 10));
-  const [selected, setSelected] = useState(null);
-  const [customStart, setCustomStart] = useState("18:00");
-  const [customDuration, setCustomDuration] = useState(60);
+  const [selectedSport, setSelectedSport] = useState(searchParams.get("sport") || "");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [slotMessage, setSlotMessage] = useState("");
+  const [checkedSlot, setCheckedSlot] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
   const { data: venue } = useTurf(venueId);
   const { data: availability = { rules: {}, slots: [], timeline: [] } } = useTurfAvailability(venueId, date);
-  const slotMinutes = Number(availability.rules?.slotMinutes || availability.slotMinutes || 60);
-  const customEndMinutes = timeToMinutes(customStart) + Number(customDuration || slotMinutes);
-  const customEnd = customEndMinutes < 24 * 60 ? formatTime(customEndMinutes) : "";
-  const visibleSlots = useMemo(() => {
-    const timeline = availability.timeline?.length ? availability.timeline : availability.slots || [];
-    return timeline.map((slot) => ({
-      reason: slot.reason || (slot.status === "available" ? "Available" : slot.status),
-      status: slot.status || "available",
-      ...slot,
-    }));
-  }, [availability.slots, availability.timeline]);
+  const minimumBookingMinutes = Number(availability.rules?.minimumBookingMinutes || 60);
+  const configuredSports = useMemo(() => venue?.sportsSupported || [], [venue]);
+  const selectedRate = rateForSport(venue, selectedSport);
+  const startOptions = useMemo(() => generateStartOptions(availability, venue, date), [availability, date, venue]);
+  const endOptions = useMemo(() => generateEndOptions(availability, startTime, venue, date), [availability, date, startTime, venue]);
+  const previewSlot = useMemo(() => (
+    startTime && endTime
+      ? {
+          endTime,
+          pricePerHour: selectedRate,
+          sport: selectedSport,
+          startTime,
+        }
+      : null
+  ), [endTime, selectedRate, selectedSport, startTime]);
+  const availableSlots = useMemo(() => availabilitySlots(availability), [availability]);
+  const availabilityResult = useMemo(() => resolveBookingAvailability({
+    availability,
+    date,
+    endTime,
+    minimumBookingMinutes,
+    slots: availableSlots,
+    startTime,
+    venue,
+  }), [availability, availableSlots, date, endTime, minimumBookingMinutes, startTime, venue]);
+  const checkoutEnabled = Boolean(
+    venue?.id &&
+    date &&
+    selectedSport &&
+    startTime &&
+    endTime &&
+    checkedSlot?.startTime === startTime &&
+    checkedSlot?.endTime === endTime &&
+    checkedSlot?.sport === selectedSport &&
+    availabilityResult.available,
+  );
   const dates = useMemo(
     () => Array.from({ length: 4 }, (_, index) => new Date(Date.now() + (index + 1) * 86400000).toISOString().slice(0, 10)),
     [],
   );
 
   useEffect(() => {
-    setCustomDuration(slotMinutes);
-  }, [slotMinutes]);
-
-  useEffect(() => {
     if (venue) dispatch(selectVenue(venue));
   }, [dispatch, venue]);
 
-  function choose(slot) {
-    if (slot.status && slot.status !== "available") return;
+  useEffect(() => {
+    if (!venue) return;
+    const nextSport = configuredSports.includes(selectedSport) ? selectedSport : configuredSports[0] || "";
+    if (nextSport !== selectedSport) {
+      setSelectedSport(nextSport);
+      return;
+    }
+    if (nextSport) {
+      dispatch(selectSport({ price: rateForSport(venue, nextSport), sport: nextSport }));
+    }
+  }, [configuredSports, dispatch, selectedSport, venue]);
+
+  useEffect(() => {
+    const nextStart = startOptions.some((option) => option.value === startTime)
+      ? startTime
+      : startOptions[0]?.value || "";
+    if (nextStart !== startTime) setStartTime(nextStart);
+  }, [startOptions, startTime]);
+
+  useEffect(() => {
+    const nextEnd = endOptions.some((option) => option.value === endTime)
+      ? endTime
+      : endOptions[0]?.value || "";
+    if (nextEnd !== endTime) setEndTime(nextEnd);
+  }, [endOptions, endTime]);
+
+  useEffect(() => {
+    setCheckedSlot(null);
     setSlotMessage("");
-    setSelected(slot);
-    dispatch(selectSlot({ date, slot }));
+    dispatch(selectSlot({ date, slot: null }));
+  }, [date, dispatch, endTime, selectedSport, startTime]);
+
+  useEffect(() => {
+    console.info("[turfx booking sync]", {
+      "Availability Result": availabilityResult,
+      "Checkout Enabled": checkoutEnabled,
+      "Selected Date": date,
+      "Selected End": endTime,
+      "Selected Start": startTime,
+      "Selected Venue": venue?.id || venueId,
+    });
+  }, [availabilityResult, checkoutEnabled, date, endTime, startTime, venue?.id, venueId]);
+
+  function confirmFlexibleSlot() {
+    const pricedSlot = {
+      endTime,
+      pricePerHour: selectedRate,
+      reason: "Available",
+      sport: selectedSport,
+      startTime,
+      status: "available",
+    };
+    setCheckedSlot(pricedSlot);
+    dispatch(selectSlot({ date, slot: pricedSlot }));
+    return pricedSlot;
   }
 
-  async function previewCustomSlot() {
-    if (!customStart || !customEnd) {
-      setSlotMessage("Choose a start time that ends before midnight.");
+  function continueToCheckout() {
+    if (!checkoutEnabled) return;
+    if (!checkedSlot) confirmFlexibleSlot();
+    navigate("/checkout");
+  }
+
+  async function previewSelectedSlot() {
+    if (!selectedSport) {
+      setSlotMessage("Select a sport before checking availability.");
+      return;
+    }
+
+    if (!startTime || !endTime) {
+      setSlotMessage("Choose a start and end time.");
+      return;
+    }
+
+    if (timeToMinutes(endTime) - timeToMinutes(startTime) < minimumBookingMinutes) {
+      setSlotMessage("Minimum booking duration is 1 hour");
       return;
     }
 
     setIsChecking(true);
     setSlotMessage("");
     try {
-      const data = responseData(await turfsApi.availability(venueId, date, {
-        endTime: customEnd,
-        startTime: customStart,
-      }));
-
-      if (!data.request?.available) {
-        setSlotMessage(data.request?.message || "This slot is unavailable.");
+      if (!availabilityResult.available) {
+        setSlotMessage(availabilityStatusMessage(availabilityResult));
         return;
       }
 
-      choose({
-        custom: true,
-        endTime: customEnd,
-        reason: "Available",
-        startTime: customStart,
-        status: "available",
-      });
-      setSlotMessage("Custom time is available.");
+      confirmFlexibleSlot();
+      setSlotMessage("Available");
     } catch (error) {
-      setSlotMessage(error.response?.data?.message || error.message);
+      setSlotMessage(bookingErrorMessage(error, Boolean(venue)));
     } finally {
       setIsChecking(false);
     }
@@ -206,6 +491,27 @@ export function SlotSelectionPage() {
                     </div>
                   ))}
                 </div>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <label>
+                    <span className="text-sm font-bold">Select Sport</span>
+                    <select
+                      className="focus-ring mt-2 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm text-ink"
+                      onChange={(event) => {
+                        setSelectedSport(event.target.value);
+                        dispatch(selectSlot({ date, slot: null }));
+                      }}
+                      value={selectedSport}
+                    >
+                      {configuredSports.map((sport) => (
+                        <option key={sport} value={sport}>{sport}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="text-sm font-bold">Hourly Rate</span>
+                    <Input className="mt-2" readOnly value={selectedSport ? `${currency(selectedRate)} / hour` : "Select sport"} />
+                  </label>
+                </div>
               </CardContent>
             </div>
           </Card>
@@ -219,7 +525,6 @@ export function SlotSelectionPage() {
                     key={option}
                     onClick={() => {
                       setDate(option);
-                      setSelected(null);
                       dispatch(selectSlot({ date: option, slot: null }));
                     }}
                   >
@@ -232,44 +537,58 @@ export function SlotSelectionPage() {
           </Card>
           <Card>
             <CardContent>
-              <h2 className="text-2xl font-black">Live availability</h2>
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {visibleSlots.map((slot) => (
-                  <button
-                    className={`rounded-xl border px-4 py-4 text-left text-sm font-black transition-all ${slotStatusClass(slot, selected)}`}
-                    disabled={slot.status !== "available"}
-                    key={`${slot.startTime}-${slot.endTime}`}
-                    onClick={() => choose(slot)}
-                  >
-                    {slot.startTime} - {slot.endTime}
-                    <span className="mt-1 block text-xs font-medium opacity-70">{slot.reason || "Available"}</span>
-                  </button>
+              <h2 className="text-2xl font-black">Booking Configuration</h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  ["Sport", selectedSport || "Select sport"],
+                  ["Date", formatDateLabel(date)],
+                  ["Start Time", startTime ? formatTimeLabel(startTime) : "Select start time"],
+                  ["End Time", endTime ? formatTimeLabel(endTime) : "Select end time"],
+                  ["Duration", previewSlot ? durationLabel(slotDurationHours(previewSlot)) : "Select duration"],
+                  ["Availability Status", slotMessage || "Check availability"],
+                ].map(([label, value]) => (
+                  <div className="rounded-xl bg-surface-low p-3" key={label}>
+                    <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">{label}</p>
+                    <p className="mt-1 font-black text-ink">{value}</p>
+                  </div>
                 ))}
               </div>
-              {!visibleSlots.length && (
-                <p className="mt-4 text-sm text-ink-muted">
-                  {availability.isBlackoutDate ? "This date is blocked by the venue." : "No available slots for this date."}
-                </p>
-              )}
               <div className="mt-6 border-t border-surface-border pt-5">
-                <h3 className="text-lg font-black">Custom time</h3>
+                <h3 className="text-lg font-black">Flexible time</h3>
                 <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
                   <label>
-                    <span className="text-sm font-bold">Start time</span>
-                    <Input className="mt-2" onChange={(event) => setCustomStart(event.target.value)} step="900" type="time" value={customStart} />
-                  </label>
-                  <label>
-                    <span className="text-sm font-bold">Duration</span>
+                    <span className="text-sm font-bold">Start Time</span>
                     <select
                       className="focus-ring mt-2 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm text-ink"
-                      onChange={(event) => setCustomDuration(Number(event.target.value))}
-                      value={customDuration}
+                      onChange={(event) => {
+                        setStartTime(event.target.value);
+                        dispatch(selectSlot({ date, slot: null }));
+                      }}
+                      value={startTime}
                     >
-                      <option value={slotMinutes}>{slotMinutes} minutes</option>
+                      {startOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
                     </select>
                   </label>
-                  <Button className="self-end" disabled={isChecking} onClick={previewCustomSlot} variant="outline">
-                    {isChecking ? "Checking..." : `Preview ${customEnd || "--:--"}`}
+                  <label>
+                    <span className="text-sm font-bold">End Time</span>
+                    <select
+                      className="focus-ring mt-2 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm text-ink"
+                      disabled={!startTime}
+                      onChange={(event) => {
+                        setEndTime(event.target.value);
+                        dispatch(selectSlot({ date, slot: null }));
+                      }}
+                      value={endTime}
+                    >
+                      {endOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <Button className="self-end" disabled={isChecking || !startTime || !endTime} onClick={previewSelectedSlot} variant="outline">
+                    {isChecking ? "Checking..." : "Check Availability"}
                   </Button>
                 </div>
                 {slotMessage && <p className="mt-3 text-sm font-bold text-ink-muted">{slotMessage}</p>}
@@ -278,8 +597,8 @@ export function SlotSelectionPage() {
           </Card>
         </section>
         <aside className="space-y-5 lg:sticky lg:top-24 lg:h-max">
-          <BookingSummary />
-          <Button className="w-full" disabled={!selected} onClick={() => navigate("/checkout")} size="lg">
+          <BookingSummary previewDate={date} previewSlot={previewSlot} previewSport={selectedSport} />
+          <Button className="w-full" disabled={!checkoutEnabled} onClick={continueToCheckout} size="lg">
             Continue to Checkout
           </Button>
         </aside>
@@ -315,19 +634,11 @@ export function CheckoutPage() {
     try {
       let bookingId = booking.bookingId;
       if (!bookingId) {
-        const availability = responseData(await turfsApi.availability(booking.selectedVenue, booking.selectedDate, {
-          endTime: booking.selectedSlot.endTime,
-          startTime: booking.selectedSlot.startTime,
-        }));
-        if (!availability.request?.available) {
-          setMessage(availability.request?.message || "This slot is unavailable.");
-          return;
-        }
-
         const reservation = responseData(await bookingsApi.reserve({
           bookingDate: booking.selectedDate,
           slotEndTime: booking.selectedSlot.endTime,
           slotStartTime: booking.selectedSlot.startTime,
+          sport: booking.selectedSlot.sport || booking.selectedSport,
           turfId: booking.selectedVenue,
         })).booking;
         bookingId = reservation._id || reservation.id;
@@ -340,7 +651,7 @@ export function CheckoutPage() {
       }
       navigate(`/success?booking=${bookingId}`, { replace: true });
     } catch (error) {
-      setMessage(error.response?.data?.message || error.message);
+      setMessage(bookingErrorMessage(error, Boolean(booking.selectedVenue)));
     } finally {
       setIsProcessing(false);
     }

@@ -2,9 +2,11 @@ const Booking = require("../models/Booking");
 const Payment = require("../models/Payment");
 const Review = require("../models/Review");
 const Turf = require("../models/Turf");
+const { approvalStatusForUser, isOwnerActive } = require("../utils/approval");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 
 const PLATFORM_FEE_RATE = 0.1;
+const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed", "checked_in", "upcoming"];
 
 function paymentOwnerRevenue(payment) {
   return Number(Number(payment.ownerRevenue ?? (Number(payment.amount || 0) * (1 - PLATFORM_FEE_RATE))).toFixed(2));
@@ -16,8 +18,21 @@ function sumPayments(payments, predicate = () => true) {
     .reduce((sum, payment) => sum + paymentOwnerRevenue(payment), 0);
 }
 
+function timeToMinutes(time = "") {
+  const [hours, minutes] = String(time).split(":").map(Number);
+  return (Number(hours) || 0) * 60 + (Number(minutes) || 0);
+}
+
+function isSameUtcDay(firstDate, secondDate) {
+  return (
+    firstDate.getUTCFullYear() === secondDate.getUTCFullYear() &&
+    firstDate.getUTCMonth() === secondDate.getUTCMonth() &&
+    firstDate.getUTCDate() === secondDate.getUTCDate()
+  );
+}
+
 const getOwnerDashboard = asyncHandler(async (req, res) => {
-  const turfs = await Turf.find({ ownerId: req.user._id }).select("_id name");
+  const turfs = await Turf.find({ ownerId: req.user._id }).select("_id name sportsSupported");
   const turfIds = turfs.map((turf) => turf._id);
   const now = new Date();
   const todayStart = new Date(now);
@@ -27,7 +42,7 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
   weekStart.setHours(0, 0, 0, 0);
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [totalBookings, recentBookings, scopedPayments] = await Promise.all([
+  const [totalBookings, recentBookings, scopedPayments, dashboardBookings] = await Promise.all([
     Booking.countDocuments({ turfId: { $in: turfIds } }),
     Booking.find({ turfId: { $in: turfIds } })
       .populate("turfId", "name city")
@@ -39,7 +54,13 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
         { ownerId: req.user._id },
         { venueId: { $in: turfIds } },
       ],
-    }).select("amount ownerRevenue platformFee paymentStatus paidAt createdAt"),
+    })
+      .select("amount ownerRevenue platformFee paymentStatus paidAt createdAt bookingId ownerId venueId")
+      .populate("bookingId", "sport"),
+    Booking.find({ turfId: { $in: turfIds } })
+      .populate("turfId", "name city sportsSupported")
+      .populate("userId", "name email")
+      .sort({ bookingDate: 1, slotStartTime: 1 }),
   ]);
 
   const revenue = sumPayments(scopedPayments, (payment) => payment.paymentStatus === "paid");
@@ -52,6 +73,30 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
   const pendingRevenue = sumPayments(scopedPayments, (payment) => payment.paymentStatus === "pending");
   const completedRevenue = revenue;
   const refundedRevenue = sumPayments(scopedPayments, (payment) => payment.paymentStatus === "refunded");
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const todayBookings = dashboardBookings.filter((booking) => isSameUtcDay(new Date(booking.bookingDate), now));
+  const upcomingBookings = dashboardBookings.filter((booking) => {
+    if (!ACTIVE_BOOKING_STATUSES.includes(booking.bookingStatus)) return false;
+    const bookingDate = new Date(booking.bookingDate);
+    return bookingDate > todayStart || (isSameUtcDay(bookingDate, now) && timeToMinutes(booking.slotEndTime) > nowMinutes);
+  });
+  const liveBookings = todayBookings.filter((booking) => (
+    ACTIVE_BOOKING_STATUSES.includes(booking.bookingStatus) &&
+    timeToMinutes(booking.slotStartTime) <= nowMinutes &&
+    timeToMinutes(booking.slotEndTime) > nowMinutes
+  ));
+  const cancelledBookings = dashboardBookings.filter((booking) => booking.bookingStatus === "cancelled");
+  const perSportRevenueMap = new Map();
+
+  scopedPayments
+    .filter((payment) => payment.paymentStatus === "paid")
+    .forEach((payment) => {
+      const sport = payment.bookingId?.sport || "Unassigned";
+      perSportRevenueMap.set(sport, (perSportRevenueMap.get(sport) || 0) + paymentOwnerRevenue(payment));
+    });
+  const perSportRevenue = [...perSportRevenueMap.entries()]
+    .sort((first, second) => second[1] - first[1])
+    .map(([sport, revenue]) => ({ sport, revenue: Number(revenue.toFixed(2)) }));
 
   const monthlyEarnings = await Payment.aggregate([
     {
@@ -90,9 +135,24 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
   ]);
 
   return successResponse(res, "Owner dashboard fetched", {
+    accountStatus: req.user.accountStatus,
+    approvalStatus: approvalStatusForUser(req.user),
+    isApproved: isOwnerActive(req.user),
+    disabledSections: isOwnerActive(req.user) ? [] : ["addVenue", "availability", "bookings", "revenue"],
     totalTurfs: turfs.length,
     totalBookings,
+    bookingBreakdown: {
+      cancelled: cancelledBookings.length,
+      live: liveBookings.length,
+      today: todayBookings.length,
+      upcoming: upcomingBookings.length,
+    },
+    cancelledBookings: cancelledBookings.slice(0, 8),
+    liveBookings: liveBookings.slice(0, 8),
+    todaysBookings: todayBookings.slice(0, 8),
+    upcomingBookings: upcomingBookings.slice(0, 8),
     revenue,
+    perSportRevenue,
     todayRevenue,
     weeklyRevenue,
     monthlyRevenue,

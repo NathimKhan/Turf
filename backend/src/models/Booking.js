@@ -14,6 +14,17 @@ const bookingSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      index: true,
+    },
+    sport: {
+      type: String,
+      trim: true,
+      default: "",
+      index: true,
+    },
     bookingDate: {
       type: Date,
       required: [true, "Booking date is required"],
@@ -32,7 +43,7 @@ const bookingSchema = new mongoose.Schema(
     hoursBooked: {
       type: Number,
       required: true,
-      min: [0.5, "Booking must be at least 30 minutes"],
+      min: [1, "Booking must be at least 1 hour"],
     },
     totalAmount: {
       type: Number,
@@ -75,6 +86,7 @@ const bookingSchema = new mongoose.Schema(
 );
 
 bookingSchema.index({ turfId: 1, bookingDate: 1, slotStartTime: 1, slotEndTime: 1, bookingStatus: 1 });
+bookingSchema.index({ ownerId: 1, sport: 1, bookingDate: 1 });
 bookingSchema.index(
   { occupancyKeys: 1 },
   {
@@ -89,8 +101,28 @@ bookingSchema.virtual("athleteId").get(function getAthleteId() {
   return this.userId;
 });
 
+bookingSchema.virtual("venueId").get(function getVenueId() {
+  return this.turfId;
+});
+
 bookingSchema.virtual("date").get(function getDate() {
   return this.bookingDate;
+});
+
+bookingSchema.virtual("startTime").get(function getStartTime() {
+  return this.slotStartTime;
+});
+
+bookingSchema.virtual("endTime").get(function getEndTime() {
+  return this.slotEndTime;
+});
+
+bookingSchema.virtual("duration").get(function getDuration() {
+  return this.hoursBooked;
+});
+
+bookingSchema.virtual("amount").get(function getAmount() {
+  return this.totalAmount;
 });
 
 bookingSchema.virtual("slot").get(function getSlot() {
