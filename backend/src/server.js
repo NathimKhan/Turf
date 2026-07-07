@@ -56,10 +56,35 @@ if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
-const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const LOCAL_CLIENT_URL = "http://localhost:5173";
+
+function normalizeAllowedOrigin(origin) {
+  const cleanOrigin = origin.trim().replace(/\/+$/, "");
+  if (!cleanOrigin) return "";
+
+  try {
+    return new URL(cleanOrigin).origin;
+  } catch {
+    return cleanOrigin;
+  }
+}
+
+const allowedOrigins = new Set([
+  LOCAL_CLIENT_URL,
+  ...(process.env.CLIENT_URL || "")
+    .split(",")
+    .map(normalizeAllowedOrigin)
+    .filter(Boolean),
+]);
+
+function isAllowedVercelOrigin(origin) {
+  try {
+    const { hostname, protocol } = new URL(origin);
+    return protocol === "https:" && hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+}
 
 app.use(
   helmet({
@@ -69,7 +94,7 @@ app.use(
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.has(origin) || isAllowedVercelOrigin(origin)) {
         return callback(null, true);
       }
 
@@ -78,6 +103,8 @@ app.use(
       return callback(error);
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(express.json({ limit: "2mb" }));
