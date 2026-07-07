@@ -354,13 +354,14 @@ function compactObject(values = {}) {
 }
 
 export function createDemoTurf(overrides = {}) {
+  const demoId = overrides._id || overrides.id || "";
   const sport = overrides.sport || overrides.sportsSupported?.[0] || "Football";
   const image = demoSportImages[sport] || assetImages.football;
   const images = overrides.images || overrides.gallery || [image, assetImages.stadium, assetImages.training];
 
   return normalizeTurf({
-    _id: "demo-venue",
-    id: "demo-venue",
+    _id: demoId,
+    id: demoId,
     name: "TURFX Demo Arena",
     slug: "turfx-demo-arena",
     description: "Prototype-ready sports arena with premium turf, live slots, transparent pricing, and demo booking data.",

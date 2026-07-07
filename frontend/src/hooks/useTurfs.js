@@ -57,7 +57,7 @@ async function resolveFallbackTurf(lookup) {
   try {
     const data = responseData(await withPrototypeTimeout(turfsApi.list({ limit: 100 })));
     const turfs = (data.turfs || []).map(normalizeTurf);
-    return turfs.find((turf) => matchesTurfLookup(turf, lookup)) || createDemoTurf();
+    return turfs.find((turf) => matchesTurfLookup(turf, lookup)) || turfs[0] || createDemoTurf();
   } catch {
     return createDemoTurf();
   }

@@ -7,8 +7,9 @@ import { currency } from "../../utils/formatters.js";
 import { handleImageError } from "../../utils/media.js";
 
 export function TurfCard({ actionHref = "/booking/slots", actionLabel = "Book Now", className, compact = false, href, stretch = true, turf }) {
-  const detailsHref = href || `/venue/${turf.id}`;
-  const bookingHref = actionHref === "/booking/slots" ? `/booking/slots?venue=${turf.id}` : actionHref;
+  const venueId = turf.isDemo ? "" : (turf._id || turf.id);
+  const detailsHref = href || (venueId ? `/venue/${venueId}` : "/explore");
+  const bookingHref = actionHref === "/booking/slots" ? (venueId ? `/booking/slots?venue=${venueId}` : "/explore") : actionHref;
   const cardImage = turf.thumbnail || turf.heroImage || turf.image;
 
   return (

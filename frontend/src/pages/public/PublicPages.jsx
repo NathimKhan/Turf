@@ -85,6 +85,11 @@ function directionsUrl(turf = {}) {
   return `https://www.google.com/maps?q=${turf.latitude},${turf.longitude}`;
 }
 
+function bookingVenueId(turf = {}) {
+  if (!turf || turf.isDemo) return "";
+  return turf._id || turf.id || "";
+}
+
 function availabilityButtonClass(slot, index) {
   if (slot.status === "booked") return "bg-surface-low text-ink-muted";
   if (slot.status === "blocked") return "bg-danger-soft text-danger";
@@ -224,6 +229,10 @@ export function LandingPage() {
   const { data: metadata = {} } = useTurfMetadata();
   const turfs = turfResult.turfs;
   const [featuredStart, setFeaturedStart] = useState(0);
+  const firstBookableTurfId = bookingVenueId(turfs.find((turf) => bookingVenueId(turf)));
+  const bookingSlotsHref = firstBookableTurfId
+    ? `/booking/slots?venue=${firstBookableTurfId}&date=${futureDate()}`
+    : "/explore";
   const featuredTurfs = useMemo(() => {
     if (turfs.length <= 3) return turfs;
     return Array.from({ length: 3 }, (_, index) => turfs[(featuredStart + index) % turfs.length]);
@@ -254,7 +263,7 @@ export function LandingPage() {
               Discover, book, and play at the best sports venues in your city with real-time availability and expert coaching.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Button as={Link} size="lg" to="/booking/slots">
+              <Button as={Link} size="lg" to={bookingSlotsHref}>
                 Book Turf
                 <ChevronRight size={18} />
               </Button>
@@ -734,6 +743,8 @@ export function VenueDetailsPage() {
     ...slot,
   }));
   const heroImage = turf.heroImage || turf.gallery[0];
+  const reservationVenueId = bookingVenueId(turf);
+  const reservationHref = reservationVenueId ? `/booking/slots?venue=${reservationVenueId}&date=${date}` : "/explore";
   const venueMedia = Array.from(new Set([
     heroImage,
     turf.coverImage,
@@ -925,7 +936,7 @@ export function VenueDetailsPage() {
                     className={`rounded-lg px-3 py-2 text-left text-xs font-bold ${availabilityButtonClass(slot, index)}`}
                     disabled={slot.status !== "available"}
                     key={`${slot.startTime}-${slot.endTime}`}
-                    onClick={() => requireBooking(`/booking/slots?venue=${turf.id}&date=${date}`)}
+                    onClick={() => requireBooking(reservationHref)}
                     type="button"
                   >
                     {slot.startTime}-{slot.endTime}
@@ -934,7 +945,7 @@ export function VenueDetailsPage() {
                 ))}
               </div>
               {!visibleAvailability.length && <p className="mt-3 text-sm text-ink-muted">No slots are available for this date.</p>}
-              <Button as={Link} className="mt-6 w-full" to={`/booking/slots?venue=${turf.id}&date=${date}`}>
+              <Button as={Link} className="mt-6 w-full" to={reservationHref}>
                 Reserve Now
                 <ChevronRight size={17} />
               </Button>
