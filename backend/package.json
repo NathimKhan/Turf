@@ -4,6 +4,7 @@
   "description": "MERN backend API for the TURFX turf booking platform.",
   "main": "src/server.js",
   "scripts": {
+    "build": "npm run lint",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/seed/seed.js",

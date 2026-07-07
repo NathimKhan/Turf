@@ -1,8 +1,16 @@
 import axios from "axios";
 import { authService } from "../authService.js";
 
+const DEFAULT_API_BASE_URL = "/api";
+
+function normalizeApiBaseUrl(value = DEFAULT_API_BASE_URL) {
+  const clean = String(value || "").trim().replace(/\/+$/, "");
+  if (!clean) return DEFAULT_API_BASE_URL;
+  return clean === DEFAULT_API_BASE_URL || clean.endsWith("/api") ? clean : `${clean}/api`;
+}
+
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL: normalizeApiBaseUrl(import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL),
   timeout: 12000,
   withCredentials: true,
 });
