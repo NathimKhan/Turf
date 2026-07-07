@@ -8,7 +8,6 @@ import {
   Download,
   MapPin,
   Trash2,
-  Trophy,
   WalletCards,
 } from "lucide-react";
 import { Badge } from "../../components/ui/badge.jsx";
@@ -22,10 +21,7 @@ import { DataTable } from "../../components/shared/DataTable.jsx";
 import { StatsCard } from "../../components/shared/StatsCard.jsx";
 import { TurfCard } from "../../components/shared/TurfCard.jsx";
 import { Icon } from "../../components/shared/icons.jsx";
-import {
-  assetImages,
-  membershipTiers,
-} from "../../data/turfxData.js";
+import { assetImages } from "../../data/turfxData.js";
 import {
   useBooking,
   useBookings,
@@ -33,21 +29,24 @@ import {
   useNotifications,
 } from "../../hooks/useBookings.js";
 import {
-  useCreateReview,
-  useDeleteReview,
   useDeleteNotification,
   useFavorites,
   useMarkNotificationRead,
-  useMyReviews,
+  useMyCoachRequests,
   usePayments,
-  useUpdateReview,
 } from "../../hooks/usePlatform.js";
 import { useTurfs } from "../../hooks/useTurfs.js";
 import { useAuth } from "../../store/authContext.js";
 import { roleLabels } from "../../constants/auth.js";
 import { authService } from "../../services/authService.js";
 import { authApi } from "../../services/api/auth.js";
-import { createBookingQr, downloadBookingPass, downloadPaymentReceipt } from "../../utils/bookingPass.js";
+import {
+  createBookingQr,
+  downloadBookingInvoice,
+  downloadBookingPass,
+  downloadPaymentReceipt,
+  isBookingQrExpired,
+} from "../../utils/bookingPass.js";
 import { currency, number } from "../../utils/formatters.js";
 import { handleImageError } from "../../utils/media.js";
 import { notify } from "../../utils/notify.js";
@@ -91,9 +90,9 @@ function BookingCard({ booking }) {
         </div>
         <div className="mt-6 flex items-center justify-between border-t border-surface-border pt-4">
           <div className="flex -space-x-2">
-            {booking.team.map((member) => (
-              <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-primary-soft text-xs font-black text-primary" key={member}>
-                {member}
+            {booking.team.map((initial) => (
+              <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-primary-soft text-xs font-black text-primary" key={initial}>
+                {initial}
               </span>
             ))}
           </div>
@@ -110,7 +109,7 @@ export function DashboardPage() {
   const { user } = useAuth();
   const { data: bookings = [] } = useBookings();
   const { data: turfResult = { turfs: [] } } = useTurfs({ limit: 6 });
-  const upcomingBookings = bookings.filter((booking) => ["pending", "confirmed", "upcoming"].includes(booking.statusValue));
+  const upcomingBookings = bookings.filter((booking) => ["pending", "confirmed", "upcoming", "ongoing"].includes(booking.statusValue));
   const [recommendationStart, setRecommendationStart] = useState(0);
   const recommendations = useMemo(() => {
     const turfs = turfResult.turfs;
@@ -177,7 +176,12 @@ export function DashboardPage() {
               <p className="mt-2 text-lg font-black">Keep playing</p>
               <p className="mt-1 text-sm text-white/70">Completed bookings build your TURFX history.</p>
             </div>
-            <Button as={Link} className="mt-10 w-full border-white/20 text-white" to="/profile" variant="outline">
+            <Button
+              as={Link}
+              className="mt-10 w-full border border-white/15 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+              to="/profile"
+              variant="ghost"
+            >
               View All Badges
             </Button>
           </CardContent>
@@ -225,7 +229,7 @@ export function MyBookingsPage() {
   const filteredBookings = bookings.filter((booking) => {
     const groups = {
       Upcoming: ["pending", "confirmed", "upcoming"],
-      "Checked In": ["checked_in"],
+      Ongoing: ["ongoing", "checked_in"],
       Completed: ["completed"],
       Cancelled: ["cancelled"],
     };
@@ -238,12 +242,12 @@ export function MyBookingsPage() {
           <p className="muted-label text-primary">User Workspace</p>
           <h1 className="mt-2 text-4xl font-black">My Bookings</h1>
         </div>
-        <Button as={Link} to="/booking/slots">
+        <Button as={Link} to="/explore">
           New Booking
         </Button>
       </div>
       <div className="mb-5 flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-        {["Upcoming", "Checked In", "Completed", "Cancelled"].map((tab) => (
+        {["Upcoming", "Ongoing", "Completed", "Cancelled"].map((tab) => (
           <Button key={tab} onClick={() => setActiveTab(tab)} variant={activeTab === tab ? "primary" : "outline"}>
             {tab}
           </Button>
@@ -261,6 +265,87 @@ export function MyBookingsPage() {
             <h2 className="mt-3 text-xl font-black">No {activeTab.toLowerCase()} bookings</h2>
             <p className="mt-2 text-sm text-ink-muted">Your booking activity will appear here as its status changes.</p>
             <Button as={Link} className="mt-5" to="/explore">Explore Venues</Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+export function MyCoachingPage() {
+  const { data: coachRequests = [] } = useMyCoachRequests();
+  const paidRequests = coachRequests.filter((request) => request.paymentStatus === "paid");
+  const pending = paidRequests.filter((request) => request.approvalStatus === "pending").length;
+  const approved = paidRequests.filter((request) => request.approvalStatus === "approved").length;
+  const totalMonthlyFee = paidRequests.reduce((sum, request) => sum + Number(request.monthlyFee || 0), 0);
+
+  return (
+    <div>
+      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <p className="muted-label text-primary">Performance Academy</p>
+          <h1 className="mt-2 text-4xl font-black">My Coaching</h1>
+          <p className="mt-2 text-ink-muted">Track monthly coach payments, timing, and turf owner approval status.</p>
+        </div>
+        <Button as={Link} to="/coaching">
+          Find a Coach
+        </Button>
+      </div>
+      <div className="mb-6 grid gap-5 md:grid-cols-3">
+        <StatsCard icon="Clock" label="Pending Approval" tone="warning" value={String(pending)} />
+        <StatsCard icon="BadgeCheck" label="Successful Plans" tone="secondary" value={String(approved)} />
+        <StatsCard icon="WalletCards" label="Monthly Fees Paid" value={currency(totalMonthlyFee)} />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        {coachRequests.map((request) => (
+          <Card key={request.id}>
+            <CardContent>
+              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                <div>
+                  <Badge variant={request.approvalStatus === "approved" ? "success" : request.approvalStatus === "rejected" ? "danger" : "warning"}>
+                    {request.status}
+                  </Badge>
+                  <h2 className="mt-4 text-2xl font-black">{request.coachName}</h2>
+                  <p className="mt-2 text-sm text-ink-muted">{request.venue} - {request.sport}</p>
+                </div>
+                <div className="rounded-xl bg-primary-soft px-4 py-3 text-right">
+                  <p className="text-xs font-bold uppercase text-primary">Monthly Fee</p>
+                  <p className="text-xl font-black text-primary">{currency(request.monthlyFee)}</p>
+                </div>
+              </div>
+              <div className="mt-6 grid gap-3 text-sm md:grid-cols-2">
+                <p className="rounded-xl bg-surface-low p-3"><span className="block text-ink-muted">Timing</span><strong>{request.timing}</strong></p>
+                <p className="rounded-xl bg-surface-low p-3"><span className="block text-ink-muted">Start Date</span><strong>{request.date}</strong></p>
+                <p className="rounded-xl bg-surface-low p-3"><span className="block text-ink-muted">Sessions</span><strong>{request.sessionsPerMonth} per month</strong></p>
+                <p className="rounded-xl bg-surface-low p-3"><span className="block text-ink-muted">Payment</span><strong>{request.paymentStatus}</strong></p>
+                <p className="rounded-xl bg-surface-low p-3 md:col-span-2"><span className="block text-ink-muted">Transaction</span><strong>{request.transactionId}</strong></p>
+              </div>
+              {request.approvalStatus === "pending" && (
+                <p className="mt-5 rounded-xl border border-warning/30 bg-warning-soft p-3 text-sm font-bold text-amber-800">
+                  Payment is successful. Your coach timing is waiting for turf owner approval.
+                </p>
+              )}
+              {request.approvalStatus === "approved" && (
+                <p className="mt-5 rounded-xl border border-accent/30 bg-accent-soft p-3 text-sm font-bold text-accent-deep">
+                  Successful. Attend your coaching session at the selected turf timing.
+                </p>
+              )}
+              {request.approvalStatus === "rejected" && (
+                <p className="mt-5 rounded-xl border border-danger/30 bg-danger-soft p-3 text-sm font-bold text-danger">
+                  Rejected by turf owner. Choose another coach timing if one is available.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      {!coachRequests.length && (
+        <Card>
+          <CardContent className="text-center">
+            <Icon className="mx-auto text-primary" name="Dumbbell" size={34} />
+            <h2 className="mt-3 text-xl font-black">No coaching plans yet</h2>
+            <p className="mt-2 text-sm text-ink-muted">Choose a coach from approved TURFX venues and pay the monthly fee to start.</p>
+            <Button as={Link} className="mt-5" to="/coaching">Find a Coach</Button>
           </CardContent>
         </Card>
       )}
@@ -300,22 +385,24 @@ export function BookingDetailsPage() {
   const { user } = useAuth();
   const { data: booking, isError, isLoading } = useBooking(id);
   const cancelBooking = useCancelBooking();
-  const createReview = useCreateReview();
-  const updateReview = useUpdateReview();
-  const deleteReview = useDeleteReview();
-  const { data: reviews = [] } = useMyReviews(user?.role === "user");
   const { data: payments = [] } = usePayments();
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [qrFailed, setQrFailed] = useState(false);
-  const [review, setReview] = useState({ comment: "", rating: 5 });
-  const [reviewEditor, setReviewEditor] = useState({ comment: "", rating: 5 });
-  const [editingReview, setEditingReview] = useState(false);
-  const existingReview = reviews.find((item) => String(item.turfId?._id || item.turfId) === booking?.venueId);
-  const existingReviewId = existingReview?._id || existingReview?.id;
   const payment = payments.find((item) => item.bookingIdValue === booking?.id);
+  const effectivePayment = booking?.payment || payment || null;
+  const effectivePaymentStatus = effectivePayment?.status || booking?.paymentStatus || "pending";
+  const isPaid = ["paid", "partially_refunded"].includes(String(effectivePaymentStatus).toLowerCase());
+  const invoiceReady = isPaid && booking?.statusValue === "completed" && ["ready", "paid"].includes(String(booking?.invoiceStatus || effectivePayment?.invoiceStatus || "").toLowerCase());
+  const qrExpired = booking ? isBookingQrExpired(booking) : false;
+  const bookAgainHref = booking?.venueId ? `/booking/slots?venue=${booking.venueId}` : "/explore";
 
   useEffect(() => {
     if (!booking) return;
+    if (isBookingQrExpired(booking)) {
+      setQrDataUrl("");
+      setQrFailed(false);
+      return;
+    }
     setQrFailed(false);
     createBookingQr(booking, user)
       .then(setQrDataUrl)
@@ -324,18 +411,6 @@ export function BookingDetailsPage() {
         setQrFailed(true);
       });
   }, [booking, user]);
-
-  useEffect(() => {
-    if (!existingReview) {
-      setEditingReview(false);
-      return;
-    }
-
-    setReviewEditor({
-      comment: existingReview.comment || "",
-      rating: existingReview.rating || 5,
-    });
-  }, [existingReview]);
 
   if (isLoading) {
     return <div className="py-16 text-center text-ink-muted">Loading booking...</div>;
@@ -399,9 +474,10 @@ export function BookingDetailsPage() {
               <h2 className="text-2xl font-black">Payment Details</h2>
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 {[
-                  ["Amount Paid", payment ? currency(payment.amount) : currency(booking.paid || booking.totalAmount || 0)],
-                  ["Transaction ID", payment?.paymentId || "Pending payment"],
-                  ["Payment Status", payment?.status || booking.paymentStatus || "pending"],
+                  [isPaid ? "Amount Paid" : "Amount Due", isPaid ? currency(effectivePayment?.amount || booking.paid || booking.totalAmount || 0) : currency(booking.paid || booking.totalAmount || 0)],
+                  ["Transaction ID", effectivePayment?.paymentId || (isPaid ? "Demo transaction syncing" : "Pending payment")],
+                  ["Payment Status", effectivePaymentStatus],
+                  ["Invoice", invoiceReady ? "Ready" : booking.invoiceStatus || "Pending"],
                   ["Venue Contact", booking.turf?.ownerId?.phone || booking.turf?.phone || "Contact via venue desk"],
                 ].map(([label, value]) => (
                   <div className="rounded-xl bg-surface-low p-3" key={label}>
@@ -410,49 +486,85 @@ export function BookingDetailsPage() {
                   </div>
                 ))}
               </div>
-              {payment && (
-                <Button
-                  className="mt-5"
-                  onClick={async () => {
-                    await downloadPaymentReceipt(payment, user);
-                    notify("Receipt downloaded.");
-                  }}
-                  variant="outline"
-                >
-                  <Download size={16} />
-                  Download Receipt
-                </Button>
-              )}
+              <div className="mt-5 flex flex-wrap gap-3">
+                {effectivePayment && (
+                  <Button
+                    onClick={async () => {
+                      await downloadPaymentReceipt(effectivePayment, user);
+                      notify("Receipt downloaded.");
+                    }}
+                    variant="outline"
+                  >
+                    <Download size={16} />
+                    Download Receipt
+                  </Button>
+                )}
+                {invoiceReady && (
+                  <Button
+                    onClick={async () => {
+                      await downloadBookingInvoice(booking, effectivePayment, user);
+                      notify("Invoice downloaded.");
+                    }}
+                    variant="outline"
+                  >
+                    <Download size={16} />
+                    Download Invoice
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
         <Card className="h-max">
           <CardContent className="text-center">
-            <div className="mx-auto grid h-44 w-44 place-items-center rounded-2xl border border-surface-border bg-white p-3">
-              {qrDataUrl ? (
-                <img alt={`Gate QR for booking ${booking.id}`} className="h-full w-full" src={qrDataUrl} />
-              ) : (
-                <span className="text-sm text-ink-muted">{qrFailed ? "QR unavailable. Use the downloaded pass." : "Generating QR..."}</span>
-              )}
-            </div>
-            <h2 className="mt-5 text-2xl font-black">Gate QR</h2>
-            <p className="mt-2 text-sm text-ink-muted">Scan at the venue desk to check in and unlock your locker.</p>
-            <Button
-              className="mt-6 w-full"
-              onClick={async () => {
-                try {
-                  await downloadBookingPass(booking, user);
-                  notify("TURFX pass downloaded.");
-                } catch {
-                  notify("The pass could not be generated. Please try again.");
-                }
-              }}
-              variant="outline"
-            >
-              <Download size={16} />
-              Download Pass
-            </Button>
-            {!["cancelled", "completed", "checked_in"].includes(booking.statusValue) && (
+            {qrExpired ? (
+              <div className="mx-auto grid h-44 w-44 place-items-center rounded-2xl border border-surface-border bg-surface-low p-4">
+                <div>
+                  <Badge variant="default">QR Expired</Badge>
+                  <p className="mt-3 text-sm text-ink-muted">This entry pass closed when the booking ended.</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="mx-auto grid h-44 w-44 place-items-center rounded-2xl border border-surface-border bg-white p-3">
+                  {qrDataUrl ? (
+                    <img alt={`Gate QR for booking ${booking.id}`} className="h-full w-full" src={qrDataUrl} />
+                  ) : (
+                    <span className="text-sm text-ink-muted">{qrFailed ? "QR unavailable. Use the downloaded pass." : "Generating QR..."}</span>
+                  )}
+                </div>
+                <h2 className="mt-5 text-2xl font-black">Gate QR</h2>
+                <p className="mt-2 text-sm text-ink-muted">Scan at the venue desk to check in and unlock your locker.</p>
+                <Button
+                  className="mt-6 w-full"
+                  onClick={async () => {
+                    try {
+                      await downloadBookingPass(booking, user);
+                      notify("TURFX pass downloaded.");
+                    } catch {
+                      notify("The pass could not be generated. Please try again.");
+                    }
+                  }}
+                  variant="outline"
+                >
+                  <Download size={16} />
+                  Download Pass
+                </Button>
+              </>
+            )}
+            {booking.statusValue === "completed" && (
+              <div className="mt-5 grid gap-3 text-left">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="success">Completed</Badge>
+                  <Badge variant={isPaid ? "success" : "warning"}>{isPaid ? "Payment Paid" : "Payment Pending"}</Badge>
+                  <Badge variant={invoiceReady ? "success" : "warning"}>{invoiceReady ? "Invoice Ready" : "Invoice Pending"}</Badge>
+                </div>
+                <Button as={Link} className="w-full" to={bookAgainHref} variant="outline">
+                  Book Again
+                </Button>
+              </div>
+            )}
+            {!["cancelled", "completed", "checked_in", "ongoing"].includes(booking.statusValue) && (
               <Button
                 className="mt-3 w-full"
                 disabled={cancelBooking.isPending}
@@ -471,103 +583,6 @@ export function BookingDetailsPage() {
           </CardContent>
         </Card>
       </div>
-      {booking.statusValue === "completed" && (
-        <Card className="mt-6">
-          <CardContent>
-            <h2 className="text-2xl font-black">Review Venue</h2>
-            {existingReview ? (
-              <div className="mt-4">
-                {!editingReview ? (
-                  <div className="rounded-xl bg-surface-low p-4">
-                    <p className="text-sm font-bold text-ink">You rated this venue {existingReview.rating} / 5</p>
-                    <p className="mt-2 text-sm text-ink-muted">{existingReview.comment}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Button onClick={() => setEditingReview(true)} size="sm" variant="outline">Edit Review</Button>
-                      <Button
-                        onClick={() => {
-                          if (!window.confirm("Delete this venue review?")) return;
-                          deleteReview.mutate(existingReviewId, {
-                            onError: (error) => notify(error.response?.data?.message || error.message),
-                            onSuccess: () => notify("Review deleted."),
-                          });
-                        }}
-                        size="sm"
-                        variant="danger"
-                      >
-                        Delete Review
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <form
-                    className="grid gap-4"
-                    onSubmit={async (event) => {
-                      event.preventDefault();
-                      try {
-                        await updateReview.mutateAsync({ id: existingReviewId, payload: reviewEditor });
-                        setEditingReview(false);
-                        notify("Review updated.");
-                      } catch (error) {
-                        notify(error.response?.data?.message || error.message);
-                      }
-                    }}
-                  >
-                    <select
-                      aria-label="Edit venue rating"
-                      className="focus-ring h-11 rounded-lg border border-surface-outline bg-white px-3 text-sm"
-                      onChange={(event) => setReviewEditor((current) => ({ ...current, rating: Number(event.target.value) }))}
-                      value={reviewEditor.rating}
-                    >
-                      {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} / 5</option>)}
-                    </select>
-                    <Textarea
-                      aria-label="Edit review comment"
-                      onChange={(event) => setReviewEditor((current) => ({ ...current, comment: event.target.value }))}
-                      required
-                      value={reviewEditor.comment}
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      <Button disabled={updateReview.isPending} type="submit">Save Review</Button>
-                      <Button onClick={() => setEditingReview(false)} type="button" variant="outline">Cancel</Button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            ) : (
-              <form
-                className="mt-5 grid gap-4"
-                onSubmit={async (event) => {
-                  event.preventDefault();
-                  try {
-                    await createReview.mutateAsync({ ...review, turfId: booking.venueId });
-                    setReview({ comment: "", rating: 5 });
-                    notify("Your venue review was published.");
-                  } catch (error) {
-                    notify(error.response?.data?.message || error.message);
-                  }
-                }}
-              >
-                <select
-                  aria-label="Venue rating"
-                  className="focus-ring h-11 rounded-lg border border-surface-outline bg-white px-3 text-sm"
-                  onChange={(event) => setReview((current) => ({ ...current, rating: Number(event.target.value) }))}
-                  value={review.rating}
-                >
-                  {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} / 5</option>)}
-                </select>
-                <Textarea
-                  aria-label="Review comment"
-                  onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))}
-                  placeholder="Share your venue experience"
-                  required
-                  value={review.comment}
-                />
-                <Button disabled={createReview.isPending} type="submit">Publish Review</Button>
-              </form>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
@@ -649,14 +664,19 @@ export function WalletPage() {
             <p className="text-white/65">Available balance</p>
             <p className="mt-3 text-5xl font-black">{currency(user?.walletBalance || 0)}</p>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {["Top up", "Transfer", "Invoices"].map((action) => (
+              {[
+                ["Top up", "Add balance"],
+                ["Transfer", "Move funds"],
+                ["Invoices", "Download CSV"],
+              ].map(([action, helper]) => (
                 <Button
                   key={action}
                   onClick={() => action === "Invoices" ? downloadInvoices() : setWalletAction(action.toLowerCase().replace(" ", ""))}
-                  variant="outline"
-                  className="border-white/25 text-white hover:bg-white/10 hover:text-white"
+                  variant="ghost"
+                  className="h-auto flex-col items-start rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-left text-white hover:bg-white/15 hover:text-white"
                 >
-                  {action}
+                  <span>{action}</span>
+                  <span className="text-xs font-semibold text-white/60">{helper}</span>
                 </Button>
               ))}
             </div>
@@ -752,8 +772,8 @@ export function WalletPage() {
 }
 
 export function NotificationsPage() {
-  const { data: notifications = [] } = useNotifications();
   const navigate = useNavigate();
+  const { data: notifications = [] } = useNotifications();
   const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
   const unread = notifications.filter((item) => !item.isRead);
@@ -809,7 +829,7 @@ export function NotificationsPage() {
           </Card>
         ))}
       </div>
-      {!notifications.length && <Card><CardContent className="text-center text-ink-muted">You are all caught up. New booking and membership activity will appear here.</CardContent></Card>}
+      {!notifications.length && <Card><CardContent className="text-center text-ink-muted">You are all caught up. New booking activity will appear here.</CardContent></Card>}
     </div>
   );
 }
@@ -818,7 +838,6 @@ export function ProfilePage() {
   const { refreshProfile, user } = useAuth();
   const { data: bookings = [] } = useBookings();
   const { data: favorites = [] } = useFavorites();
-  const { data: reviews = [] } = useMyReviews(user?.role === "user");
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
@@ -837,9 +856,7 @@ export function ProfilePage() {
     });
   }, [user?.bio, user?.name, user?.phone]);
   const role = authService.normalizeRole(user?.role);
-  const membership = role === "admin" || role === "owner"
-    ? roleLabels[role]
-    : user?.membership || user?.membershipPlan || "TURFX Member";
+  const accountLabel = roleLabels[role] || "Athlete";
   const completedBookings = bookings.filter((item) => item.statusValue === "completed").length;
   const loyaltyPoints = completedBookings * 250 + bookings.length * 25;
 
@@ -850,13 +867,13 @@ export function ProfilePage() {
           <Card>
             <CardContent className="text-center">
               <img
-                alt={user?.name || "TURFX member"}
+                alt={user?.name || "TURFX player"}
                 className="mx-auto h-24 w-24 rounded-2xl object-cover"
                 onError={handleImageError}
                 src={user?.profileImage || assetImages.profile}
               />
               <h2 className="mt-4 text-xl font-black">{user?.name}</h2>
-              <Badge className="mt-2" variant="primary">{membership}</Badge>
+              <Badge className="mt-2" variant="primary">{accountLabel}</Badge>
               <p className="mt-3 break-all text-sm text-ink-muted">{user?.email}</p>
             </CardContent>
           </Card>
@@ -864,7 +881,7 @@ export function ProfilePage() {
             <CardContent>
               <p className="muted-label text-primary">Booking Summary</p>
               <div className="mt-4 space-y-3 text-sm">
-                <p className="flex justify-between"><span>Upcoming</span><strong>{bookings.filter((item) => ["pending", "confirmed", "checked_in", "upcoming"].includes(item.statusValue)).length}</strong></p>
+                <p className="flex justify-between"><span>Upcoming</span><strong>{bookings.filter((item) => ["pending", "confirmed", "checked_in", "upcoming", "ongoing"].includes(item.statusValue)).length}</strong></p>
                 <p className="flex justify-between"><span>Completed</span><strong>{completedBookings}</strong></p>
               </div>
             </CardContent>
@@ -880,7 +897,7 @@ export function ProfilePage() {
             <CardContent>
               <p className="muted-label text-primary">Quick Actions</p>
               <div className="mt-4 grid gap-2">
-                <Button as={Link} to="/booking/slots">New Booking</Button>
+                <Button as={Link} to="/explore">New Booking</Button>
                 <Button as={Link} to="/explore" variant="outline">Explore Venues</Button>
               </div>
             </CardContent>
@@ -894,14 +911,14 @@ export function ProfilePage() {
             </div>
             <CardContent className="-mt-20 relative">
               <img
-                alt={user?.name || "TURFX member"}
+                alt={user?.name || "TURFX player"}
                 className="h-36 w-36 rounded-3xl border-4 border-white object-cover shadow-lift"
                 onError={handleImageError}
                 src={avatarPreview || user?.profileImage || assetImages.profile}
               />
               <div className="mt-4 flex flex-col justify-between gap-4 md:flex-row md:items-end">
                 <div>
-                  <Badge variant="primary">{membership}</Badge>
+                  <Badge variant="primary">{accountLabel}</Badge>
                   <h1 className="mt-3 text-4xl font-black">{user?.name}</h1>
                   <p className="mt-2 text-ink-muted">{user?.bio || "Add a short player bio to complete your profile."}</p>
                 </div>
@@ -951,7 +968,6 @@ export function ProfilePage() {
             {[
               ["Bookings", String(bookings.length), "CalendarDays"],
               ["Favorites", String(favorites.length), "Star"],
-              ["Reviews", String(reviews.length), "MessageSquare"],
               ["Joined", user?.createdAt ? new Date(user.createdAt).getFullYear() : "2026", "BadgeCheck"],
             ].map(([label, value, icon]) => (
               <StatsCard icon={icon} key={label} label={label} value={value} />
@@ -965,117 +981,13 @@ export function ProfilePage() {
                 <div className="mt-5 grid gap-4">
                   <Input readOnly value={user?.email || ""} />
                   <Input readOnly value={user?.phone || "No phone added"} />
-                  <Input readOnly value={`${membership} membership`} />
+                  <Input readOnly value={`${accountLabel} account`} />
                 </div>
               </CardContent>
             </Card>
           </div>
         </main>
       </div>
-    </div>
-  );
-}
-
-export function MembershipCenterPage() {
-  const { refreshProfile, user } = useAuth();
-  const { data: bookings = [] } = useBookings();
-  const [selectedTier, setSelectedTier] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const currentPlan = user?.membershipPlan || user?.membership || "Starter";
-  const planRank = { Starter: 0, Gold: 1, Elite: 2 };
-  return (
-    <div>
-      <div className="mb-6">
-        <p className="muted-label text-primary">Membership Center</p>
-        <h1 className="mt-2 text-4xl font-black">TURFX {currentPlan} Benefits</h1>
-        <p className="mt-2 text-ink-muted">Review your current access and upgrade instantly through the prototype checkout.</p>
-      </div>
-      <div className="grid gap-5 lg:grid-cols-3">
-        {membershipTiers.map((tier) => (
-          <Card className={tier.featured ? "border-primary" : ""} interactive key={tier.name}>
-            <CardContent>
-              <Badge variant={tier.featured ? "primary" : "default"}>{tier.label}</Badge>
-              <h2 className="mt-4 text-2xl font-black">{tier.name}</h2>
-              <p className="mt-1 text-sm text-ink-muted">{tier.price ? `${currency(tier.price)} / month` : "Free"}</p>
-              <div className="mt-5 space-y-3">
-                {tier.perks.map((perk) => (
-                  <p className="flex items-center gap-2 text-sm" key={perk}>
-                    <Check className="text-accent" size={16} />
-                    {perk}
-                  </p>
-                ))}
-              </div>
-              <Button
-                className="mt-6 w-full"
-                disabled={planRank[tier.name] <= planRank[currentPlan]}
-                onClick={() => setSelectedTier(tier)}
-                variant={tier.featured ? "primary" : "outline"}
-              >
-                {tier.name === currentPlan ? "Current Plan" : planRank[tier.name] < planRank[currentPlan] ? "Included" : `Upgrade to ${tier.name}`}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-        <Card className="bg-primary text-white">
-          <CardContent>
-            <Trophy />
-            <h2 className="mt-4 text-2xl font-black">{bookings.length} Total Bookings</h2>
-            <p className="mt-2 text-white/75">Your activity history grows with every completed venue booking.</p>
-          </CardContent>
-        </Card>
-        <ChartPanel data={bookingSeries(bookings)} dataKey="bookings" title="Booking Activity" type="line" />
-      </div>
-      <Card className="mt-6">
-        <CardContent>
-          <h2 className="text-2xl font-black">Membership History</h2>
-          <div className="mt-4 space-y-3">
-            {(user?.membershipHistory || []).map((entry) => (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-low p-4" key={entry._id || entry.reference}>
-                <div>
-                  <p className="font-black">{entry.plan}</p>
-                  <p className="text-sm text-ink-muted">{entry.reference}</p>
-                </div>
-                <p className="text-sm font-bold">{currency(entry.amount)} - {new Date(entry.upgradedAt).toLocaleDateString()}</p>
-              </div>
-            ))}
-            {!user?.membershipHistory?.length && <p className="text-sm text-ink-muted">Starter membership activated when your account was created.</p>}
-          </div>
-        </CardContent>
-      </Card>
-      <Modal onOpenChange={(open) => !open && setSelectedTier(null)} open={Boolean(selectedTier)} title="Membership Checkout">
-        {selectedTier && (
-          <div>
-            <Badge variant="primary">{selectedTier.name}</Badge>
-            <h2 className="mt-4 text-3xl font-black">{currency(selectedTier.price)} / month</h2>
-            <p className="mt-3 text-sm text-ink-muted">This prototype uses an instant mock payment. Your profile, dashboard, membership center, and notifications update immediately.</p>
-            <div className="mt-5 rounded-xl bg-surface-low p-4">
-              <p className="font-black">Confirm upgrade</p>
-              <p className="mt-1 text-sm text-ink-muted">{currentPlan} to {selectedTier.name}</p>
-            </div>
-            <Button
-              className="mt-5 w-full"
-              disabled={isProcessing}
-              onClick={async () => {
-                setIsProcessing(true);
-                try {
-                  await authApi.upgradeMembership(selectedTier.name);
-                  await refreshProfile();
-                  notify(`Membership upgraded to ${selectedTier.name}.`);
-                  setSelectedTier(null);
-                } catch (error) {
-                  notify(error.response?.data?.message || error.message);
-                } finally {
-                  setIsProcessing(false);
-                }
-              }}
-            >
-              {isProcessing ? "Confirming..." : "Confirm Mock Payment"}
-            </Button>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }

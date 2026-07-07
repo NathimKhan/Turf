@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { getBookingLifecycleStatus } = require("../utils/bookingLifecycle");
 
 const bookingSchema = new mongoose.Schema(
   {
@@ -52,13 +53,13 @@ const bookingSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed", "refunded"],
+      enum: ["pending", "paid", "failed", "refunded", "partially_refunded"],
       default: "pending",
       index: true,
     },
     bookingStatus: {
       type: String,
-      enum: ["pending", "confirmed", "checked_in", "cancelled", "completed", "upcoming"],
+      enum: ["pending", "confirmed", "checked_in", "cancelled", "completed", "upcoming", "ongoing"],
       default: "pending",
       index: true,
     },
@@ -76,6 +77,39 @@ const bookingSchema = new mongoose.Schema(
     cancelledBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+    },
+    completedAt: Date,
+    invoiceStatus: {
+      type: String,
+      enum: ["pending", "ready", "void", "not_required"],
+      default: "pending",
+      index: true,
+    },
+    invoiceId: {
+      type: String,
+      trim: true,
+      default: "",
+      index: true,
+    },
+    invoiceGeneratedAt: Date,
+    qrStatus: {
+      type: String,
+      enum: ["inactive", "active", "expired", "cancelled"],
+      default: "inactive",
+      index: true,
+    },
+    qrExpiresAt: Date,
+    lifecycleSyncedAt: Date,
+    history: {
+      type: [
+        {
+          status: { type: String, trim: true, required: true },
+          at: { type: Date, default: Date.now },
+          note: { type: String, trim: true, default: "" },
+          source: { type: String, trim: true, default: "system" },
+        },
+      ],
+      default: [],
     },
   },
   {
@@ -130,15 +164,11 @@ bookingSchema.virtual("slot").get(function getSlot() {
 });
 
 bookingSchema.virtual("status").get(function getStatus() {
-  const map = {
-    cancelled: "cancelled",
-    completed: "completed",
-    confirmed: "confirmed",
-    checked_in: "checked_in",
-    pending: "pending",
-    upcoming: this.paymentStatus === "paid" ? "confirmed" : "pending",
-  };
-  return map[this.bookingStatus] || this.bookingStatus;
+  return getBookingLifecycleStatus(this);
+});
+
+bookingSchema.virtual("lifecycleStatus").get(function getLifecycleStatus() {
+  return getBookingLifecycleStatus(this);
 });
 
 bookingSchema.virtual("total").get(function getTotal() {

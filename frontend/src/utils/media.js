@@ -4,5 +4,5 @@ const fallbackImage =
 export function handleImageError(event) {
   const image = event.currentTarget;
   image.onerror = null;
-  image.src = fallbackImage;
+  image.src = image.dataset.fallbackSrc || fallbackImage;
 }

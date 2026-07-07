@@ -10,7 +10,6 @@ const {
   register,
   registerValidation,
   resetPassword,
-  upgradeMembership,
   updateProfile,
   updateWallet,
 } = require("../controllers/authController");
@@ -38,13 +37,6 @@ router.post("/logout", logout);
 router.get("/profile", protect, getProfile);
 router.get("/me", protect, getProfile);
 router.put("/profile", protect, upload.single("profileImage"), updateProfile);
-router.post(
-  "/membership/upgrade",
-  protect,
-  body("plan").isIn(["Gold", "Elite"]).withMessage("Plan must be Gold or Elite"),
-  validateRequest,
-  upgradeMembership,
-);
 router.post(
   "/wallet",
   protect,

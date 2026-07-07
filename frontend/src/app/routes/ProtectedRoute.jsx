@@ -13,8 +13,8 @@ function AccessDenied() {
     <div className="page-shell flex min-h-[55vh] items-center justify-center py-10">
       <div className="w-full max-w-md rounded-xl border border-surface-border bg-white p-5 shadow-soft">
         <p className="muted-label text-primary">Access Denied</p>
-        <h1 className="mt-3 text-2xl font-black">Platform owner access required</h1>
-        <p className="mt-2 text-sm text-ink-muted">This workspace is only available to the TURFX Platform Owner.</p>
+        <h1 className="mt-3 text-2xl font-black">Platform admin access required</h1>
+        <p className="mt-2 text-sm text-ink-muted">This workspace is only available to a TURFX platform admin.</p>
       </div>
     </div>
   );

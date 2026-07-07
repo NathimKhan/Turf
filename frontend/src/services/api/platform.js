@@ -1,7 +1,7 @@
 import { apiClient } from "./client.js";
 
 export const notificationsApi = {
-  list: () => apiClient.get("/notifications"),
+  list: (params = {}) => apiClient.get("/notifications", { params }),
   markRead: (id) => apiClient.put(`/notifications/${id}/read`),
   remove: (id) => apiClient.delete(`/notifications/${id}`),
   create: (payload) => apiClient.post("/notifications", payload),
@@ -20,7 +20,6 @@ export const paymentsApi = {
 
 export const ownerApi = {
   dashboard: () => apiClient.get("/owner/dashboard"),
-  reviews: () => apiClient.get("/owner/reviews"),
 };
 
 export const adminApi = {
@@ -31,8 +30,6 @@ export const adminApi = {
     apiClient.patch(`/admin/owners/${id}/status`, { status, reason }),
   updateTurfStatus: (id, status, reason = "") =>
     apiClient.patch(`/admin/turfs/${id}/status`, { status, reason }),
-  settings: () => apiClient.get("/admin/settings"),
-  saveSetting: (key, payload) => apiClient.put(`/admin/settings/${key}`, payload),
   venueSchedules: () => apiClient.get("/admin/venue-schedules"),
 };
 
@@ -42,26 +39,23 @@ export const usersApi = {
   remove: (id) => apiClient.delete(`/users/${id}`),
 };
 
-export const eventsApi = {
-  list: () => apiClient.get("/events"),
-  detail: (id) => apiClient.get(`/events/${id}`),
-  create: (payload) => apiClient.post("/events", payload),
-  update: (id, payload) => apiClient.put(`/events/${id}`, payload),
-  remove: (id) => apiClient.delete(`/events/${id}`),
-};
-
 export const tournamentsApi = {
   list: (params) => apiClient.get("/tournaments", { params }),
   detail: (id) => apiClient.get(`/tournaments/${id}`),
   create: (payload) => apiClient.post("/tournaments", payload),
+  createRegistration: (id, payload) => apiClient.post(`/tournaments/${id}/register`, payload),
+  myRegistrations: () => apiClient.get("/tournaments/mine/registrations"),
+  ownerList: () => apiClient.get("/tournaments/owner/mine"),
+  ownerRegistrations: () => apiClient.get("/tournaments/owner/registrations"),
   update: (id, payload) => apiClient.put(`/tournaments/${id}`, payload),
+  updateRegistrationStatus: (id, payload) => apiClient.patch(`/tournaments/registrations/${id}/status`, payload),
   remove: (id) => apiClient.delete(`/tournaments/${id}`),
 };
 
-export const reviewsApi = {
-  create: (payload) => apiClient.post("/reviews", payload),
-  mine: () => apiClient.get("/reviews/mine"),
-  byTurf: (turfId) => apiClient.get(`/reviews/turf/${turfId}`),
-  update: (id, payload) => apiClient.put(`/reviews/${id}`, payload),
-  remove: (id) => apiClient.delete(`/reviews/${id}`),
+export const coachingApi = {
+  coaches: () => apiClient.get("/coaching/coaches"),
+  createRequest: (payload) => apiClient.post("/coaching/requests", payload),
+  mine: () => apiClient.get("/coaching/mine"),
+  ownerRequests: () => apiClient.get("/coaching/owner/requests"),
+  updateStatus: (id, payload) => apiClient.patch(`/coaching/requests/${id}/status`, payload),
 };

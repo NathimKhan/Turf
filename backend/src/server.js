@@ -18,6 +18,11 @@ if (dotenvResult.error) {
 const connectDatabase = require("./config/database");
 const { errorMiddleware, notFound } = require("./middleware/errorMiddleware");
 const swaggerSpec = require("./docs/swagger");
+const {
+  completeExpiredBookings,
+  migrateExistingBookingLifecycles,
+  startBookingLifecycleWorker,
+} = require("./services/bookingLifecycleService");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -26,11 +31,10 @@ const bookingRoutes = require("./routes/bookingRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const ownerRoutes = require("./routes/ownerRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const reviewRoutes = require("./routes/reviewRoutes");
-const eventRoutes = require("./routes/eventRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const favoriteRoutes = require("./routes/favoriteRoutes");
+const coachingRoutes = require("./routes/coachingRoutes");
 const {
   apiLimiter,
   rejectUnsafeKeys,
@@ -45,6 +49,8 @@ function validateProductionEnvironment() {
 }
 
 const app = express();
+const isVercelRuntime = process.env.VERCEL === "1";
+let runtimeReadyPromise = null;
 
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
@@ -81,6 +87,16 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api", apiLimiter);
 app.use("/api", rejectUnsafeKeys);
+app.use("/api", async (req, res, next) => {
+  if (!isVercelRuntime || !runtimeReadyPromise) return next();
+
+  try {
+    await runtimeReadyPromise;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+});
 
 app.get("/", (req, res) => {
   res.json({
@@ -114,11 +130,10 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/owner", ownerRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/events", eventRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/coaching", coachingRoutes);
 
 app.use(notFound);
 app.use(errorMiddleware);
@@ -149,14 +164,83 @@ function listen() {
   });
 }
 
+async function migrateLegacyVenueApprovals() {
+  const Turf = require("./models/Turf");
+
+  await Turf.updateMany(
+    {
+      approvalStatus: { $exists: false },
+      isApproved: true,
+      $or: [
+        { status: { $in: ["ACTIVE", "LIVE"] } },
+        { moderationStatus: "approved" },
+        { status: { $exists: false } },
+      ],
+    },
+    {
+      $set: {
+        approvalStatus: "APPROVED",
+        isPublished: true,
+        isVerified: true,
+        moderationStatus: "approved",
+        status: "ACTIVE",
+        visibility: "PUBLIC",
+      },
+    },
+  );
+
+  await Turf.updateMany(
+    { approvalStatus: { $exists: false } },
+    {
+      $set: {
+        approvalStatus: "PENDING",
+        isApproved: false,
+        isPublished: false,
+        isVerified: false,
+        moderationStatus: "pending",
+        status: "PENDING",
+        visibility: "PRIVATE",
+      },
+    },
+  );
+}
+
+async function prepareRuntime({ runStartupMaintenance = true, startWorker = true } = {}) {
+  await connectDatabase();
+
+  if (!runStartupMaintenance) return;
+
+  await migrateLegacyVenueApprovals();
+  await migrateExistingBookingLifecycles();
+  await completeExpiredBookings();
+
+  if (startWorker) {
+    startBookingLifecycleWorker();
+  }
+}
+
 if (process.env.NODE_ENV !== "test") {
   validateProductionEnvironment();
-  connectDatabase()
-    .then(listen)
-    .catch((error) => {
-      explainListenFailure(error);
+
+  runtimeReadyPromise = prepareRuntime({
+    runStartupMaintenance: !isVercelRuntime,
+    startWorker: !isVercelRuntime,
+  }).then(() => {
+    if (isVercelRuntime) {
+      console.log("[server] Vercel runtime detected; skipping local HTTP listener and background worker.");
+      return undefined;
+    }
+
+    return listen();
+  });
+
+  runtimeReadyPromise.catch((error) => {
+    explainListenFailure(error);
+
+    if (!isVercelRuntime) {
       process.exit(1);
-    });
+    }
+  });
 }
 
 module.exports = app;

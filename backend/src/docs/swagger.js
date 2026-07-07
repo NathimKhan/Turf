@@ -3,7 +3,7 @@ const swaggerSpec = {
   info: {
     title: "TURFX Backend API",
     version: "1.0.0",
-    description: "Complete MERN backend API for turf booking, payments, dashboards, reviews, events, and tournaments.",
+    description: "Complete MERN backend API for turf booking, payments, dashboards, and tournaments.",
   },
   servers: [
     {
@@ -17,8 +17,6 @@ const swaggerSpec = {
     { name: "Turfs" },
     { name: "Bookings" },
     { name: "Payments" },
-    { name: "Reviews" },
-    { name: "Events" },
     { name: "Tournaments" },
     { name: "Notifications" },
     { name: "Favorites" },
@@ -55,7 +53,6 @@ const swaggerSpec = {
           accountStatus: { type: "string", enum: ["active", "pending", "rejected", "suspended"] },
           profileImage: { type: "string" },
           walletBalance: { type: "number" },
-          membershipPlan: { type: "string" },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },
@@ -76,12 +73,22 @@ const swaggerSpec = {
           },
           pricePerHour: { type: "number" },
           images: { type: "array", items: { type: "string" } },
+          heroImage: { type: "string" },
+          coverImage: { type: "string" },
+          profileImage: { type: "string" },
+          thumbnail: { type: "string" },
+          videoThumbnail: { type: "string" },
+          gallery: { type: "array", items: { type: "string" } },
+          groundImages: { type: "array", items: { type: "string" } },
+          amenityImages: { type: "array", items: { type: "string" } },
+          locationImages: { type: "array", items: { type: "string" } },
+          sportsImages: { type: "array", items: { type: "string" } },
+          createdImages: { type: "array", items: { type: "string" } },
+          updatedImages: { type: "array", items: { type: "string" } },
           amenities: {
             type: "array",
             items: { type: "string", enum: ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Seating Area"] },
           },
-          rating: { type: "number" },
-          totalReviews: { type: "number" },
           ownerId: { type: "string" },
           isApproved: { type: "boolean" },
           moderationStatus: { type: "string", enum: ["pending", "approved", "rejected", "suspended"] },
@@ -100,8 +107,8 @@ const swaggerSpec = {
           slotEndTime: { type: "string", example: "19:00" },
           hoursBooked: { type: "number" },
           totalAmount: { type: "number" },
-          paymentStatus: { type: "string", enum: ["pending", "paid", "failed", "refunded"] },
-          bookingStatus: { type: "string", enum: ["pending", "confirmed", "completed", "cancelled"] },
+          paymentStatus: { type: "string", enum: ["pending", "paid", "failed", "refunded", "partially_refunded"] },
+          bookingStatus: { type: "string", enum: ["pending", "confirmed", "upcoming", "ongoing", "checked_in", "completed", "cancelled"] },
           createdAt: { type: "string", format: "date-time" },
         },
       },
@@ -113,34 +120,9 @@ const swaggerSpec = {
           bookingId: { type: "string" },
           amount: { type: "number" },
           paymentMethod: { type: "string", enum: ["UPI", "Card", "Cash"] },
-          paymentStatus: { type: "string", enum: ["pending", "paid", "failed", "refunded"] },
+          paymentStatus: { type: "string", enum: ["pending", "paid", "failed", "refunded", "partially_refunded"] },
           transactionId: { type: "string" },
           createdAt: { type: "string", format: "date-time" },
-        },
-      },
-      Review: {
-        type: "object",
-        properties: {
-          _id: { type: "string" },
-          userId: { type: "string" },
-          turfId: { type: "string" },
-          rating: { type: "number", minimum: 1, maximum: 5 },
-          comment: { type: "string" },
-          createdAt: { type: "string", format: "date-time" },
-        },
-      },
-      Event: {
-        type: "object",
-        properties: {
-          _id: { type: "string" },
-          title: { type: "string" },
-          description: { type: "string" },
-          eventDate: { type: "string", format: "date-time" },
-          location: { type: "string" },
-          entryFee: { type: "number" },
-          maxParticipants: { type: "number" },
-          currentParticipants: { type: "number" },
-          createdBy: { type: "string" },
         },
       },
       Tournament: {
@@ -358,7 +340,6 @@ const swaggerSpec = {
           { name: "sport", in: "query", schema: { type: "string" } },
           { name: "minPrice", in: "query", schema: { type: "number" } },
           { name: "maxPrice", in: "query", schema: { type: "number" } },
-          { name: "rating", in: "query", schema: { type: "number" } },
         ],
         responses: { 200: { description: "Turfs fetched" } },
       },
@@ -382,7 +363,7 @@ const swaggerSpec = {
     "/turfs/search": {
       get: {
         tags: ["Turfs"],
-        summary: "Search turfs by query, city, sport, price, or rating",
+        summary: "Search turfs by query, city, sport, or price",
         responses: { 200: { description: "Turfs fetched" } },
       },
     },
@@ -392,6 +373,14 @@ const swaggerSpec = {
         summary: "List turfs by city",
         parameters: [{ name: "city", in: "path", required: true, schema: { type: "string" } }],
         responses: { 200: { description: "Turfs fetched" } },
+      },
+    },
+    "/turfs/generated-media/{token}.svg": {
+      get: {
+        tags: ["Turfs"],
+        summary: "Render generated venue media SVG",
+        parameters: [{ name: "token", in: "path", required: true, schema: { type: "string" } }],
+        responses: { 200: { description: "SVG image" } },
       },
     },
     "/turfs/{id}": {
@@ -546,66 +535,6 @@ const swaggerSpec = {
         responses: { 200: { description: "Payment history fetched" } },
       },
     },
-    "/reviews": {
-      post: {
-        tags: ["Reviews"],
-        security: [{ bearerAuth: [] }],
-        summary: "Create review and recalculate turf rating",
-        responses: { 201: { description: "Review created" } },
-      },
-    },
-    "/reviews/turf/{id}": {
-      get: {
-        tags: ["Reviews"],
-        summary: "Get reviews for turf",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        responses: { 200: { description: "Reviews fetched" } },
-      },
-    },
-    "/reviews/{id}": {
-      delete: {
-        tags: ["Reviews"],
-        security: [{ bearerAuth: [] }],
-        summary: "Delete review",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        responses: { 200: { description: "Review deleted" } },
-      },
-    },
-    "/events": {
-      get: {
-        tags: ["Events"],
-        summary: "List events",
-        responses: { 200: { description: "Events fetched" } },
-      },
-      post: {
-        tags: ["Events"],
-        security: [{ bearerAuth: [] }],
-        summary: "Owner/admin create event",
-        responses: { 201: { description: "Event created" } },
-      },
-    },
-    "/events/{id}": {
-      get: {
-        tags: ["Events"],
-        summary: "Get event",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        responses: { 200: { description: "Event fetched" } },
-      },
-      put: {
-        tags: ["Events"],
-        security: [{ bearerAuth: [] }],
-        summary: "Owner/admin update event",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        responses: { 200: { description: "Event updated" } },
-      },
-      delete: {
-        tags: ["Events"],
-        security: [{ bearerAuth: [] }],
-        summary: "Owner/admin delete event",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        responses: { 200: { description: "Event deleted" } },
-      },
-    },
     "/tournaments": {
       get: {
         tags: ["Tournaments"],
@@ -679,14 +608,6 @@ const swaggerSpec = {
         security: [{ bearerAuth: [] }],
         summary: "Owner dashboard totals and earnings",
         responses: { 200: { description: "Owner dashboard fetched" } },
-      },
-    },
-    "/owner/reviews": {
-      get: {
-        tags: ["Owner"],
-        security: [{ bearerAuth: [] }],
-        summary: "Reviews for venues owned by the current owner",
-        responses: { 200: { description: "Owner reviews fetched" } },
       },
     },
     "/favorites": {
@@ -774,14 +695,6 @@ const swaggerSpec = {
         summary: "Moderate venue publication status",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
         responses: { 200: { description: "Venue status updated" } },
-      },
-    },
-    "/admin/settings": {
-      get: {
-        tags: ["Admin"],
-        security: [{ bearerAuth: [] }],
-        summary: "List persisted platform settings",
-        responses: { 200: { description: "Settings fetched" } },
       },
     },
     "/admin/venue-schedules": {

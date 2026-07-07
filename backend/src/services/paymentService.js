@@ -15,10 +15,18 @@ class MockPaymentProvider {
   }
 }
 
-function getPaymentProvider() {
-  const providerName = (process.env.PAYMENT_PROVIDER || "mock").toLowerCase();
+function configuredPaymentProviderName() {
+  return (process.env.PAYMENT_PROVIDER || "mock").toLowerCase();
+}
 
-  if (providerName === "mock") {
+function isDemoPaymentMode() {
+  return ["mock", "demo", "test", "local"].includes(configuredPaymentProviderName());
+}
+
+function getPaymentProvider() {
+  const providerName = configuredPaymentProviderName();
+
+  if (isDemoPaymentMode()) {
     return { name: "mock", provider: new MockPaymentProvider() };
   }
 
@@ -28,6 +36,8 @@ function getPaymentProvider() {
 }
 
 module.exports = {
+  configuredPaymentProviderName,
   getPaymentProvider,
+  isDemoPaymentMode,
   MockPaymentProvider,
 };

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { CalendarDays, Check, Clock, MapPin, MoreVertical, Plus, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarDays, Check, Clock, GripVertical, Image as ImageIcon, MoreVertical, Plus, Search, Trash2, UploadCloud } from "lucide-react";
 import { Badge } from "../../components/ui/badge.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Card, CardContent } from "../../components/ui/card.jsx";
@@ -10,17 +10,28 @@ import { DataTable } from "../../components/shared/DataTable.jsx";
 import { StatsCard } from "../../components/shared/StatsCard.jsx";
 import { Stepper } from "../../components/shared/Stepper.jsx";
 import { TurfCard } from "../../components/shared/TurfCard.jsx";
+import { VenueMap } from "../../components/shared/VenueMap.jsx";
 import {
   addTurfSteps,
   assetImages,
 } from "../../data/turfxData.js";
 import { useOwnerDashboard } from "../../hooks/useAnalytics.js";
 import { useBookings, useUpdateBookingStatus } from "../../hooks/useBookings.js";
-import { useOwnerReviews, usePayments } from "../../hooks/usePlatform.js";
+import {
+  useCreateTournament,
+  useDeleteTournament,
+  useOwnerCoachRequests,
+  useOwnerTournamentRegistrations,
+  useOwnerTournaments,
+  usePayments,
+  useUpdateCoachRequestStatus,
+  useUpdateTournamentRegistrationStatus,
+} from "../../hooks/usePlatform.js";
 import {
   useCreateTurf,
   useDeleteTurf,
   useMyTurfs,
+  useResubmitTurf,
   useTurf,
   useUpdateTurf,
   useUpdateTurfSlots,
@@ -30,6 +41,9 @@ import { downloadPaymentReceipt } from "../../utils/bookingPass.js";
 import { handleImageError } from "../../utils/media.js";
 import { notify } from "../../utils/notify.js";
 import { useAuth } from "../../store/authContext.js";
+import { responseData } from "../../services/api/client.js";
+import { turfsApi } from "../../services/api/turfs.js";
+import { cn } from "../../utils/cn.js";
 
 const TURF_SPORT_OPTIONS = ["Football", "Cricket", "Volleyball", "Basketball", "Badminton", "Tennis"];
 const TURF_AMENITY_OPTIONS = ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Seating Area"];
@@ -37,7 +51,25 @@ const DAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "satur
 const UTC_DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const WEEKEND_KEYS = ["saturday", "sunday"];
-const BLACKOUT_REASON_OPTIONS = ["Maintenance", "Private Event", "Holiday"];
+const BLACKOUT_REASON_OPTIONS = ["Maintenance", "Private Booking", "Holiday"];
+const FEATURED_TURF_IMAGE_FIELDS = [
+  { field: "heroImage", label: "Hero" },
+  { field: "coverImage", label: "Cover" },
+  { field: "profileImage", label: "Profile" },
+  { field: "thumbnail", label: "Thumbnail" },
+  { field: "videoThumbnail", label: "Video Thumbnail" },
+];
+const COLLECTION_TURF_IMAGE_FIELDS = [
+  { field: "groundImages", label: "Ground" },
+  { field: "amenityImages", label: "Amenities" },
+  { field: "locationImages", label: "Location" },
+  { field: "sportsImages", label: "Sports" },
+];
+const TURF_IMAGE_UPLOAD_FIELDS = [
+  "images",
+  ...FEATURED_TURF_IMAGE_FIELDS.map((item) => item.field),
+  ...COLLECTION_TURF_IMAGE_FIELDS.map((item) => item.field),
+];
 const PROTOTYPE_REVENUE_SERIES = [
   { name: "Jan", previous: 72000, revenue: 84000 },
   { name: "Feb", previous: 78000, revenue: 96000 },
@@ -91,7 +123,7 @@ const PROTOTYPE_BOOKING_INSIGHTS = [
   { label: "Cancellation Rate", value: "4%" },
 ];
 const PROTOTYPE_SUGGESTED_ACTIONS = [
-  "Review weekend pricing",
+  "Adjust weekend pricing",
   "Open evening slots",
   "Confirm pending payouts",
 ];
@@ -122,7 +154,7 @@ const PROTOTYPE_PERFORMANCE_INSIGHTS = [
   { label: "Booking Growth", value: "+12%" },
   { label: "Revenue Growth", value: "+18%" },
   { label: "Weekend Utilization", value: "92%" },
-  { label: "Customer Satisfaction", value: "4.8/5" },
+  { label: "Repeat Booking Rate", value: "68%" },
 ];
 // eslint-disable-next-line no-unused-vars
 const PEAK_QUICK_ACTIONS = [
@@ -131,6 +163,12 @@ const PEAK_QUICK_ACTIONS = [
   { href: "/owner/revenue", label: "View Earnings" },
   { href: "/owner/add-turf", label: "Create Venue" },
 ];
+
+function futureDate(days = 1) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 
 function PageTitle({ eyebrow, title, subtitle, action }) {
   return (
@@ -147,6 +185,18 @@ function PageTitle({ eyebrow, title, subtitle, action }) {
 
 function validOptions(values = [], options) {
   return [...new Set(values)].filter((value) => options.includes(value));
+}
+
+function uniqueMedia(values = []) {
+  return [...new Set(values.flat().filter(Boolean))];
+}
+
+function moveItem(values = [], fromIndex, direction) {
+  const toIndex = fromIndex + direction;
+  if (toIndex < 0 || toIndex >= values.length) return values;
+  const next = [...values];
+  [next[fromIndex], next[toIndex]] = [next[toIndex], next[fromIndex]];
+  return next;
 }
 
 function titleCase(value = "") {
@@ -188,21 +238,73 @@ function OwnerApprovalBanner({ dashboard = {} }) {
 function VenueStatusBadge({ status }) {
   const statusValue = String(status || "PENDING").toUpperCase();
   const variants = {
+    ACTIVE: "success",
+    ARCHIVED: "default",
     DRAFT: "default",
+    EXPIRED: "warning",
     LIVE: "success",
+    NEED_CHANGES: "warning",
     PENDING: "warning",
     REJECTED: "danger",
     SUSPENDED: "danger",
   };
   const labels = {
+    ACTIVE: "Active",
+    ARCHIVED: "Archived",
     DRAFT: "Draft",
+    EXPIRED: "Expired",
     LIVE: "Live",
+    NEED_CHANGES: "Needs Changes",
     PENDING: "Pending Approval",
     REJECTED: "Rejected",
     SUSPENDED: "Suspended",
   };
 
   return <Badge variant={variants[statusValue] || "warning"}>{labels[statusValue] || status}</Badge>;
+}
+
+function VenueApprovalPanel({ turf }) {
+  const submittedAt = turf.submittedAt ? new Date(turf.submittedAt).toLocaleDateString() : "Pending";
+  const reviewedAt = turf.reviewedAt ? new Date(turf.reviewedAt).toLocaleDateString() : "";
+  const progress = Math.min(Math.max(Number(turf.reviewProgress || 50), 0), 100);
+
+  return (
+    <div className="rounded-xl border border-surface-border bg-surface-low p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="muted-label text-primary">Approval Timeline</p>
+          <h2 className="mt-2 text-xl font-black">Platform Approval</h2>
+        </div>
+        <VenueStatusBadge status={turf.statusValue} />
+      </div>
+      <div className="mt-5 h-2 rounded-full bg-surface-mid">
+        <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+      </div>
+      <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+        <p className="rounded-lg bg-white p-3"><span className="block text-ink-muted">Submission Date</span><strong>{submittedAt}</strong></p>
+        <p className="rounded-lg bg-white p-3"><span className="block text-ink-muted">Estimated Approval</span><strong>1-2 business days</strong></p>
+        <p className="rounded-lg bg-white p-3"><span className="block text-ink-muted">Visibility</span><strong>{turf.visibility}</strong></p>
+        <p className="rounded-lg bg-white p-3"><span className="block text-ink-muted">Published</span><strong>{turf.isPublished ? "Yes" : "No"}</strong></p>
+      </div>
+      {reviewedAt && <p className="mt-4 text-sm font-bold text-ink-muted">Last updated on {reviewedAt}.</p>}
+      {turf.rejectionReason && (
+        <p className="mt-4 rounded-xl border border-danger/20 bg-danger-soft p-3 text-sm font-bold text-danger">
+          {turf.rejectionReason}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const VENUE_STATUS_FILTERS = [
+  { status: "PENDING", label: "Pending Approval", icon: "Clock", tone: "warning" },
+  { status: "APPROVED", label: "Public Venues", icon: "BadgeCheck", tone: "accent" },
+  { status: "NEED_CHANGES", label: "Needs Changes", icon: "FileText", tone: "secondary" },
+  { status: "REJECTED", label: "Rejected", icon: "X", tone: "primary" },
+];
+
+function ownerVenueStatusLabel(status) {
+  return VENUE_STATUS_FILTERS.find((item) => item.status === status)?.label || "All Venues";
 }
 
 function OptionGroup({ options, selected, onToggle }) {
@@ -280,7 +382,11 @@ function sumAmounts(items = []) {
 }
 
 function paymentRevenue(payment = {}) {
-  return Number(payment.ownerRevenue ?? payment.amount ?? 0);
+  const amount = Number(payment.amount || 0);
+  const baseRevenue = Number(payment.ownerRevenue ?? payment.amount ?? 0);
+  const refundedAmount = Number(payment.refundedAmount || 0);
+  const remainingRatio = amount > 0 ? Math.max(0, (amount - refundedAmount) / amount) : 1;
+  return Number((baseRevenue * remainingRatio).toFixed(2));
 }
 
 function bookingRevenue(booking = {}) {
@@ -288,7 +394,7 @@ function bookingRevenue(booking = {}) {
 }
 
 function isPaidPayment(payment = {}) {
-  return String(payment.paymentStatus || payment.status || "").toLowerCase() === "paid";
+  return ["paid", "partially_refunded"].includes(String(payment.paymentStatus || payment.status || "").toLowerCase());
 }
 
 function percent(part, total) {
@@ -495,7 +601,7 @@ function buildPeakBookingSummary({ bookings = [], payments = [] }) {
       .reduce((sum, payment) => sum + paymentRevenue(payment), 0);
   const upcoming = bookings.filter((booking) => {
     const date = bookingStartDateTime(booking);
-    return date && date >= today && ["confirmed", "pending"].includes(booking.statusValue);
+    return date && date >= today && ["confirmed", "pending", "upcoming"].includes(booking.statusValue);
   }).length;
   const completed = bookings.filter((booking) => booking.statusValue === "completed").length;
   const cancelled = bookings.filter((booking) => booking.statusValue === "cancelled").length;
@@ -541,7 +647,7 @@ function buildUpcomingBookingRows(bookings = []) {
   const now = new Date();
   const rows = bookings
     .map((booking) => ({ booking, startsAt: bookingStartDateTime(booking) }))
-    .filter(({ booking, startsAt }) => startsAt && startsAt >= now && ["confirmed", "pending"].includes(booking.statusValue))
+    .filter(({ booking, startsAt }) => startsAt && startsAt >= now && ["confirmed", "pending", "upcoming"].includes(booking.statusValue))
     .sort((first, second) => first.startsAt - second.startsAt)
     .slice(0, 5)
     .map(({ booking }) => ({
@@ -610,7 +716,7 @@ function buildPeakPerformanceInsights({ bookings = [], payments = [] }) {
     { label: "Booking Growth", value: `+${bookingGrowth || 12}%` },
     { label: "Revenue Growth", value: `+${revenueGrowth || 18}%` },
     { label: "Weekend Utilization", value: percent(weekendBookings, Math.max(1, bookings.length)) },
-    { label: "Customer Satisfaction", value: completed ? "4.8/5" : PROTOTYPE_PERFORMANCE_INSIGHTS[3].value },
+    { label: "Repeat Booking Rate", value: completed ? "68%" : PROTOTYPE_PERFORMANCE_INSIGHTS[3].value },
   ];
 }
 
@@ -653,7 +759,7 @@ function buildRevenueForecast({ bookings = [], dashboard = {}, hasRevenueData = 
   if (!hasRevenueData) return PROTOTYPE_REVENUE_FORECAST;
 
   const paidPayments = payments.filter(isPaidPayment);
-  const upcomingBookings = bookings.filter((booking) => ["confirmed", "pending"].includes(booking.statusValue));
+  const upcomingBookings = bookings.filter((booking) => ["confirmed", "pending", "upcoming"].includes(booking.statusValue));
   const averageBookingValue = paidPayments.length
     ? paidPayments.reduce((sum, payment) => sum + paymentRevenue(payment), 0) / paidPayments.length
     : Number(dashboard.revenue || 0) / Math.max(1, Number(dashboard.totalBookings || bookings.length || 1));
@@ -730,14 +836,14 @@ function buildBookingInsights(bookings = [], turfs = []) {
   ];
 }
 
-function MetricSummaryCard({ title, items = [] }) {
+function MetricSummaryCard({ title, items = [], className, contentClassName, gridClassName }) {
   return (
-    <Card>
-      <CardContent>
+    <Card className={className}>
+      <CardContent className={contentClassName}>
         <h2 className="text-2xl font-black">{title}</h2>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className={cn("mt-5 grid gap-3 sm:grid-cols-2", gridClassName)}>
           {items.map((item) => (
-            <div className="rounded-xl bg-surface-low p-3" key={item.label}>
+            <div className="min-h-[76px] rounded-xl bg-surface-low p-3" key={item.label}>
               <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">{item.label}</p>
               <p className="mt-1 font-black text-ink">{item.value}</p>
             </div>
@@ -748,9 +854,9 @@ function MetricSummaryCard({ title, items = [] }) {
   );
 }
 
-function TransactionPreviewCard({ rows = [] }) {
+function TransactionPreviewCard({ rows = [], className }) {
   return (
-    <Card>
+    <Card className={className}>
       <CardContent>
         <h2 className="text-2xl font-black">Recent Transactions</h2>
         <div className="mt-5 space-y-3">
@@ -772,9 +878,9 @@ function TransactionPreviewCard({ rows = [] }) {
   );
 }
 
-function PayoutPreviewCard({ rows = [] }) {
+function PayoutPreviewCard({ rows = [], className }) {
   return (
-    <Card>
+    <Card className={className}>
       <CardContent>
         <h2 className="text-2xl font-black">Upcoming Payouts</h2>
         <div className="mt-5 space-y-3">
@@ -793,38 +899,52 @@ function PayoutPreviewCard({ rows = [] }) {
   );
 }
 
-function PerformanceBars({ bookings = [], turfs = [] }) {
+function PerformanceBars({ bookings = [], turfs = [], className }) {
   const maxBookings = Math.max(
     1,
     ...turfs.map((turf) => bookings.filter((booking) => bookingTurfId(booking) === turf.id).length),
   );
+  const rows = turfs
+    .map((turf) => {
+      const turfBookings = bookings.filter((booking) => bookingTurfId(booking) === turf.id);
+      const utility = Math.round((turfBookings.length / maxBookings) * 100);
+      const revenue = turfBookings
+        .filter((booking) => booking.paymentStatus === "paid")
+        .reduce((sum, booking) => sum + booking.paid, 0);
+
+      return {
+        bookings: turfBookings.length,
+        id: turf.id,
+        name: turf.name || "Venue",
+        revenue,
+        utility,
+      };
+    })
+    .sort((first, second) => second.utility - first.utility || second.revenue - first.revenue || first.name.localeCompare(second.name));
 
   return (
-    <Card>
+    <Card className={className}>
       <CardContent>
-        <h2 className="text-2xl font-black">Venue Performance</h2>
-        <div className="mt-6 space-y-5">
-          {turfs.map((turf) => {
-            const turfBookings = bookings.filter((booking) => bookingTurfId(booking) === turf.id);
-            const utility = Math.round((turfBookings.length / maxBookings) * 100);
-            const revenue = turfBookings
-              .filter((booking) => booking.paymentStatus === "paid")
-              .reduce((sum, booking) => sum + booking.paid, 0);
-            return (
-            <div key={turf.id}>
-              <div className="mb-2 flex items-end justify-between">
-                <div>
-                  <p className="font-black">{turf.name}</p>
-                  <p className="text-sm text-ink-muted">{currency(revenue)} Revenue</p>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-2xl font-black">Venue Performance</h2>
+          <Badge variant="primary">{rows.length} venues</Badge>
+        </div>
+        <div className="mt-5 max-h-[520px] space-y-3 overflow-y-auto pr-1">
+          {rows.map((turf) => (
+            <div className="rounded-xl bg-surface-low p-3" key={turf.id}>
+              <div className="mb-2 flex items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-black">{turf.name}</p>
+                  <p className="text-sm text-ink-muted">{currency(turf.revenue)} Revenue</p>
                 </div>
-                <p className="font-black text-primary">{utility}% Utility</p>
+                <p className="shrink-0 font-black text-primary">{turf.utility}% Utility</p>
               </div>
               <div className="h-2 rounded-full bg-surface-high">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${utility}%` }} />
+                <div className="h-full rounded-full bg-primary" style={{ width: `${turf.utility}%` }} />
               </div>
             </div>
-          )})}
-          {!turfs.length && <p className="text-sm text-ink-muted">Add a venue to see performance.</p>}
+          ))}
+          {!rows.length && <p className="text-sm text-ink-muted">Add a venue to see performance.</p>}
         </div>
       </CardContent>
     </Card>
@@ -846,7 +966,7 @@ export function OwnerDashboardPage() {
     ? (hasSeriesActivity(monthlySeries) ? monthlySeries : paymentSeries)
     : PROTOTYPE_REVENUE_SERIES;
   const dashboardRevenue = hasRevenueData
-    ? Number(dashboard.revenue || paidPayments.reduce((sum, payment) => sum + paymentRevenue(payment), 0))
+    ? Number(dashboard.finalizedRevenue ?? dashboard.completedRevenue ?? dashboard.revenue ?? paidPayments.reduce((sum, payment) => sum + paymentRevenue(payment), 0))
     : 12000;
   const recentTransactions = buildRecentTransactions(paidPayments, hasRevenueData);
   const upcomingPayouts = buildUpcomingPayouts(paidPayments, hasRevenueData);
@@ -864,11 +984,12 @@ export function OwnerDashboardPage() {
     { label: "Live Bookings", value: String(bookingBreakdown.live ?? 0) },
     { label: "Cancelled Bookings", value: String(bookingBreakdown.cancelled ?? 0) },
   ];
+  const pendingVenues = turfs.filter((turf) => turf.approvalStatus === "PENDING").length;
   const ownerKpis = [
-    { label: "Total Revenue", value: currency(dashboardRevenue), trend: hasRevenueData ? "Paid bookings" : "Preview forecast", icon: "Banknote" },
-    { label: "Bookings", value: String(dashboard.totalBookings || 0), trend: "All statuses", icon: "ClipboardList" },
-    { label: "Venues", value: String(dashboard.totalTurfs || 0), trend: "Owned venues", icon: "Landmark" },
-    { label: "Pending", value: String(bookings.filter((item) => item.statusValue === "pending").length), trend: "Needs review", icon: "Clock" },
+    { label: "Total Revenue", value: currency(dashboardRevenue), trend: hasRevenueData ? "Completed bookings" : "Preview forecast", icon: "Banknote", to: "/owner/revenue" },
+    { label: "Bookings", value: String(dashboard.totalBookings || 0), trend: "All statuses", icon: "ClipboardList", to: "/owner/bookings" },
+    { label: "Venues", value: String(dashboard.totalTurfs || turfs.length || 0), trend: "Owned venues", icon: "Landmark", to: "/owner/turfs" },
+    { label: "Pending", value: String(pendingVenues), trend: "Needs approval", icon: "Clock", to: "/owner/turfs?status=PENDING" },
   ];
   const today = new Date().toISOString().slice(0, 10);
   const matches = bookings
@@ -901,7 +1022,7 @@ export function OwnerDashboardPage() {
       <OwnerApprovalBanner dashboard={dashboard} />
       <div className="metric-grid">
         {ownerKpis.map((kpi, index) => (
-          <StatsCard delay={index * 0.06} icon={kpi.icon} key={kpi.label} label={kpi.label} trend={kpi.trend} value={kpi.value} />
+          <StatsCard delay={index * 0.06} icon={kpi.icon} key={kpi.label} label={kpi.label} to={kpi.to} trend={kpi.trend} value={kpi.value} />
         ))}
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -948,23 +1069,42 @@ export function OwnerDashboardPage() {
           </CardContent>
         </Card>
       )}
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.8fr]">
-        <div className="space-y-6">
-          <MetricSummaryCard items={revenueForecast} title="Revenue Forecast" />
-          <TransactionPreviewCard rows={recentTransactions} />
-        </div>
-        <div className="space-y-6">
-          <PayoutPreviewCard rows={upcomingPayouts} />
-          <MetricSummaryCard items={bookingStatusSummary} title="Booking Status" />
-          {perSportRevenue.length > 0 && <MetricSummaryCard items={perSportRevenue} title="Per Sport Revenue" />}
-          <MetricSummaryCard items={bookingInsights} title="Booking Insights" />
-        </div>
+      <div className="mt-6 grid gap-6 xl:grid-cols-12">
+        <MetricSummaryCard
+          className="xl:col-span-7"
+          gridClassName="md:grid-cols-2 2xl:grid-cols-4"
+          items={revenueForecast}
+          title="Revenue Forecast"
+        />
+        <MetricSummaryCard
+          className="xl:col-span-5"
+          items={bookingInsights}
+          title="Booking Insights"
+        />
+        <TransactionPreviewCard className="xl:col-span-4" rows={recentTransactions} />
+        <PayoutPreviewCard className="xl:col-span-4" rows={upcomingPayouts} />
+        <MetricSummaryCard
+          className="xl:col-span-4"
+          gridClassName="md:grid-cols-2"
+          items={bookingStatusSummary}
+          title="Booking Status"
+        />
+        {perSportRevenue.length > 0 && (
+          <MetricSummaryCard
+            className="xl:col-span-4"
+            items={perSportRevenue}
+            title="Per Sport Revenue"
+          />
+        )}
+        <MetricSummaryCard
+          className={perSportRevenue.length > 0 ? "xl:col-span-8" : "xl:col-span-12"}
+          gridClassName="md:grid-cols-2 xl:grid-cols-4"
+          items={venueHighlights}
+          title="Venue Performance Highlights"
+        />
       </div>
-      <div className="mt-6">
-        <MetricSummaryCard items={venueHighlights} title="Venue Performance Highlights" />
-      </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <Card>
+      <div className="mt-6 grid items-start gap-6 xl:grid-cols-12">
+        <Card className="xl:col-span-5">
           <CardContent>
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-black">Peak Hours</h2>
@@ -988,9 +1128,21 @@ export function OwnerDashboardPage() {
                 </Fragment>
               ))}
             </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {[
+                { label: "Morning", value: "08:00" },
+                { label: "Afternoon", value: "12:00" },
+                { label: "Evening", value: "18:00" },
+              ].map((slot) => (
+                <div className="rounded-xl bg-surface-low p-3" key={slot.label}>
+                  <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">{slot.label}</p>
+                  <p className="mt-1 font-black text-ink">{slot.value}</p>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
-        <PerformanceBars bookings={bookings} turfs={turfs} />
+        <PerformanceBars bookings={bookings} className="xl:col-span-7" turfs={turfs} />
       </div>
     </div>
   );
@@ -1001,11 +1153,31 @@ export function MyTurfsPage() {
   const [searchParams] = useSearchParams();
   const { data: allTurfs = [] } = useMyTurfs();
   const deleteTurf = useDeleteTurf();
+  const resubmitTurf = useResubmitTurf();
   const ownerPending = isOwnerPending(user);
   const search = (searchParams.get("search") || "").trim().toLowerCase();
+  const rawStatusFilter = String(searchParams.get("status") || "").trim().toUpperCase();
+  const statusFilter = VENUE_STATUS_FILTERS.some((item) => item.status === rawStatusFilter) ? rawStatusFilter : "";
+  const visibleStatusLabel = ownerVenueStatusLabel(statusFilter);
+  const filteredByStatus = statusFilter
+    ? allTurfs.filter((turf) => turf.approvalStatus === statusFilter)
+    : allTurfs;
   const turfs = allTurfs.filter((turf) =>
-    !search || [turf.name, turf.city, turf.location, turf.format].some((value) => String(value || "").toLowerCase().includes(search)),
+    (!statusFilter || turf.approvalStatus === statusFilter) &&
+    (!search || [turf.name, turf.city, turf.location, turf.format].some((value) => String(value || "").toLowerCase().includes(search))),
   );
+  const filterHref = (status) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("status", status);
+    return `/owner/turfs?${params.toString()}`;
+  };
+  const clearFilterHref = (() => {
+    const params = new URLSearchParams(searchParams);
+    params.delete("status");
+    const query = params.toString();
+    return query ? `/owner/turfs?${query}` : "/owner/turfs";
+  })();
+
   return (
     <div>
       <PageTitle
@@ -1027,19 +1199,73 @@ export function MyTurfsPage() {
         title="My Venues"
       />
       <OwnerApprovalBanner />
-      <div className="grid gap-5 lg:grid-cols-3">
-        {turfs.map((turf) => (
-          <TurfCard actionHref={`/owner/turfs/${turf.id}`} actionLabel="Manage" href={`/owner/turfs/${turf.id}`} key={turf.id} turf={turf} />
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
+        {VENUE_STATUS_FILTERS.map((filter) => (
+          <StatsCard
+            icon={filter.icon}
+            key={filter.status}
+            label={filter.label}
+            to={filterHref(filter.status)}
+            tone={filter.tone}
+            trend={statusFilter === filter.status ? "Viewing" : "View"}
+            value={String(allTurfs.filter((turf) => turf.approvalStatus === filter.status).length)}
+          />
         ))}
+      </div>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-surface-border bg-white px-4 py-3">
+        <div>
+          <p className="muted-label text-primary">Venue List</p>
+          <h2 className="text-xl font-black">
+            {statusFilter ? `${visibleStatusLabel} (${filteredByStatus.length})` : `All Venues (${allTurfs.length})`}
+          </h2>
+          <p className="text-sm text-ink-muted">
+            Open any venue below to view location, pricing, approval details, images, and booking settings.
+          </p>
+        </div>
+        {statusFilter && (
+          <Button as={Link} to={clearFilterHref} variant="outline">
+            View All Venues
+          </Button>
+        )}
+      </div>
+      <div className="grid items-start gap-5 lg:grid-cols-3" id="owner-venues-list">
+        {turfs.map((turf) => {
+          const canResubmit = ["REJECTED", "NEED_CHANGES", "EXPIRED"].includes(turf.approvalStatus);
+
+          return (
+            <Card className="overflow-hidden" key={turf.id}>
+              <TurfCard actionHref={`/owner/turfs/${turf.id}`} actionLabel="Manage" className="border-0 shadow-none" href={`/owner/turfs/${turf.id}`} stretch={false} turf={turf} />
+              <div className="border-t border-surface-border p-4">
+                <VenueApprovalPanel turf={turf} />
+                {canResubmit && (
+                  <Button
+                    className="mt-4 w-full"
+                    disabled={resubmitTurf.isPending}
+                    onClick={async () => {
+                      try {
+                        await resubmitTurf.mutateAsync(turf.id);
+                        notify("Venue resubmitted for approval.");
+                      } catch (error) {
+                        notify(error.response?.data?.message || error.message);
+                      }
+                    }}
+                  >
+                    Resubmit
+                  </Button>
+                )}
+              </div>
+            </Card>
+          );
+        })}
       </div>
       {!turfs.length && (
         <Card>
           <CardContent className="text-center">
-            <h2 className="text-xl font-black">{search ? "No matching venues" : "No venues yet"}</h2>
+            <h2 className="text-xl font-black">{search || statusFilter ? "No matching venues" : "No venues yet"}</h2>
             <p className="mt-2 text-sm text-ink-muted">
-              {search ? "Try a venue name, city, or sport." : "Submit your first venue to begin the approval flow."}
+              {search || statusFilter ? "Try another status, venue name, city, or sport." : "Submit your first venue to begin the approval flow."}
             </p>
-            {!search && (
+            {!search && !statusFilter && (
               ownerPending
                 ? <Button className="mt-5" disabled>Add Venue</Button>
                 : <Button as={Link} className="mt-5" to="/owner/add-turf">Add Venue</Button>
@@ -1055,8 +1281,20 @@ export function MyTurfsPage() {
             turf.sport,
             currency(turf.price),
             <VenueStatusBadge key={`${turf.id}-status`} status={turf.statusValue} />,
-            <div className="flex gap-2" key={`${turf.id}-actions`}>
+            <div className="flex flex-wrap gap-2" key={`${turf.id}-actions`}>
               <Button as={Link} size="sm" to={`/owner/add-turf?edit=${turf.id}`} variant="outline">Edit</Button>
+              {["REJECTED", "NEED_CHANGES", "EXPIRED"].includes(turf.approvalStatus) && (
+                <Button
+                  disabled={resubmitTurf.isPending}
+                  onClick={() => resubmitTurf.mutate(turf.id, {
+                    onError: (error) => notify(error.response?.data?.message || error.message),
+                    onSuccess: () => notify("Venue resubmitted for approval."),
+                  })}
+                  size="sm"
+                >
+                  Resubmit
+                </Button>
+              )}
               <Button
                 onClick={() => {
                   if (window.confirm(`Delete ${turf.name}? This cannot be undone.`)) deleteTurf.mutate(turf.id);
@@ -1090,14 +1328,22 @@ export function TurfDetailsOwnerPage() {
         subtitle="Operational summary, gallery, pricing, and live rules."
         title={turf.name}
       />
+      <div className="mb-6">
+        <VenueApprovalPanel turf={turf} />
+      </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <Card className="overflow-hidden">
-          <img alt={turf.name} className="h-80 w-full object-cover" onError={handleImageError} src={turf.image} />
+          <img alt={turf.name} className="h-80 w-full object-cover" data-fallback-src={turf.heroImage} onError={handleImageError} src={turf.coverImage || turf.heroImage || turf.image} />
           <CardContent>
             <h2 className="text-2xl font-black">Published Experience</h2>
             <p className="mt-3 leading-7 text-ink-muted">
               {turf.description}
             </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-4">
+              {turf.gallery.slice(0, 4).map((image) => (
+                <img alt={`${turf.name} gallery`} className="h-24 w-full rounded-xl object-cover" data-fallback-src={turf.heroImage} key={image} onError={handleImageError} src={image} />
+              ))}
+            </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-4">
               {turf.amenities.map((amenity) => (
                 <Badge key={amenity} variant="primary">{amenity}</Badge>
@@ -1121,13 +1367,19 @@ export function AddTurfWizardPage() {
   const updateTurf = useUpdateTurf();
   const ownerPending = isOwnerPending(user);
   const [message, setMessage] = useState("");
-  const [imagePreviews, setImagePreviews] = useState([]);
+  const [coordinatesTouched, setCoordinatesTouched] = useState(false);
+  const [geocodeStatus, setGeocodeStatus] = useState("");
+  const [selectedImageFiles, setSelectedImageFiles] = useState({});
+  const [imagePreviews, setImagePreviews] = useState({});
+  const [existingGallery, setExistingGallery] = useState([]);
   const [form, setForm] = useState({
     address: "",
     amenities: [],
     city: "",
     description: "",
+    latitude: "",
     location: "",
+    longitude: "",
     name: "",
     pricePerHour: "",
     sportRates: {},
@@ -1142,17 +1394,58 @@ export function AddTurfWizardPage() {
       amenities: validOptions(editingTurf.amenities || [], TURF_AMENITY_OPTIONS),
       city: editingTurf.city || "",
       description: editingTurf.description || "",
+      latitude: editingTurf.latitude || "",
       location: editingTurf.location || "",
+      longitude: editingTurf.longitude || "",
       name: editingTurf.name || "",
       pricePerHour: String(editingTurf.price || ""),
       sportRates: editingTurf.sportRates || {},
       sportsSupported: validOptions(editingTurf.sportsSupported || [], TURF_SPORT_OPTIONS),
       state: editingTurf.state || "",
     });
+    setCoordinatesTouched(false);
+    setExistingGallery(uniqueMedia(editingTurf.gallery || []));
+    setImagePreviews({});
+    setSelectedImageFiles({});
   }, [editingTurf]);
+
+  useEffect(() => {
+    if (ownerPending || coordinatesTouched) return undefined;
+    const hasSearchText = form.address || form.location || form.city;
+    if (!hasSearchText) return undefined;
+
+    const timer = setTimeout(async () => {
+      try {
+        setGeocodeStatus("Resolving GPS coordinates...");
+        const data = responseData(await turfsApi.geocode({
+          address: form.address,
+          city: form.city,
+          location: form.location,
+          state: form.state,
+        }));
+        setForm((current) => ({
+          ...current,
+          latitude: data.latitude ? String(data.latitude) : current.latitude,
+          longitude: data.longitude ? String(data.longitude) : current.longitude,
+        }));
+        setGeocodeStatus("GPS coordinates resolved.");
+      } catch {
+        setGeocodeStatus("Enter latitude and longitude if this address is not found.");
+      }
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [coordinatesTouched, form.address, form.city, form.location, form.state, ownerPending]);
 
   function update(field) {
     return (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
+  }
+
+  function updateCoordinate(field) {
+    return (event) => {
+      setCoordinatesTouched(true);
+      setForm((current) => ({ ...current, [field]: event.target.value }));
+    };
   }
 
   function toggleOption(field, option) {
@@ -1178,6 +1471,40 @@ export function AddTurfWizardPage() {
         [sport]: event.target.value,
       },
     }));
+  }
+
+  function setImageFiles(field, files) {
+    const nextFiles = Array.from(files || []);
+    const previews = nextFiles.map((file) => URL.createObjectURL(file));
+    setSelectedImageFiles((current) => ({ ...current, [field]: nextFiles }));
+    setImagePreviews((current) => ({ ...current, [field]: previews }));
+  }
+
+  function updateImagePreview(field) {
+    return (event) => setImageFiles(field, event.target.files);
+  }
+
+  function previewImagesFor(field) {
+    if (imagePreviews[field]?.length) return imagePreviews[field];
+    if (field === "images") return existingGallery.length ? existingGallery : [assetImages.stadium, assetImages.indoor, assetImages.training];
+
+    const current = editingTurf?.[field];
+    if (Array.isArray(current) && current.length) return current;
+    if (typeof current === "string" && current) return [current];
+    return [];
+  }
+
+  function handleImageDrop(field) {
+    return (event) => {
+      event.preventDefault();
+      setImageFiles(field, event.dataTransfer.files);
+    };
+  }
+
+  function appendUploadFiles(payload) {
+    TURF_IMAGE_UPLOAD_FIELDS.forEach((field) => {
+      (selectedImageFiles[field] || []).forEach((file) => payload.append(field, file));
+    });
   }
 
   async function submitVenue(event) {
@@ -1221,7 +1548,10 @@ export function AddTurfWizardPage() {
         payload.append(key, value);
       }
     });
-    Array.from(event.currentTarget.elements.images?.files || []).forEach((file) => payload.append("images", file));
+    if (editId) {
+      payload.append("gallery", JSON.stringify(existingGallery));
+    }
+    appendUploadFiles(payload);
 
     try {
       if (editId) {
@@ -1272,31 +1602,116 @@ export function AddTurfWizardPage() {
                 <Input onChange={update("location")} placeholder="Area or district" required value={form.location} />
                 <Input onChange={update("city")} placeholder="City" required value={form.city} />
                 <Input onChange={update("state")} placeholder="State" required value={form.state} />
+                <Input onChange={updateCoordinate("latitude")} placeholder="Latitude" required step="any" type="number" value={form.latitude} />
+                <Input onChange={updateCoordinate("longitude")} placeholder="Longitude" required step="any" type="number" value={form.longitude} />
               </div>
               <div className="relative mt-4 h-56 overflow-hidden rounded-2xl">
-                <img alt="Map" className="h-full w-full object-cover grayscale" src={assetImages.map} />
-                <div className="absolute inset-0 grid place-items-center">
-                  <div className="grid h-12 w-12 place-items-center rounded-full bg-primary text-white">
-                    <MapPin />
-                  </div>
-                </div>
+                <VenueMap className="h-full w-full" label={form.name || "Venue pin"} latitude={form.latitude} longitude={form.longitude} />
               </div>
+              {geocodeStatus && <p className="mt-2 text-sm font-bold text-ink-muted">{geocodeStatus}</p>}
             </section>
             <section>
               <h2 className="text-2xl font-black">Gallery</h2>
-              <Input
-                accept="image/*"
-                className="mt-4"
-                multiple
-                name="images"
-                onChange={(event) => {
-                  setImagePreviews(Array.from(event.target.files || []).map((file) => URL.createObjectURL(file)));
-                }}
-                type="file"
-              />
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                {(imagePreviews.length ? imagePreviews : editingTurf?.gallery?.length ? editingTurf.gallery : [assetImages.stadium, assetImages.indoor, assetImages.training]).map((image) => (
-                  <img alt="Gallery upload preview" className="h-40 rounded-xl object-cover" key={image} onError={handleImageError} src={image} />
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                {FEATURED_TURF_IMAGE_FIELDS.map(({ field, label }) => {
+                  const preview = previewImagesFor(field)[0];
+
+                  return (
+                    <label
+                      className="block rounded-xl border border-dashed border-surface-outline bg-surface-low/60 p-4"
+                      key={field}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={handleImageDrop(field)}
+                    >
+                      <span className="flex items-center gap-2 text-sm font-black text-ink">
+                        <ImageIcon size={16} />
+                        {label}
+                      </span>
+                      <Input accept="image/*" className="mt-3" name={field} onChange={updateImagePreview(field)} type="file" />
+                      <div className="mt-3 aspect-[16/9] overflow-hidden rounded-xl bg-white">
+                        {preview ? (
+                          <img alt={`${label} preview`} className="h-full w-full object-cover" onError={handleImageError} src={preview} />
+                        ) : (
+                          <div className="grid h-full place-items-center text-ink-muted">
+                            <UploadCloud size={24} />
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <div
+                className="mt-5 rounded-xl border border-dashed border-surface-outline bg-surface-low/60 p-4"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={handleImageDrop("images")}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 text-sm font-black text-ink">
+                    <GripVertical size={16} />
+                    Gallery Order
+                  </span>
+                  <Input accept="image/*" className="max-w-xs" multiple name="images" onChange={updateImagePreview("images")} type="file" />
+                </div>
+                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                  {previewImagesFor("images").map((image, index) => (
+                    <div className="overflow-hidden rounded-xl border border-surface-border bg-white" key={image}>
+                      <img alt="Gallery upload preview" className="h-40 w-full object-cover" onError={handleImageError} src={image} />
+                      {existingGallery.includes(image) && (
+                        <div className="flex items-center justify-between gap-2 p-2">
+                          <Button
+                            aria-label="Move image up"
+                            disabled={index === 0}
+                            onClick={() => setExistingGallery((current) => moveItem(current, index, -1))}
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <ArrowUp size={16} />
+                          </Button>
+                          <Button
+                            aria-label="Move image down"
+                            disabled={index === existingGallery.length - 1}
+                            onClick={() => setExistingGallery((current) => moveItem(current, index, 1))}
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <ArrowDown size={16} />
+                          </Button>
+                          <Button
+                            aria-label="Remove image"
+                            onClick={() => setExistingGallery((current) => current.filter((item) => item !== image))}
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                {COLLECTION_TURF_IMAGE_FIELDS.map(({ field, label }) => (
+                  <label
+                    className="block rounded-xl border border-dashed border-surface-outline bg-surface-low/60 p-4"
+                    key={field}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={handleImageDrop(field)}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-black text-ink">
+                      <ImageIcon size={16} />
+                      {label}
+                    </span>
+                    <Input accept="image/*" className="mt-3" multiple name={field} onChange={updateImagePreview(field)} type="file" />
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {previewImagesFor(field).slice(0, 6).map((image) => (
+                        <img alt={`${label} preview`} className="h-24 w-full rounded-lg object-cover" key={image} onError={handleImageError} src={image} />
+                      ))}
+                    </div>
+                  </label>
                 ))}
               </div>
             </section>
@@ -1330,7 +1745,7 @@ export function AddTurfWizardPage() {
               <Textarea className="mt-4" onChange={update("description")} placeholder="Venue description and rules" value={form.description} />
             </section>
             <section className="rounded-2xl bg-primary-soft p-5">
-              <h2 className="text-2xl font-black">Review & Publish</h2>
+              <h2 className="text-2xl font-black">Confirm & Publish</h2>
               <p className="mt-2 text-sm text-ink-muted">
                 Preview validates required data, image coverage, price bands, slot rules, and publish readiness.
               </p>
@@ -1737,12 +2152,12 @@ export function RevenueDashboardPage() {
     ? (hasSeriesActivity(realRevenueSeries) ? realRevenueSeries : paymentRevenueSeries)
     : PROTOTYPE_REVENUE_SERIES;
   const currentMonthRevenue = chartData[chartData.length - 1]?.revenue || 0;
-  const totalRevenue = hasEarningsData ? Number(dashboard.revenue || sumAmounts(paid)) : sumAmounts(insightPaid);
+  const totalRevenue = hasEarningsData ? Number(dashboard.finalizedRevenue ?? dashboard.completedRevenue ?? dashboard.revenue ?? sumAmounts(paid)) : sumAmounts(insightPaid);
   const todayRevenue = hasEarningsData ? Number(dashboard.todayRevenue || 0) : 6200;
   const weeklyRevenue = hasEarningsData ? Number(dashboard.weeklyRevenue || 0) : 47000;
   const monthlyRevenue = hasEarningsData ? Number(dashboard.monthlyRevenue || currentMonthRevenue) : currentMonthRevenue;
   const pendingRevenue = hasEarningsData ? Number(dashboard.pendingRevenue || 0) : 2400;
-  const completedRevenue = hasEarningsData ? Number(dashboard.completedRevenue || totalRevenue) : totalRevenue;
+  const completedRevenue = hasEarningsData ? Number(dashboard.completedRevenue ?? dashboard.finalizedRevenue ?? totalRevenue) : totalRevenue;
   const refundedRevenue = hasEarningsData ? Number(dashboard.refundedRevenue || 0) : 0;
   const averageBookingValue = insightPaid.length ? totalRevenue / insightPaid.length : 0;
   const completedBookings = bookings.filter((booking) => booking.statusValue === "completed").length;
@@ -1794,92 +2209,100 @@ export function RevenueDashboardPage() {
         <StatsCard icon="Banknote" label="Weekly Revenue" trend="Last 7 days" value={currency(weeklyRevenue)} tone="accent" />
         <StatsCard icon="BadgeCheck" label="Monthly Revenue" trend="This month" value={currency(monthlyRevenue)} tone="warning" />
       </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.8fr]">
-        <div className="space-y-6">
-          {!hasEarningsData && (
-            <Card>
-              <CardContent>
-                <p className="font-black text-ink">No earnings data yet. Revenue insights will appear as bookings are completed.</p>
-                <p className="mt-2 text-sm text-ink-muted">Prototype preview data is shown below so the earnings workspace remains useful during demos.</p>
-              </CardContent>
-            </Card>
-          )}
-          <ChartPanel data={chartData} subtitle="Last 6 months earnings" title="Revenue Movement" />
-          <MetricSummaryCard items={revenueForecast} title="Revenue Forecast" />
-          <div className="grid gap-4 md:grid-cols-2">
-            <TransactionPreviewCard rows={recentTransactions} />
-            <PayoutPreviewCard rows={upcomingPayouts} />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardContent>
-                <h2 className="text-2xl font-black">Revenue Overview</h2>
-                <div className="mt-5 space-y-3 text-sm">
-                  <p className="flex justify-between"><span className="text-ink-muted">Total Revenue</span><strong>{currency(totalRevenue)}</strong></p>
-                  <p className="flex justify-between"><span className="text-ink-muted">Pending Revenue</span><strong>{currency(pendingRevenue)}</strong></p>
-                  <p className="flex justify-between"><span className="text-ink-muted">Completed Revenue</span><strong>{currency(completedRevenue)}</strong></p>
-                  <p className="flex justify-between"><span className="text-ink-muted">Refunded Revenue</span><strong>{currency(refundedRevenue)}</strong></p>
-                  <p className="flex justify-between"><span className="text-ink-muted">Average Booking Value</span><strong>{currency(averageBookingValue)}</strong></p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <h2 className="text-2xl font-black">Booking Performance</h2>
-                <div className="mt-5 space-y-3 text-sm">
-                  <p className="flex justify-between"><span className="text-ink-muted">Total Bookings</span><strong>{bookingTotal}</strong></p>
-                  <p className="flex justify-between"><span className="text-ink-muted">Completed Bookings</span><strong>{bookingCompleted}</strong></p>
-                  <p className="flex justify-between"><span className="text-ink-muted">Cancelled Bookings</span><strong>{bookingCancelled}</strong></p>
-                  <p className="flex justify-between"><span className="text-ink-muted">Paid Bookings</span><strong>{insightPaid.length}</strong></p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardContent>
-                <h2 className="text-2xl font-black">Peak Hours Analysis</h2>
-                <div className="mt-5 space-y-3">
-                  {(peakHours.length ? peakHours : PROTOTYPE_PEAK_HOURS).map((hour) => (
-                    <div className="flex items-center justify-between rounded-xl bg-surface-low p-3" key={hour.label}>
-                      <span className="text-sm font-bold">{hour.label}</span>
-                      <span className="text-sm font-black text-primary">{hour.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <h2 className="text-2xl font-black">Payment Breakdown</h2>
-                <div className="mt-5 space-y-3">
-                  {paymentBreakdown.map((item) => (
-                    <div className="flex items-center justify-between rounded-xl bg-surface-low p-3" key={item.method}>
-                      <span className="text-sm font-bold">{item.method}</span>
-                      <span className="text-sm font-black text-primary">{currency(item.amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <MetricSummaryCard items={venueHighlights} title="Venue Performance Highlights" />
-          <MetricSummaryCard items={bookingInsights} title="Booking Insights" />
-          <Card>
+      <div className="mt-6 grid items-start gap-6 xl:grid-cols-12">
+        {!hasEarningsData && (
+          <Card className="xl:col-span-12">
             <CardContent>
-              <h2 className="text-2xl font-black">Top Performing Venues</h2>
-              <div className="mt-5 space-y-3">
-                {topVenues.map((venue) => (
-                  <div className="flex items-center justify-between rounded-xl bg-surface-low p-3" key={venue.venue}>
-                    <span className="text-sm font-bold">{venue.venue}</span>
-                    <span className="text-sm font-black text-primary">{currency(venue.amount)}</span>
-                  </div>
-                ))}
-              </div>
+              <p className="font-black text-ink">No earnings data yet. Revenue insights will appear as bookings are completed.</p>
+              <p className="mt-2 text-sm text-ink-muted">Prototype preview data is shown below so the earnings workspace remains useful during demos.</p>
             </CardContent>
           </Card>
+        )}
+        <div className="xl:col-span-7">
+          <ChartPanel data={chartData} subtitle="Last 6 months earnings" title="Revenue Movement" />
         </div>
-        <PerformanceBars bookings={bookings} turfs={turfs} />
+        <PerformanceBars bookings={bookings} className="xl:col-span-5" turfs={turfs} />
+        <MetricSummaryCard
+          className="xl:col-span-7"
+          gridClassName="md:grid-cols-2 2xl:grid-cols-4"
+          items={revenueForecast}
+          title="Revenue Forecast"
+        />
+        <MetricSummaryCard
+          className="xl:col-span-5"
+          items={bookingInsights}
+          title="Booking Insights"
+        />
+        <TransactionPreviewCard className="xl:col-span-4" rows={recentTransactions} />
+        <PayoutPreviewCard className="xl:col-span-4" rows={upcomingPayouts} />
+        <Card className="xl:col-span-4">
+          <CardContent>
+            <h2 className="text-2xl font-black">Revenue Overview</h2>
+            <div className="mt-5 space-y-3 text-sm">
+              <p className="flex justify-between"><span className="text-ink-muted">Total Revenue</span><strong>{currency(totalRevenue)}</strong></p>
+              <p className="flex justify-between"><span className="text-ink-muted">Pending Revenue</span><strong>{currency(pendingRevenue)}</strong></p>
+              <p className="flex justify-between"><span className="text-ink-muted">Completed Revenue</span><strong>{currency(completedRevenue)}</strong></p>
+              <p className="flex justify-between"><span className="text-ink-muted">Refunded Revenue</span><strong>{currency(refundedRevenue)}</strong></p>
+              <p className="flex justify-between"><span className="text-ink-muted">Average Booking Value</span><strong>{currency(averageBookingValue)}</strong></p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="xl:col-span-4">
+          <CardContent>
+            <h2 className="text-2xl font-black">Booking Performance</h2>
+            <div className="mt-5 space-y-3 text-sm">
+              <p className="flex justify-between"><span className="text-ink-muted">Total Bookings</span><strong>{bookingTotal}</strong></p>
+              <p className="flex justify-between"><span className="text-ink-muted">Completed Bookings</span><strong>{bookingCompleted}</strong></p>
+              <p className="flex justify-between"><span className="text-ink-muted">Cancelled Bookings</span><strong>{bookingCancelled}</strong></p>
+              <p className="flex justify-between"><span className="text-ink-muted">Paid Bookings</span><strong>{insightPaid.length}</strong></p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="xl:col-span-4">
+          <CardContent>
+            <h2 className="text-2xl font-black">Peak Hours Analysis</h2>
+            <div className="mt-5 space-y-3">
+              {(peakHours.length ? peakHours : PROTOTYPE_PEAK_HOURS).map((hour) => (
+                <div className="flex items-center justify-between rounded-xl bg-surface-low p-3" key={hour.label}>
+                  <span className="text-sm font-bold">{hour.label}</span>
+                  <span className="text-sm font-black text-primary">{hour.value}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="xl:col-span-4">
+          <CardContent>
+            <h2 className="text-2xl font-black">Payment Breakdown</h2>
+            <div className="mt-5 space-y-3">
+              {paymentBreakdown.map((item) => (
+                <div className="flex items-center justify-between rounded-xl bg-surface-low p-3" key={item.method}>
+                  <span className="text-sm font-bold">{item.method}</span>
+                  <span className="text-sm font-black text-primary">{currency(item.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <MetricSummaryCard
+          className="xl:col-span-8"
+          gridClassName="md:grid-cols-2 xl:grid-cols-4"
+          items={venueHighlights}
+          title="Venue Performance Highlights"
+        />
+        <Card className="xl:col-span-4">
+          <CardContent>
+            <h2 className="text-2xl font-black">Top Performing Venues</h2>
+            <div className="mt-5 space-y-3">
+              {topVenues.map((venue) => (
+                <div className="flex items-center justify-between rounded-xl bg-surface-low p-3" key={venue.venue}>
+                  <span className="text-sm font-bold">{venue.venue}</span>
+                  <span className="text-sm font-black text-primary">{currency(venue.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
       <div className="mt-6">
         <DataTable
@@ -1918,17 +2341,17 @@ export function OwnerBookingsPage() {
                 Confirm
               </Button>
             )}
-            {booking.statusValue === "confirmed" && (
+            {["confirmed", "upcoming"].includes(booking.statusValue) && (
               <Button disabled={ownerPending} onClick={() => updateStatus.mutate({ id: booking.id, status: "checked_in" })} size="sm">
                 Check In
               </Button>
             )}
-            {booking.statusValue === "checked_in" && (
+            {["checked_in", "ongoing"].includes(booking.statusValue) && (
               <Button disabled={ownerPending} onClick={() => updateStatus.mutate({ id: booking.id, status: "completed" })} size="sm">
                 Complete
               </Button>
             )}
-            {!["cancelled", "completed", "checked_in"].includes(booking.statusValue) && (
+            {!["cancelled", "completed", "checked_in", "ongoing"].includes(booking.statusValue) && (
               <Button disabled={ownerPending} onClick={() => updateStatus.mutate({ id: booking.id, status: "cancelled" })} size="sm" variant="danger">
                 Cancel
               </Button>
@@ -1940,22 +2363,274 @@ export function OwnerBookingsPage() {
   );
 }
 
-export function OwnerReviewsPage() {
-  const { data: reviews = [] } = useOwnerReviews();
+export function OwnerTournamentsPage() {
+  const { user } = useAuth();
+  const { data: turfs = [] } = useMyTurfs();
+  const { data: tournaments = [] } = useOwnerTournaments();
+  const { data: registrations = [] } = useOwnerTournamentRegistrations();
+  const createTournament = useCreateTournament();
+  const deleteTournament = useDeleteTournament();
+  const updateRegistrationStatus = useUpdateTournamentRegistrationStatus();
+  const ownerPending = isOwnerPending(user);
+  const liveTurfs = turfs.filter((turf) => turf.approvalStatus === "APPROVED" || turf.statusValue === "ACTIVE" || turf.statusValue === "LIVE" || turf.isLive);
+  const [form, setForm] = useState({
+    description: "",
+    endDate: futureDate(15),
+    entryFee: "500",
+    maxTeams: "8",
+    prizePool: "10000",
+    sport: "Football",
+    startDate: futureDate(14),
+    title: "",
+    turfId: "",
+  });
+  const selectedTurf = liveTurfs.find((turf) => turf.id === form.turfId);
+  const sportOptions = selectedTurf?.sportsSupported?.length ? selectedTurf.sportsSupported : TURF_SPORT_OPTIONS;
+  const pendingRegistrations = registrations.filter((registration) => registration.approvalStatus === "pending").length;
+  const approvedRegistrations = registrations.filter((registration) => registration.approvalStatus === "approved").length;
+  const tournamentRevenue = registrations
+    .filter((registration) => registration.paymentStatus === "paid")
+    .reduce((sum, registration) => sum + Number(registration.ownerRevenue || 0), 0);
+
+  useEffect(() => {
+    if (form.turfId || !liveTurfs.length) return;
+    const firstTurf = liveTurfs[0];
+    setForm((current) => ({
+      ...current,
+      sport: firstTurf.sportsSupported?.[0] || current.sport,
+      turfId: firstTurf.id,
+    }));
+  }, [form.turfId, liveTurfs]);
+
+  const updateForm = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
+
+  function handleTurfChange(event) {
+    const turf = liveTurfs.find((item) => item.id === event.target.value);
+    setForm((current) => ({
+      ...current,
+      sport: turf?.sportsSupported?.[0] || current.sport,
+      turfId: event.target.value,
+    }));
+  }
+
+  function updateStatus(registration, status) {
+    updateRegistrationStatus.mutate(
+      { id: registration.id, reason: status === "rejected" ? "Team registration could not be verified" : "", status },
+      {
+        onError: (error) => notify(error.response?.data?.message || error.message),
+        onSuccess: () => notify(status === "approved" ? "Tournament registration approved." : "Tournament registration rejected."),
+      },
+    );
+  }
+
   return (
     <div>
       <PageTitle
-        eyebrow="Customer Experience"
-        subtitle="Monitor ratings and customer feedback for your venues."
-        title="Reviews"
+        eyebrow="Tournament Desk"
+        subtitle="Create tournaments under your live turfs and approve paid team entries."
+        title="Tournaments"
       />
+      <OwnerApprovalBanner />
+      <div className="mb-6 grid gap-5 md:grid-cols-4">
+        <StatsCard icon="Trophy" label="Tournaments" value={String(tournaments.length)} />
+        <StatsCard icon="Clock" label="Pending Teams" tone="warning" value={String(pendingRegistrations)} />
+        <StatsCard icon="BadgeCheck" label="Successful Teams" tone="secondary" value={String(approvedRegistrations)} />
+        <StatsCard icon="Banknote" label="Tournament Revenue" value={currency(tournamentRevenue)} />
+      </div>
+      <Card className="mb-6">
+        <CardContent>
+          <h2 className="text-xl font-black">Create Turf Tournament</h2>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <select className="focus-ring h-11 rounded-lg border border-surface-outline bg-white px-3 text-sm" disabled={!liveTurfs.length || ownerPending} onChange={handleTurfChange} value={form.turfId}>
+              {!liveTurfs.length && <option value="">No live turfs available</option>}
+              {liveTurfs.map((turf) => <option key={turf.id} value={turf.id}>{turf.name}</option>)}
+            </select>
+            <Input disabled={ownerPending} onChange={updateForm("title")} placeholder="Tournament title" value={form.title} />
+            <select className="focus-ring h-11 rounded-lg border border-surface-outline bg-white px-3 text-sm" disabled={ownerPending} onChange={updateForm("sport")} value={form.sport}>
+              {sportOptions.map((sport) => <option key={sport}>{sport}</option>)}
+            </select>
+            <Input disabled={ownerPending} onChange={updateForm("startDate")} type="date" value={form.startDate} />
+            <Input disabled={ownerPending} onChange={updateForm("endDate")} type="date" value={form.endDate} />
+            <Input disabled={ownerPending} min="0" onChange={updateForm("entryFee")} placeholder="Entry fee" type="number" value={form.entryFee} />
+            <Input disabled={ownerPending} min="0" onChange={updateForm("prizePool")} placeholder="Prize pool" type="number" value={form.prizePool} />
+            <Input disabled={ownerPending} min="1" onChange={updateForm("maxTeams")} placeholder="Max teams" type="number" value={form.maxTeams} />
+            <Textarea className="md:col-span-2" disabled={ownerPending} onChange={updateForm("description")} placeholder="Tournament description" value={form.description} />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button
+              disabled={ownerPending || createTournament.isPending || !form.turfId || !form.title || !form.description}
+              onClick={async () => {
+                if (form.endDate < form.startDate) {
+                  notify("End date must be after the start date.");
+                  return;
+                }
+                try {
+                  await createTournament.mutateAsync({
+                    ...form,
+                    entryFee: Number(form.entryFee),
+                    maxTeams: Number(form.maxTeams),
+                    prizePool: Number(form.prizePool),
+                  });
+                  setForm((current) => ({
+                    ...current,
+                    description: "",
+                    endDate: futureDate(15),
+                    entryFee: "500",
+                    maxTeams: "8",
+                    prizePool: "10000",
+                    startDate: futureDate(14),
+                    title: "",
+                  }));
+                  notify("Tournament created for your turf.");
+                } catch (error) {
+                  notify(error.response?.data?.message || error.message);
+                }
+              }}
+            >
+              Create Tournament
+            </Button>
+            {!liveTurfs.length && <Button as={Link} to="/owner/turfs" variant="outline">Manage Venues</Button>}
+          </div>
+        </CardContent>
+      </Card>
+      <div className="grid gap-6 xl:grid-cols-[1fr_1.15fr]">
+        <DataTable
+          columns={["Tournament", "Turf", "Date", "Entry Fee", "Teams", "Actions"]}
+          emptyMessage="Create a tournament from one of your live turfs."
+          rows={tournaments.map((tournament) => [
+            tournament.title,
+            tournament.venue,
+            tournament.date,
+            currency(tournament.entryFee),
+            `${tournament.teams} / ${tournament.maxTeams}`,
+            <div className="flex flex-wrap gap-2" key={`${tournament.id}-actions`}>
+              <Button as={Link} size="sm" to={`/tournaments/${tournament.id}`} variant="outline">Open</Button>
+              <Button
+                disabled={ownerPending || deleteTournament.isPending}
+                onClick={() => {
+                  if (window.confirm(`Delete ${tournament.title}?`)) {
+                    deleteTournament.mutate(tournament.id, {
+                      onError: (error) => notify(error.response?.data?.message || error.message),
+                      onSuccess: () => notify("Tournament deleted."),
+                    });
+                  }
+                }}
+                size="sm"
+                variant="danger"
+              >
+                Delete
+              </Button>
+            </div>,
+          ])}
+        />
+        <DataTable
+          columns={["Team", "Tournament", "Turf", "Fee", "Payment", "Status", "Actions"]}
+          emptyMessage="Paid tournament entries will appear here for approval."
+          rows={registrations.map((registration) => [
+            `${registration.teamName} (${registration.customerName})`,
+            registration.tournamentTitle,
+            registration.venue,
+            currency(registration.entryFee),
+            registration.paymentStatus,
+            registration.status,
+            <div className="flex flex-wrap gap-2" key={`${registration.id}-actions`}>
+              {registration.approvalStatus === "pending" ? (
+                <>
+                  <Button
+                    disabled={ownerPending || updateRegistrationStatus.isPending}
+                    onClick={() => updateStatus(registration, "approved")}
+                    size="sm"
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    disabled={ownerPending || updateRegistrationStatus.isPending}
+                    onClick={() => updateStatus(registration, "rejected")}
+                    size="sm"
+                    variant="danger"
+                  >
+                    Reject
+                  </Button>
+                </>
+              ) : (
+                <Badge variant={registration.approvalStatus === "approved" ? "success" : "danger"}>{registration.status}</Badge>
+              )}
+            </div>,
+          ])}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function OwnerCoachingPage() {
+  const { user } = useAuth();
+  const { data: coachRequests = [] } = useOwnerCoachRequests();
+  const updateCoachRequest = useUpdateCoachRequestStatus();
+  const ownerPending = isOwnerPending(user);
+  const pending = coachRequests.filter((request) => request.approvalStatus === "pending").length;
+  const approved = coachRequests.filter((request) => request.approvalStatus === "approved").length;
+  const paidRevenue = coachRequests
+    .filter((request) => request.paymentStatus === "paid")
+    .reduce((sum, request) => sum + Number(request.ownerRevenue || 0), 0);
+
+  function updateStatus(request, status) {
+    updateCoachRequest.mutate(
+      { id: request.id, reason: status === "rejected" ? "Coach timing unavailable" : "", status },
+      {
+        onError: (error) => notify(error.response?.data?.message || error.message),
+        onSuccess: () => notify(status === "approved" ? "Coach request approved." : "Coach request rejected."),
+      },
+    );
+  }
+
+  return (
+    <div>
+      <PageTitle
+        eyebrow="Performance Academy"
+        subtitle="Approve paid monthly coach requests for coaches attached to your turf venues."
+        title="Coach Approvals"
+      />
+      <OwnerApprovalBanner />
+      <div className="mb-6 grid gap-5 md:grid-cols-3">
+        <StatsCard icon="Clock" label="Pending Coach Requests" tone="warning" value={String(pending)} />
+        <StatsCard icon="BadgeCheck" label="Approved Plans" tone="secondary" value={String(approved)} />
+        <StatsCard icon="Banknote" label="Coach Revenue" value={currency(paidRevenue)} />
+      </div>
       <DataTable
-        columns={["Venue", "User", "Rating", "Comment"]}
-        rows={reviews.map((review) => [
-          review.turfId?.name || "Venue",
-          review.userId?.name || "User",
-          `${review.rating} / 5`,
-          review.comment,
+        columns={["Customer", "Coach", "Venue", "Timing", "Monthly Fee", "Payment", "Status", "Actions"]}
+        emptyMessage="No coaching requests yet. Paid customer requests will appear here for approval."
+        rows={coachRequests.map((request) => [
+          request.customerName,
+          `${request.coachName} (${request.sport})`,
+          request.venue,
+          request.timing,
+          currency(request.monthlyFee),
+          request.paymentStatus,
+          request.status,
+          <div className="flex flex-wrap gap-2" key={`${request.id}-actions`}>
+            {request.approvalStatus === "pending" ? (
+              <>
+                <Button
+                  disabled={ownerPending || updateCoachRequest.isPending}
+                  onClick={() => updateStatus(request, "approved")}
+                  size="sm"
+                >
+                  Approve
+                </Button>
+                <Button
+                  disabled={ownerPending || updateCoachRequest.isPending}
+                  onClick={() => updateStatus(request, "rejected")}
+                  size="sm"
+                  variant="danger"
+                >
+                  Reject
+                </Button>
+              </>
+            ) : (
+              <Badge variant={request.approvalStatus === "approved" ? "success" : "danger"}>{request.status}</Badge>
+            )}
+          </div>,
         ])}
       />
     </div>
@@ -1965,7 +2640,7 @@ export function OwnerReviewsPage() {
 export function CRMPage() {
   const { data: bookings = [] } = useBookings();
   const [search, setSearch] = useState("");
-  const members = useMemo(() => {
+  const athletes = useMemo(() => {
     const map = new Map();
     bookings.forEach((booking) => {
       if (!booking.user?._id) return;
@@ -1982,7 +2657,7 @@ export function CRMPage() {
     });
     return [...map.values()];
   }, [bookings]);
-  const filteredMembers = members.filter((member) => member.name?.toLowerCase().includes(search.toLowerCase()));
+  const filteredAthletes = athletes.filter((athlete) => athlete.name?.toLowerCase().includes(search.toLowerCase()));
   return (
     <div>
       <PageTitle
@@ -2002,9 +2677,9 @@ export function CRMPage() {
             <CardContent>
               <p className="muted-label">{segment}</p>
               <p className="mt-2 text-3xl font-black">{[
-                members.length,
-                members.filter((member) => member.bookings > 1).length,
-                members.filter((member) => member.bookings === 1).length,
+                athletes.length,
+                athletes.filter((athlete) => athlete.bookings > 1).length,
+                athletes.filter((athlete) => athlete.bookings === 1).length,
                 bookings.length,
               ][index]}</p>
             </CardContent>
@@ -2013,11 +2688,11 @@ export function CRMPage() {
       </div>
       <DataTable
         columns={["Athlete", "Sport", "Spend", "Bookings"]}
-        rows={filteredMembers.map((member) => [
-          <Link className="font-black text-primary hover:underline" key={member.id} to={`/owner/athletes/${member.id}`}>{member.name}</Link>,
-          member.sport,
-          currency(member.spend),
-          String(member.bookings),
+        rows={filteredAthletes.map((athlete) => [
+          <Link className="font-black text-primary hover:underline" key={athlete.id} to={`/owner/athletes/${athlete.id}`}>{athlete.name}</Link>,
+          athlete.sport,
+          currency(athlete.spend),
+          String(athlete.bookings),
         ])}
       />
     </div>

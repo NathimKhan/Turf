@@ -14,7 +14,7 @@ const notificationValidation = [
   body("title").trim().notEmpty().withMessage("Title is required"),
   body("message").trim().notEmpty().withMessage("Message is required"),
   body("targetUrl").optional().trim().isLength({ max: 300 }).withMessage("Target URL is too long"),
-  body("type").optional().isIn(["booking", "payment", "revenue", "membership", "venue", "review", "system"]).withMessage("Invalid notification type"),
+  body("type").optional().isIn(["booking", "coaching", "payment", "revenue", "tournament", "venue", "system"]).withMessage("Invalid notification type"),
 ];
 
 const createNotification = asyncHandler(async (req, res) => {
@@ -58,12 +58,15 @@ const createNotification = asyncHandler(async (req, res) => {
 });
 
 const getNotifications = asyncHandler(async (req, res) => {
-  const filter =
-    req.user.role === "admin"
-      ? req.query.userId
-        ? { userId: req.query.userId }
-        : {}
-      : { userId: req.user._id };
+  const isAdmin = req.user.role === "admin";
+  const requestedUserId = isAdmin && req.query.userId ? req.query.userId : null;
+  const shouldFetchAll = isAdmin && req.query.scope === "all";
+  const filter = shouldFetchAll
+    ? requestedUserId
+      ? { userId: requestedUserId }
+      : {}
+    : { userId: requestedUserId || req.user._id };
+
   const notifications = await Notification.find(filter)
     .populate("userId", "name email role")
     .sort({ createdAt: -1 });

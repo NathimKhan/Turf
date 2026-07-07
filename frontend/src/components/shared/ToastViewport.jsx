@@ -12,8 +12,7 @@ export function ToastViewport() {
     if (!nextMessage) return undefined;
 
     setMessage(nextMessage);
-    const timeout = window.setTimeout(() => setMessage(""), 4500);
-    return () => window.clearTimeout(timeout);
+    return undefined;
   }, [location.key, location.state?.toast]);
 
   useEffect(() => {
@@ -24,6 +23,13 @@ export function ToastViewport() {
     window.addEventListener("turfx:toast", handleToast);
     return () => window.removeEventListener("turfx:toast", handleToast);
   }, []);
+
+  useEffect(() => {
+    if (!message) return undefined;
+
+    const timeout = window.setTimeout(() => setMessage(""), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
 
   return (
     <AnimatePresence>

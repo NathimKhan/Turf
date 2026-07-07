@@ -11,32 +11,19 @@ const columns = [
     links: [
       ["Find Venues", "/explore"],
       ["List your Turf", "/register"],
-      ["Corporate Booking", "/support?q=corporate"],
-      ["Pricing", "/memberships"],
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      ["Support Center", "/support"],
-      ["Terms of Service", "/support?q=terms"],
-      ["Privacy Policy", "/support?q=privacy"],
-      ["Cancellation Policy", "/support?q=cancellation"],
     ],
   },
   {
     title: "Company",
     links: [
-      ["About TURFX", "/support?q=about"],
-      ["Careers", "/support?q=careers"],
       ["Partner Network", "/register"],
-      ["Status", "/support?q=status"],
     ],
   },
 ];
 
 export function Footer() {
   const [email, setEmail] = useState("");
+
   return (
     <footer className="border-t border-surface-border bg-white">
       <div className="page-shell grid gap-10 py-14 lg:grid-cols-[1.5fr_2fr_1.4fr]">
@@ -46,7 +33,7 @@ export function Footer() {
             Redefining the athletic journey through premium sports access and real-time venue intelligence.
           </p>
         </div>
-        <div className="grid gap-8 sm:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-2">
           {columns.map((column) => (
             <div key={column.title}>
               <p className="muted-label text-primary">{column.title}</p>
@@ -62,7 +49,7 @@ export function Footer() {
         </div>
         <div>
           <p className="muted-label text-primary">Newsletter</p>
-          <p className="mt-3 text-sm text-ink-muted">Get early access to slots, events, and tournament invites.</p>
+          <p className="mt-3 text-sm text-ink-muted">Get early access to premium slots, coaching, and venue updates.</p>
           <form
             className="mt-4 flex gap-2"
             onSubmit={(event) => {

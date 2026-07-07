@@ -1,7 +1,7 @@
 export const BOOKING_AUTH_MESSAGE = "Please sign in first to continue booking.";
 
 export const roleLabels = {
-  admin: "Platform Owner",
+  admin: "Platform Admin",
   owner: "Turf Owner",
   user: "User",
 };
@@ -16,7 +16,7 @@ export const demoLoginOptions = [
   {
     ariaLabel: `${roleLabels.admin} Login`,
     email: "admin@turfx.com",
-    helperText: "You are signing in as the Platform Owner. This account manages the entire TURFX platform.",
+    helperText: "You are signing in as the Platform Admin. This account manages the TURFX platform.",
     label: roleLabels.admin,
     password: "Admin@123",
     role: "admin",

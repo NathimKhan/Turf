@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -8,39 +8,34 @@ import {
   Filter,
   MapPin,
   Search,
-  Star,
-  Ticket,
-  Trophy,
 } from "lucide-react";
 import { Badge } from "../../components/ui/badge.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Drawer } from "../../components/ui/drawer.jsx";
-import { Input, Textarea } from "../../components/ui/input.jsx";
+import { Textarea } from "../../components/ui/input.jsx";
 import { Modal } from "../../components/ui/modal.jsx";
 import { Skeleton } from "../../components/ui/skeleton.jsx";
 import { EmptyState } from "../../components/shared/EmptyState.jsx";
-import { EventCard } from "../../components/shared/EventCard.jsx";
 import { Reveal } from "../../components/shared/Motion.jsx";
 import { Pagination } from "../../components/shared/Pagination.jsx";
 import { SearchFilters } from "../../components/shared/SearchFilters.jsx";
+import { StatsCard } from "../../components/shared/StatsCard.jsx";
 import { TurfCard } from "../../components/shared/TurfCard.jsx";
+import { VenueMap } from "../../components/shared/VenueMap.jsx";
 import { Icon } from "../../components/shared/icons.jsx";
-import {
-  assetImages,
-  membershipTiers,
-} from "../../data/turfxData.js";
+import { assetImages } from "../../data/turfxData.js";
 import { useBookingGuard } from "../../hooks/useBookingGuard.js";
 import { useTurf, useTurfAvailability, useTurfMetadata, useTurfs } from "../../hooks/useTurfs.js";
 import {
-  useEvent,
-  useEvents,
+  useCoaches,
+  useCreateCoachRequest,
   useFavoriteMutation,
   useFavorites,
-  useTournament,
-  useTournaments,
+  useMyCoachRequests,
 } from "../../hooks/usePlatform.js";
 import { useAuth } from "../../store/authContext.js";
+import { useUserLocation } from "../../store/locationContext.js";
 import { currency } from "../../utils/formatters.js";
 import { handleImageError } from "../../utils/media.js";
 import { notify } from "../../utils/notify.js";
@@ -57,21 +52,43 @@ const sportVisuals = {
 function futureDate(days = 1) {
   const date = new Date();
   date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateLabel(value) {
+  if (!value) return "Select date";
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function userLocationParams(userLocation) {
+  if (!userLocation?.latitude || !userLocation?.longitude) return {};
+  return {
+    latitude: userLocation.latitude,
+    longitude: userLocation.longitude,
+  };
+}
+
+function hasVenueCoordinates(turf = {}) {
+  return Number.isFinite(Number(turf.latitude)) && Number.isFinite(Number(turf.longitude));
+}
+
+function directionsUrl(turf = {}) {
+  if (!hasVenueCoordinates(turf)) return "https://www.google.com/maps";
+  return `https://www.google.com/maps?q=${turf.latitude},${turf.longitude}`;
 }
 
 function availabilityButtonClass(slot, index) {
   if (slot.status === "booked") return "bg-surface-low text-ink-muted";
   if (slot.status === "blocked") return "bg-danger-soft text-danger";
   return index === 1 ? "bg-primary text-white" : "bg-surface-low text-ink-muted";
-}
-
-function storedIncludes(key, id) {
-  try {
-    return JSON.parse(localStorage.getItem(key) || "[]").includes(id);
-  } catch {
-    return false;
-  }
 }
 
 function SectionHeader({ eyebrow, title, subtitle, action }) {
@@ -89,6 +106,7 @@ function SectionHeader({ eyebrow, title, subtitle, action }) {
 
 function SearchPanel({ compact = false }) {
   const { data: metadata = {} } = useTurfMetadata();
+  const { location: userLocation } = useUserLocation();
   const [location, setLocation] = useState("");
   const [sport, setSport] = useState("");
   const [date, setDate] = useState(futureDate());
@@ -106,6 +124,13 @@ function SearchPanel({ compact = false }) {
     dateInputRef.current?.showPicker?.();
   }
 
+  const searchParams = new URLSearchParams({
+    ...userLocationParams(userLocation),
+    date,
+    location,
+    sport,
+  });
+
   return (
     <div
       className={`glass-panel grid min-w-0 max-w-full gap-3 rounded-2xl p-3 ${
@@ -120,11 +145,11 @@ function SearchPanel({ compact = false }) {
         </span>
         <select
           aria-label="Select location"
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          className="absolute inset-0 h-full w-full cursor-pointer text-ink opacity-0"
           onChange={(event) => setLocation(event.target.value)}
           value={location}
         >
-          <option value="">All locations</option>
+          <option className="bg-white text-ink" value="">All locations</option>
           {locationOptions.map((option) => (
             <option className="bg-white text-ink" key={option} value={option}>
               {option}
@@ -140,11 +165,11 @@ function SearchPanel({ compact = false }) {
         </span>
         <select
           aria-label="Pick a sport"
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          className="absolute inset-0 h-full w-full cursor-pointer text-ink opacity-0"
           onChange={(event) => setSport(event.target.value)}
           value={sport}
         >
-          <option value="">All sports</option>
+          <option className="bg-white text-ink" value="">All sports</option>
           {sportOptions.map((option) => (
             <option className="bg-white text-ink" key={option} value={option}>
               {option}
@@ -185,7 +210,7 @@ function SearchPanel({ compact = false }) {
       <Button
         className={compact ? "sm:h-full" : "md:h-full"}
         as={Link}
-        to={{ pathname: "/search", search: new URLSearchParams({ location, sport, date }).toString() }}
+        to={{ pathname: "/search", search: searchParams.toString() }}
       >
         <Search size={18} />
         Search
@@ -197,7 +222,6 @@ function SearchPanel({ compact = false }) {
 export function LandingPage() {
   const { data: turfResult = { turfs: [] } } = useTurfs({ limit: 100 });
   const { data: metadata = {} } = useTurfMetadata();
-  const { data: tournaments = [] } = useTournaments();
   const turfs = turfResult.turfs;
   const [featuredStart, setFeaturedStart] = useState(0);
   const featuredTurfs = useMemo(() => {
@@ -208,12 +232,6 @@ export function LandingPage() {
     name,
     venues: turfs.filter((turf) => turf.sportsSupported.includes(name)).length,
     ...(sportVisuals[name] || { icon: "Goal", image: assetImages.stadium }),
-  }));
-  const liveSlots = turfs.slice(0, 4).map((turf) => ({
-    id: turf.id,
-    sport: turf.sport,
-    time: "Check live slots",
-    venue: turf.name,
   }));
 
   return (
@@ -233,7 +251,7 @@ export function LandingPage() {
               Book Premium Sports Venues Instantly
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-8 text-white/80">
-              Discover, book, and play at the best sports venues in your city with real-time availability and competitive events.
+              Discover, book, and play at the best sports venues in your city with real-time availability and expert coaching.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button as={Link} size="lg" to="/booking/slots">
@@ -266,15 +284,15 @@ export function LandingPage() {
           subtitle="The city's most booked activities this week"
           title="Popular Sports"
         />
-        <div className="grid min-h-[420px] w-full grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {sports.map((sport, index) => (
+        <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {sports.slice(0, 4).map((sport, index) => (
             <Reveal
-              className={index === 0 ? "xl:col-span-2 xl:row-span-2" : index === sports.length - 1 ? "xl:col-span-2" : ""}
+              className="h-full"
               delay={index * 0.06}
               key={sport.name}
             >
               <Link
-                className="group relative block h-full min-h-48 overflow-hidden rounded-2xl"
+                className="group relative block h-64 overflow-hidden rounded-2xl sm:h-72 xl:h-80"
                 to={{ pathname: "/search", search: new URLSearchParams({ sport: sport.name, date: futureDate() }).toString() }}
               >
                 <img alt={sport.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src={sport.image} />
@@ -287,31 +305,6 @@ export function LandingPage() {
               </Link>
             </Reveal>
           ))}
-        </div>
-      </section>
-
-      <section className="bg-primary-soft/55 py-12">
-        <div className="page-shell">
-          <div className="mb-5 flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-            <p className="text-sm font-bold">Live Availability</p>
-            <span className="text-xs text-ink-muted">Slots available in the next 60 minutes</span>
-          </div>
-          <div className="grid gap-4 md:grid-cols-4">
-            {liveSlots.map((slot) => (
-              <Link key={slot.venue} to={`/venue/${slot.id}`}>
-                <Card interactive className="h-full">
-                  <CardContent className="flex items-center justify-between p-4">
-                    <div>
-                      <p className="text-sm font-black">{slot.venue}</p>
-                      <p className="text-xs text-ink-muted">{slot.time}</p>
-                    </div>
-                    <Badge variant="secondary">{slot.sport}</Badge>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -337,41 +330,10 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="page-shell pb-16">
-        <div className="grid overflow-hidden rounded-3xl bg-dark text-white lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="p-8 md:p-12">
-            <p className="muted-label text-secondary">Competitive Edge</p>
-            <h2 className="mt-3 text-4xl font-black">Elite Tournaments</h2>
-            <p className="mt-4 max-w-md text-white/70">
-              Join prestigious local tournaments. Prove your skills, climb leaderboards, and unlock athlete rewards.
-            </p>
-            <Button as={Link} className="mt-6" to="/tournaments" variant="secondary">
-              View Tournament Schedule
-            </Button>
-          </div>
-          <div className="space-y-3 p-6 md:p-10">
-            {tournaments.slice(0, 2).map((tournament) => (
-              <Link className="flex items-center justify-between rounded-xl bg-white/10 p-4 transition-colors hover:bg-white/15" key={tournament.id} to={`/tournaments/${tournament.id}`}>
-                <div className="flex items-center gap-4">
-                  <div className="grid h-14 w-14 place-items-center rounded-lg bg-primary text-center text-xs font-black">
-                    {tournament.date}
-                  </div>
-                  <div>
-                    <p className="font-black">{tournament.title}</p>
-                    <p className="text-sm text-white/65">{tournament.teams} teams - {tournament.prize}</p>
-                  </div>
-                </div>
-                <ChevronRight size={18} />
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="page-shell grid gap-5 pb-16 md:grid-cols-2">
         {[
           ["Pro Coaching", "Learn from certified professionals to elevate your game.", assetImages.training, "/coaching"],
-          ["TURFX Gold", "Unlock priority booking, exclusive discounts, and access to premium member lounges.", assetImages.indoor, "/memberships"],
+          ["Premium Venues", "Compare top-rated grounds, live slots, and transparent hourly pricing.", assetImages.stadium, "/explore"],
         ].map(([title, copy, image, href]) => (
           <Link className="group relative min-h-72 overflow-hidden rounded-2xl" key={title} to={href}>
             <img alt={title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" src={image} />
@@ -413,33 +375,6 @@ function ScrollRow({ children, className = "" }) {
   );
 }
 
-function DiscoveryMiniCard({ item }) {
-  return (
-    <Card interactive className="h-full w-64 shrink-0 snap-start sm:w-72">
-      <Link className="flex h-full flex-col" to={item.href}>
-        <div className="relative h-32 shrink-0 overflow-hidden rounded-t-2xl sm:h-36">
-          <img
-            alt={item.title}
-            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-            loading="lazy"
-            onError={handleImageError}
-            src={item.image}
-          />
-          <Badge className="absolute left-3 top-3" variant="white">{item.type}</Badge>
-        </div>
-        <div className="flex flex-1 flex-col gap-2 p-4">
-          <h3 className="line-clamp-1 text-base font-black text-ink">{item.title}</h3>
-          <p className="flex items-center gap-1.5 text-xs font-bold text-ink-muted">
-            <CalendarDays size={14} />
-            {item.date}
-          </p>
-          <p className="mt-auto truncate text-xs font-bold text-ink-soft">{item.meta}</p>
-        </div>
-      </Link>
-    </Card>
-  );
-}
-
 function CommunityTile({ sport }) {
   return (
     <Link
@@ -465,10 +400,17 @@ function CommunityTile({ sport }) {
 }
 
 export function ExplorePage() {
-  const { data: turfResult = { turfs: [] }, isError: turfsError, isLoading: turfsLoading } = useTurfs({ limit: 100 });
+  const { location: userLocation } = useUserLocation();
+  const turfParams = useMemo(
+    () => ({
+      ...userLocationParams(userLocation),
+      limit: 100,
+      ...(userLocation ? { radiusKm: 25 } : {}),
+    }),
+    [userLocation],
+  );
+  const { data: turfResult = { turfs: [] }, isError: turfsError, isLoading: turfsLoading } = useTurfs(turfParams);
   const { data: metadata = {} } = useTurfMetadata();
-  const { data: events = [] } = useEvents();
-  const { data: tournaments = [] } = useTournaments();
   const turfs = turfResult.turfs;
 
   const sports = (metadata.sports || []).map((name) => ({
@@ -478,19 +420,14 @@ export function ExplorePage() {
   }));
 
   const trending = useMemo(
-    () =>
-      [...turfs]
-        .sort((a, b) => b.rating * (b.reviews || 1) - a.rating * (a.reviews || 1))
-        .slice(0, 6),
+    () => [...turfs].slice(0, 6),
     [turfs],
   );
-
-  const topRated = useMemo(() => [...turfs].sort((a, b) => b.rating - a.rating).slice(0, 5), [turfs]);
 
   const recommended = useMemo(() => {
     const seenSports = new Set();
     const picks = [];
-    for (const turf of [...turfs].sort((a, b) => b.rating - a.rating)) {
+    for (const turf of turfs) {
       const key = turf.sport || "general";
       if (seenSports.has(key)) continue;
       seenSports.add(key);
@@ -504,6 +441,16 @@ export function ExplorePage() {
   }, [turfs]);
 
   const nearbyGrounds = useMemo(() => {
+    if (userLocation) {
+      return {
+        city: "",
+        grounds: [...turfs]
+          .filter((turf) => turf.distanceInKm !== null)
+          .sort((first, second) => first.distanceInKm - second.distanceInKm)
+          .slice(0, 6),
+      };
+    }
+
     const counts = {};
     turfs.forEach((turf) => {
       const city = turf.city || turf.distance;
@@ -512,31 +459,7 @@ export function ExplorePage() {
     const topCity = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
     const grouped = topCity ? turfs.filter((turf) => (turf.city || turf.distance) === topCity) : turfs;
     return { city: topCity, grounds: grouped.slice(0, 6) };
-  }, [turfs]);
-
-  const upcoming = useMemo(() => {
-    const tournamentItems = tournaments
-      .filter((tournament) => tournament.status === "Registration Open")
-      .map((tournament) => ({
-        date: tournament.date,
-        href: `/tournaments/${tournament.id}`,
-        id: `tournament-${tournament.id}`,
-        image: assetImages.event,
-        meta: `${tournament.teams} teams · ${tournament.prize || "Open prize pool"}`,
-        title: tournament.title,
-        type: "Tournament",
-      }));
-    const eventItems = events.map((event) => ({
-      date: event.date,
-      href: `/events/${event.id}`,
-      id: `event-${event.id}`,
-      image: event.image,
-      meta: event.venue || "TURFX venue",
-      title: event.title,
-      type: "Event",
-    }));
-    return [...tournamentItems, ...eventItems].slice(0, 8);
-  }, [events, tournaments]);
+  }, [turfs, userLocation]);
 
   return (
     <main className="page-shell py-8 sm:py-10">
@@ -548,10 +471,11 @@ export function ExplorePage() {
           <div className="mt-6">
             <SearchPanel compact />
           </div>
-          <div className="mt-4 flex min-w-0 flex-wrap gap-3 px-1 pb-3 pt-2">
+          <div className="mt-4 grid max-w-[450px] grid-cols-2 gap-3 px-1 pb-3 pt-2">
             {sports.map((sport) => (
               <Button
                 as={Link}
+                className="w-full"
                 key={sport.name}
                 to={{ pathname: "/search", search: new URLSearchParams({ sport: sport.name, date: futureDate() }).toString() }}
                 variant={sport.name === "Football" ? "primary" : "outline"}
@@ -563,11 +487,20 @@ export function ExplorePage() {
           </div>
         </section>
         <section className="relative min-h-64 min-w-0 overflow-hidden rounded-3xl border border-surface-border bg-white shadow-soft sm:min-h-80 lg:min-h-[420px]">
-          <img alt="Map preview of nearby venues" className="absolute inset-0 h-full w-full object-cover grayscale" src={assetImages.map} />
-          <div className="absolute inset-0 bg-primary/10" />
+          <img
+            alt="Premium turf venue"
+            className="absolute inset-0 h-full w-full object-cover"
+            onError={handleImageError}
+            src={assetImages.stadium}
+          />
+          <div className="absolute inset-0 bg-gradient-to-tr from-dark/60 via-dark/20 to-primary/10" />
           <Badge className="absolute left-4 top-4 sm:left-5 sm:top-5" variant="white">
             Nearby venues
           </Badge>
+          <div className="absolute bottom-5 left-5 right-5 max-w-md text-white">
+            <p className="text-sm font-bold uppercase tracking-wider text-white/75">Ready to play</p>
+            <h2 className="mt-2 text-3xl font-black">Book premium grounds around you</h2>
+          </div>
         </section>
       </div>
 
@@ -610,24 +543,11 @@ export function ExplorePage() {
             </section>
           )}
 
-          {Boolean(topRated.length) && (
-            <section className="mt-14">
-              <SectionHeader subtitle="Highest-reviewed venues, ranked by athlete ratings" title="🏆 Top Rated Venues" />
-              <ScrollRow>
-                {topRated.map((turf, index) => (
-                  <div className="w-64 shrink-0 snap-start sm:w-72" key={turf.id}>
-                    <TurfCard compact rank={index + 1} turf={turf} />
-                  </div>
-                ))}
-              </ScrollRow>
-            </section>
-          )}
-
           {Boolean(nearbyGrounds.grounds.length) && (
             <section className="mt-14">
               <SectionHeader
-                subtitle={nearbyGrounds.city ? `Popular venues around ${nearbyGrounds.city}` : "Popular venues close to you"}
-                title="📍 Nearby Grounds"
+                subtitle={userLocation ? "Sorted by distance from your current location" : nearbyGrounds.city ? `Popular venues around ${nearbyGrounds.city}` : "Popular venues close to you"}
+                title={userLocation ? "Near Me" : "Nearby Grounds"}
               />
               <ScrollRow>
                 {nearbyGrounds.grounds.map((turf) => (
@@ -639,25 +559,6 @@ export function ExplorePage() {
             </section>
           )}
         </>
-      )}
-
-      {Boolean(upcoming.length) && (
-        <section className="mt-14">
-          <SectionHeader
-            action={
-              <Button as={Link} to="/tournaments" variant="ghost">
-                View All <ChevronRight size={16} />
-              </Button>
-            }
-            subtitle="Compete or spectate at the city's best upcoming matchups"
-            title="🎯 Weekend Tournaments & Events"
-          />
-          <ScrollRow>
-            {upcoming.map((item) => (
-              <DiscoveryMiniCard item={item} key={item.id} />
-            ))}
-          </ScrollRow>
-        </section>
       )}
 
       {Boolean(sports.length) && (
@@ -687,7 +588,7 @@ export function ExplorePage() {
           </div>
         ) : (
           <EmptyState
-            description={turfsError ? "Check the API connection and try again." : "New venues are reviewed and added regularly. Please check back soon."}
+            description={turfsError ? "Check the API connection and try again." : "New venues are verified and added regularly. Please check back soon."}
             icon="Search"
             title={turfsError ? "Venues could not be loaded" : "No venues available yet"}
           />
@@ -700,12 +601,20 @@ export function ExplorePage() {
 export function SearchResultsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { location: userLocation } = useUserLocation();
   const page = Number(searchParams.get("page") || 1);
   const locationFilter = searchParams.get("location") || "";
   const sportFilter = searchParams.get("sport") || "";
   const dateFilter = searchParams.get("date") || futureDate();
+  const radiusFilter = searchParams.get("radiusKm") || "";
+  const latitudeFilter = searchParams.get("latitude") || searchParams.get("lat") || userLocation?.latitude;
+  const longitudeFilter = searchParams.get("longitude") || searchParams.get("lng") || userLocation?.longitude;
+  const hasSearchCoordinates = latitudeFilter && longitudeFilter;
   const params = {
     city: locationFilter || undefined,
+    latitude: hasSearchCoordinates ? latitudeFilter : undefined,
+    longitude: hasSearchCoordinates ? longitudeFilter : undefined,
+    radiusKm: radiusFilter || undefined,
     sport: sportFilter || undefined,
     date: dateFilter,
     page,
@@ -713,13 +622,18 @@ export function SearchResultsPage() {
   const { data: result = { pagination: {}, turfs: [] }, isError } = useTurfs(params);
   const { data: metadata = {} } = useTurfMetadata();
   const turfs = result.turfs;
-  const location = locationFilter || "all locations";
+  const location = locationFilter || (hasSearchCoordinates ? "your location" : "all locations");
   const sport = sportFilter || "Sports";
   const date = dateFilter;
-  const filterValues = { date: dateFilter, location: locationFilter, sport: sportFilter };
+  const filterValues = { date: dateFilter, location: locationFilter, radiusKm: radiusFilter, sport: sportFilter };
 
   function applyFilters(nextFilters) {
-    setSearchParams({ ...nextFilters, page: "1" });
+    const nextParams = {
+      ...nextFilters,
+      ...userLocationParams(userLocation),
+      page: "1",
+    };
+    setSearchParams(Object.fromEntries(Object.entries(nextParams).filter(([, value]) => value !== undefined && value !== "")));
     setFiltersOpen(false);
   }
 
@@ -778,11 +692,14 @@ export function VenueDetailsPage() {
   const { id } = useParams();
   const requireBooking = useBookingGuard();
   const { user } = useAuth();
+  const { location: userLocation } = useUserLocation();
   const { data: favorites = [] } = useFavorites(Boolean(user));
   const favoriteMutation = useFavoriteMutation();
   const [date, setDate] = useState(futureDate());
+  const [favoriteOverride, setFavoriteOverride] = useState(null);
   const [mediaMode, setMediaMode] = useState("");
-  const { data: turf, isError, isLoading } = useTurf(id);
+  const detailParams = useMemo(() => userLocationParams(userLocation), [userLocation]);
+  const { data: turf, isError, isLoading } = useTurf(id, detailParams);
   const { data: availability = { slots: [], timeline: [] } } = useTurfAvailability(id, date);
   const { data: similarResult = { turfs: [] } } = useTurfs({
     limit: 4,
@@ -792,6 +709,12 @@ export function VenueDetailsPage() {
     () => Array.from({ length: 4 }, (_, index) => futureDate(index + 1)),
     [],
   );
+  const serverFavorite = turf ? favorites.some((favorite) => favorite.id === turf.id) : false;
+  const isFavorite = favoriteOverride ?? serverFavorite;
+
+  useEffect(() => {
+    setFavoriteOverride(null);
+  }, [id, serverFavorite]);
 
   if (isLoading) {
     return <main className="page-shell py-16 text-center text-ink-muted">Loading venue...</main>;
@@ -805,18 +728,30 @@ export function VenueDetailsPage() {
       </main>
     );
   }
-  const isFavorite = favorites.some((favorite) => favorite.id === turf.id);
   const visibleAvailability = (availability.timeline?.length ? availability.timeline : availability.slots || []).map((slot) => ({
     reason: slot.reason || (slot.status === "available" ? "Available" : slot.status),
     status: slot.status || "available",
     ...slot,
   }));
+  const heroImage = turf.heroImage || turf.gallery[0];
+  const venueMedia = Array.from(new Set([
+    heroImage,
+    turf.coverImage,
+    turf.profileImage,
+    turf.videoThumbnail,
+    ...(turf.gallery || []),
+    ...(turf.groundImages || []),
+    ...(turf.amenityImages || []),
+    ...(turf.locationImages || []),
+    ...(turf.sportsImages || []),
+  ].filter(Boolean)));
+  const sideImages = venueMedia.filter((image) => image !== heroImage).slice(0, 2);
 
   return (
     <main className="page-shell py-8">
       <section className="grid gap-4 lg:grid-cols-[1.4fr_0.75fr]">
         <div className="relative min-h-[420px] overflow-hidden rounded-2xl">
-          <img alt={turf.name} className="h-full w-full object-cover" onError={handleImageError} src={turf.gallery[0]} />
+          <img alt={turf.name} className="h-full w-full object-cover" data-fallback-src={turf.coverImage} onError={handleImageError} src={heroImage} />
           <div className="absolute bottom-5 left-5 flex gap-2">
             <Button onClick={() => setMediaMode("tour")} variant="dark">
               <Icon name="CircleGauge" />
@@ -829,8 +764,8 @@ export function VenueDetailsPage() {
           </div>
         </div>
         <div className="grid gap-4">
-          {turf.gallery.slice(1, 3).map((image) => (
-            <img alt={turf.name} className="h-48 w-full rounded-2xl object-cover lg:h-full" key={image} onError={handleImageError} src={image} />
+          {sideImages.map((image) => (
+            <img alt={turf.name} className="h-48 w-full rounded-2xl object-cover lg:h-full" data-fallback-src={heroImage} key={image} loading="lazy" onError={handleImageError} src={image} />
           ))}
         </div>
       </section>
@@ -843,36 +778,56 @@ export function VenueDetailsPage() {
                 <p className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
                   <MapPin size={16} />
                   {turf.location}
-                  <span>-</span>
-                  <Star className="fill-warning text-warning" size={16} />
-                  {turf.rating} ({turf.reviews} reviews)
                 </p>
               </div>
               <Button
                 aria-label={isFavorite ? "Remove favorite" : "Save favorite"}
+                aria-pressed={isFavorite}
+                className={
+                  isFavorite
+                    ? "border-danger/30 bg-danger-soft text-danger hover:border-danger hover:bg-red-50 hover:text-danger"
+                    : "text-ink-muted"
+                }
+                disabled={favoriteMutation.isPending}
                 onClick={() => {
                   if (!user) {
                     requireBooking(`/venue/${turf.id}`);
                     return;
                   }
+                  const nextFavorite = !isFavorite;
+                  setFavoriteOverride(nextFavorite);
                   favoriteMutation.mutate(
-                    { id: turf.id, favorite: !isFavorite },
-                    { onSuccess: () => notify(isFavorite ? "Venue removed from favorites." : "Venue saved to favorites.") },
+                    { id: turf.id, favorite: nextFavorite },
+                    {
+                      onError: (error) => {
+                        setFavoriteOverride(serverFavorite);
+                        notify(error.response?.data?.message || error.message);
+                      },
+                      onSuccess: () => notify(nextFavorite ? "Venue saved to favorites." : "Venue removed from favorites."),
+                    },
                   );
                 }}
                 size="icon"
                 variant="outline"
               >
-                <Icon name="Heart" />
+                <Icon className={isFavorite ? "fill-current" : ""} name="Heart" />
               </Button>
             </div>
           </div>
           <div>
             <h2 className="text-xl font-black">Facilities & Amenities</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {turf.amenities.map((amenity) => (
+              {turf.amenities.map((amenity, index) => (
                 <Card key={amenity}>
                   <CardContent className="p-4">
+                    <img
+                      alt={`${amenity} at ${turf.name}`}
+                      className="mb-3 h-20 w-full rounded-lg object-cover"
+                      data-fallback-src={heroImage}
+                      loading="lazy"
+                      onError={handleImageError}
+                      src={turf.amenityImages[index % turf.amenityImages.length] || heroImage}
+                    />
                     <Icon className="text-primary" name="ShieldCheck" />
                     <p className="mt-3 text-sm font-bold">{amenity}</p>
                   </CardContent>
@@ -886,6 +841,19 @@ export function VenueDetailsPage() {
               Experience world-class play on premium synthetic surfaces, broadcast-grade lights, climate controlled support spaces,
               and fast digital check-in built for repeated weekly play.
             </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {turf.groundImages.slice(0, 4).map((image, index) => (
+                <img
+                  alt={`${turf.name} ground view ${index + 1}`}
+                  className="h-32 w-full rounded-xl object-cover"
+                  data-fallback-src={heroImage}
+                  key={image}
+                  loading="lazy"
+                  onError={handleImageError}
+                  src={image}
+                />
+              ))}
+            </div>
           </div>
           <Card className="bg-primary-soft/50">
             <CardContent>
@@ -903,11 +871,29 @@ export function VenueDetailsPage() {
           <div>
             <h2 className="text-xl font-black">Location & Access</h2>
             <div className="relative mt-4 h-72 overflow-hidden rounded-2xl">
-              <img alt="Venue map" className="h-full w-full object-cover grayscale" src={assetImages.map} />
-              <div className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-white shadow-lift">
-                <MapPin size={22} />
-              </div>
+              <VenueMap className="h-full w-full" label={turf.name} latitude={turf.latitude} longitude={turf.longitude} userLocation={userLocation} />
             </div>
+            <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <p className="rounded-xl bg-surface-low p-3"><span className="block text-xs font-bold uppercase tracking-wider text-ink-soft">Address</span>{turf.address || turf.location}</p>
+              <p className="rounded-xl bg-surface-low p-3"><span className="block text-xs font-bold uppercase tracking-wider text-ink-soft">Distance From User</span>{turf.distanceInKm ? `${turf.distanceInKm} km` : "Enable location"}</p>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-4">
+              {turf.locationImages.slice(0, 4).map((image, index) => (
+                <img
+                  alt={`${turf.name} access view ${index + 1}`}
+                  className="h-28 w-full rounded-xl object-cover"
+                  data-fallback-src={heroImage}
+                  key={image}
+                  loading="lazy"
+                  onError={handleImageError}
+                  src={image}
+                />
+              ))}
+            </div>
+            <Button as="a" className="mt-4" href={directionsUrl(turf)} rel="noreferrer" target="_blank" variant="outline">
+              <MapPin size={16} />
+              Get Directions
+            </Button>
           </div>
         </div>
         <aside className="lg:sticky lg:top-24 lg:h-max">
@@ -918,7 +904,7 @@ export function VenueDetailsPage() {
                   <p className="text-3xl font-black">{currency(turf.price)}</p>
                   <p className="text-sm text-ink-muted">per hour</p>
                 </div>
-                <Badge variant="secondary">Members save 15%</Badge>
+                <Badge variant="secondary">Live Slots</Badge>
               </div>
               <p className="muted-label mt-6">Select Date</p>
               <div className="mt-3 grid grid-cols-4 gap-2">
@@ -967,8 +953,8 @@ export function VenueDetailsPage() {
       </section>
       <Modal onOpenChange={(open) => !open && setMediaMode("")} open={Boolean(mediaMode)} title={mediaMode === "tour" ? `${turf.name} 360 Tour` : `${turf.name} Gallery`}>
         <div className={mediaMode === "photos" ? "grid gap-3 sm:grid-cols-2" : ""}>
-          {(mediaMode === "photos" ? turf.gallery : turf.gallery.slice(0, 1)).map((image) => (
-            <img alt={turf.name} className="max-h-[60vh] w-full rounded-xl object-cover" key={image} onError={handleImageError} src={image} />
+          {(mediaMode === "photos" ? venueMedia : [turf.videoThumbnail || heroImage]).map((image) => (
+            <img alt={turf.name} className="max-h-[60vh] w-full rounded-xl object-cover" data-fallback-src={heroImage} key={image} onError={handleImageError} src={image} />
           ))}
         </div>
         {mediaMode === "tour" && <p className="mt-3 text-sm text-ink-muted">Drag-free prototype panorama preview generated from the venue hero media.</p>}
@@ -977,388 +963,65 @@ export function VenueDetailsPage() {
   );
 }
 
-export function MembershipsPage() {
-  const { user } = useAuth();
-  return (
-    <main>
-      <section className="relative overflow-hidden bg-dark py-20 text-white">
-        <img alt="Membership court" className="absolute inset-0 h-full w-full object-cover opacity-45" src={assetImages.indoor} />
-        <div className="absolute inset-0 bg-gradient-to-r from-dark via-dark/75 to-dark/20" />
-        <div className="page-shell relative">
-          <Badge className="bg-accent text-white">TURFX Elite</Badge>
-          <h1 className="mt-5 max-w-3xl text-5xl font-black tracking-normal">Memberships built for the way serious athletes repeat.</h1>
-          <p className="mt-5 max-w-xl text-white/75">
-            Priority access, member savings, recovery benefits, and tournament privileges across the TURFX network.
-          </p>
-        </div>
-      </section>
-      <section className="page-shell py-14">
-        <div className="grid gap-5 lg:grid-cols-3">
-          {membershipTiers.map((tier) => (
-            <Card className={tier.featured ? "border-primary bg-primary text-white shadow-lift" : ""} interactive key={tier.name}>
-              <CardContent>
-                <Badge variant={tier.featured ? "white" : "primary"}>{tier.label}</Badge>
-                <h2 className="mt-5 text-3xl font-black">{tier.name}</h2>
-                <p className={`mt-2 text-sm ${tier.featured ? "text-white/75" : "text-ink-muted"}`}>
-                  {tier.price === 0 ? "Free" : `${currency(tier.price)} / month`}
-                </p>
-                <div className="mt-6 space-y-3">
-                  {tier.perks.map((perk) => (
-                    <p className="flex items-center gap-2 text-sm" key={perk}>
-                      <Check size={16} />
-                      {perk}
-                    </p>
-                  ))}
-                </div>
-                <Button
-                  as={Link}
-                  className="mt-7 w-full"
-                  state={!user ? { from: "/membership-center" } : undefined}
-                  to={user ? "/membership-center" : "/login"}
-                  variant={tier.featured ? "dark" : "primary"}
-                >
-                  {tier.name === user?.membershipPlan ? "Current Plan" : `Choose ${tier.name}`}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
-}
-
-export function TournamentsPage() {
-  const { data: tournaments = [] } = useTournaments();
-
-  return (
-    <main className="page-shell py-10">
-      <SectionHeader
-        eyebrow="Competitive"
-        subtitle="Bracket-ready events with team registration, prize pools, and live leaderboards."
-        title="Tournaments"
-      />
-      <div className="grid gap-5 lg:grid-cols-3">
-        {tournaments.map((tournament) => (
-          <Card interactive key={tournament.id}>
-            <CardContent>
-              <Badge variant="primary">{tournament.status}</Badge>
-              <h2 className="mt-5 text-2xl font-black">{tournament.title}</h2>
-              <div className="mt-5 grid gap-3 text-sm text-ink-muted">
-                <p className="flex items-center gap-2">
-                  <CalendarDays size={16} />
-                  {tournament.date}
-                </p>
-                <p className="flex items-center gap-2">
-                  <Trophy size={16} />
-                  {tournament.teams} teams - {tournament.prize}
-                </p>
-              </div>
-              <Button as={Link} className="mt-6 w-full" to={`/tournaments/${tournament.id}`}>
-                Open Hub
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      {!tournaments.length && <Card><CardContent className="text-center text-ink-muted">New tournament fixtures are being prepared. Check back soon.</CardContent></Card>}
-    </main>
-  );
-}
-
-export function TournamentHubPage() {
-  const { id } = useParams();
-  const { data: tournament, isError, isLoading } = useTournament(id);
-  const bracket = tournament?.participants?.map((participant) => participant.name) || [];
-  const [registered, setRegistered] = useState(() => storedIncludes("turfx-tournament-registrations", id));
-
-  if (isLoading) {
-    return <main className="page-shell py-16 text-center text-ink-muted">Loading tournament...</main>;
-  }
-  if (isError || !tournament) {
-    return <main className="page-shell py-16 text-center"><h1 className="text-3xl font-black">Tournament not found</h1><Button as={Link} className="mt-5" to="/tournaments">View Tournaments</Button></main>;
-  }
-
-  return (
-    <main className="page-shell py-10">
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <Card className="overflow-hidden">
-          <div className="relative h-72">
-            <img alt={tournament.title} className="h-full w-full object-cover" src={assetImages.event} />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
-            <div className="absolute bottom-6 left-6 text-white">
-              <Badge className="bg-primary text-white">{tournament.status}</Badge>
-              <h1 className="mt-4 text-4xl font-black">{tournament.title}</h1>
-              <p className="mt-2 text-white/75">{tournament.teams} teams - Prize {tournament.prize}</p>
-            </div>
-          </div>
-          <CardContent>
-            <h2 className="text-xl font-black">Live Bracket</h2>
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {bracket.map((team, index) => (
-                <div className="rounded-xl border border-surface-border bg-surface-low p-4" key={team}>
-                  <p className="text-xs font-bold uppercase tracking-wider text-ink-soft">Round {Math.floor(index / 2) + 1}</p>
-                  <p className="mt-2 font-black">{team}</p>
-                  <p className="mt-1 text-sm text-ink-muted">Seed #{index + 1}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <h2 className="text-2xl font-black">Register Team</h2>
-            <p className="mt-2 text-sm text-ink-muted">Includes bracket entry, referee crew, live scoring, and warmup slot.</p>
-            <div className="mt-6 space-y-3">
-              {["Team roster", "Captain verification", "Payment hold", "Fixture lock"].map((item) => (
-                <p className="flex items-center gap-2 text-sm font-bold" key={item}>
-                  <Check className="text-accent" size={16} />
-                  {item}
-                </p>
-              ))}
-            </div>
-            <Button
-              className="mt-7 w-full"
-              disabled={registered}
-              onClick={() => {
-                const registrations = JSON.parse(localStorage.getItem("turfx-tournament-registrations") || "[]");
-                if (!registrations.includes(id)) registrations.push(id);
-                localStorage.setItem("turfx-tournament-registrations", JSON.stringify(registrations));
-                setRegistered(true);
-                notify("Tournament registration saved.");
-              }}
-            >
-              {registered ? "Team Registered" : "Register Now"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
-  );
-}
-
-export function EventsPage() {
-  const { data: events = [] } = useEvents();
-
-  return (
-    <main className="page-shell py-10">
-      <SectionHeader
-        eyebrow="Events"
-        subtitle="Discover challenges, academy sessions, and high-energy athletic meetups."
-        title="Discover your next challenge"
-      />
-      <div className="grid gap-5 lg:grid-cols-3">
-        {events.map((event) => (
-          <EventCard event={event} key={event.id} />
-        ))}
-      </div>
-      {!events.length && <Card><CardContent className="text-center text-ink-muted">New community events are being scheduled.</CardContent></Card>}
-    </main>
-  );
-}
-
-export function EventDetailsPage() {
-  const { id } = useParams();
-  const { data: event, isError, isLoading } = useEvent(id);
-  const [ticketReserved, setTicketReserved] = useState(() => storedIncludes("turfx-event-tickets", id));
-
-  if (isLoading) {
-    return <main className="page-shell py-16 text-center text-ink-muted">Loading event...</main>;
-  }
-  if (isError || !event) {
-    return <main className="page-shell py-16 text-center"><h1 className="text-3xl font-black">Event not found</h1><Button as={Link} className="mt-5" to="/events">View Events</Button></main>;
-  }
-
-  return (
-    <main>
-      <section className="relative min-h-[520px] overflow-hidden text-white">
-        <img alt={event.title} className="absolute inset-0 h-full w-full object-cover" onError={handleImageError} src={event.image} />
-        <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/55 to-transparent" />
-        <div className="page-shell relative flex min-h-[520px] items-end pb-12">
-          <div className="max-w-3xl">
-            <Badge className="bg-primary text-white">{event.type}</Badge>
-            <h1 className="mt-5 text-5xl font-black tracking-normal">{event.title}</h1>
-            <p className="mt-4 max-w-2xl text-white/75">{event.description}</p>
-          </div>
-        </div>
-      </section>
-      <section className="page-shell grid gap-6 py-10 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
-          <Card>
-            <CardContent>
-              <h2 className="text-2xl font-black">Experience Timeline</h2>
-              <div className="mt-5 grid gap-4">
-                {["Athlete check-in", "Warmup and coaching pods", "Main challenge rounds", "Awards and recovery lounge"].map((item, index) => (
-                  <div className="flex gap-4" key={item}>
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-primary font-black">{index + 1}</div>
-                    <div>
-                      <p className="font-black">{item}</p>
-                      <p className="text-sm text-ink-muted">{index + 10}:00 session block</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        <Card>
-          <CardContent>
-            <p className="muted-label text-primary">Secure your ticket</p>
-            <h2 className="mt-2 text-3xl font-black">{currency(event.price)}</h2>
-            <div className="mt-5 space-y-3 text-sm text-ink-muted">
-              <p className="flex items-center gap-2">
-                <CalendarDays size={16} />
-                {event.date}
-              </p>
-              <p className="flex items-center gap-2">
-                <MapPin size={16} />
-                {event.venue}
-              </p>
-              <p className="flex items-center gap-2">
-                <Ticket size={16} />
-                {event.capacity}
-              </p>
-            </div>
-            <Button
-              className="mt-7 w-full"
-              disabled={ticketReserved}
-              onClick={() => {
-                const tickets = JSON.parse(localStorage.getItem("turfx-event-tickets") || "[]");
-                if (!tickets.includes(id)) tickets.push(id);
-                localStorage.setItem("turfx-event-tickets", JSON.stringify(tickets));
-                setTicketReserved(true);
-                notify("Event ticket reserved with mock payment.");
-              }}
-            >
-              {ticketReserved ? "Ticket Reserved" : "Reserve Ticket"}
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-    </main>
-  );
-}
-
-export function SupportPage() {
-  const [searchParams] = useSearchParams();
-  const [supportOpen, setSupportOpen] = useState(false);
-  const [supportSearch, setSupportSearch] = useState(searchParams.get("q") || "");
-  const [ticket, setTicket] = useState({ bookingReference: "", message: "", name: "" });
-  const faqs = [
-    ["How do I change a booking?", "Open My Bookings, choose the reservation, and use reschedule if the venue policy allows it."],
-    ["Can turf owners add multiple venues?", "Yes. Turf Owner workspaces support multiple venues, pitch types, gallery media, and scheduling rules."],
-    ["Is payment required upfront?", "Most venues support a payment hold with final settlement at check-in."],
-  ];
-  const visibleFaqs = faqs.filter(([question, answer]) => `${question} ${answer}`.toLowerCase().includes(supportSearch.toLowerCase()));
-
-  return (
-    <main className="page-shell py-10">
-      <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-        <section>
-          <Badge variant="primary">Help Center</Badge>
-          <h1 className="mt-4 text-5xl font-black tracking-normal">Fast support for athletes and operators.</h1>
-          <p className="mt-4 text-ink-muted">Search policies, talk to support, or open a ticket with booking context attached.</p>
-          <form
-            className="mt-6 flex gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              notify(visibleFaqs.length ? `${visibleFaqs.length} help article${visibleFaqs.length === 1 ? "" : "s"} found.` : "No matching help articles.");
-            }}
-          >
-            <Input onChange={(event) => setSupportSearch(event.target.value)} placeholder="Search help articles" value={supportSearch} />
-            <Button type="submit">
-              <Search size={18} />
-            </Button>
-          </form>
-          <Button className="mt-4" onClick={() => setSupportOpen(true)} variant="outline">
-            <Icon name="LifeBuoy" />
-            Open Priority Ticket
-          </Button>
-        </section>
-        <section className="grid gap-4">
-          {[
-            ["Bookings", "Calendar changes, cancellations, and venue rules", "CalendarDays"],
-            ["Payments", "Wallet, invoices, refunds, and payment holds", "CreditCard"],
-            ["Turf Owner Tools", "Venue publishing, availability, analytics, and customer management", "Landmark"],
-            ["Live Support", "Priority help for event day questions", "LifeBuoy"],
-          ].map(([title, copy, icon]) => (
-            <button
-              className="text-left"
-              key={title}
-              onClick={() => {
-                setTicket((current) => ({ ...current, message: `I need help with ${title.toLowerCase()}.` }));
-                setSupportOpen(true);
-              }}
-              type="button"
-            >
-              <Card interactive className="h-full">
-                <CardContent className="flex items-center gap-4">
-                  <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary-soft text-primary">
-                    <Icon name={icon} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black">{title}</h2>
-                    <p className="text-sm text-ink-muted">{copy}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </button>
-          ))}
-        </section>
-      </div>
-      <section className="mt-12">
-        <SectionHeader title="Frequently Asked Questions" />
-        <div className="grid gap-4 md:grid-cols-3">
-          {visibleFaqs.map(([question, answer]) => (
-            <Card key={question}>
-              <CardContent>
-                <h2 className="text-lg font-black">{question}</h2>
-                <p className="mt-3 text-sm leading-6 text-ink-muted">{answer}</p>
-              </CardContent>
-            </Card>
-          ))}
-          {!visibleFaqs.length && (
-            <Card className="md:col-span-3">
-              <CardContent className="text-center">
-                <h2 className="text-xl font-black">No matching help article</h2>
-                <p className="mt-2 text-sm text-ink-muted">Open a priority ticket and the prototype will save your request locally.</p>
-                <Button className="mt-5" onClick={() => setSupportOpen(true)}>Open Support Ticket</Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </section>
-      <Modal onOpenChange={setSupportOpen} open={supportOpen} title="Priority Support Ticket">
-        <form
-          className="grid gap-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const tickets = JSON.parse(localStorage.getItem("turfx-support-tickets") || "[]");
-            tickets.push({ ...ticket, createdAt: new Date().toISOString(), reference: `SUP-${Date.now()}` });
-            localStorage.setItem("turfx-support-tickets", JSON.stringify(tickets));
-            setSupportOpen(false);
-            setTicket({ bookingReference: "", message: "", name: "" });
-            notify("Support ticket submitted.");
-          }}
-        >
-          <Input aria-label="Name" onChange={(event) => setTicket((current) => ({ ...current, name: event.target.value }))} placeholder="Your name" required value={ticket.name} />
-          <Input aria-label="Booking reference" onChange={(event) => setTicket((current) => ({ ...current, bookingReference: event.target.value }))} placeholder="Booking reference" value={ticket.bookingReference} />
-          <Textarea aria-label="Support message" onChange={(event) => setTicket((current) => ({ ...current, message: event.target.value }))} placeholder="Tell us what happened..." required value={ticket.message} />
-          <div className="flex justify-end gap-3">
-            <Button onClick={() => setSupportOpen(false)} variant="outline">
-              Cancel
-            </Button>
-            <Button type="submit">
-              Submit Ticket
-            </Button>
-          </div>
-        </form>
-      </Modal>
-    </main>
-  );
-}
-
 export function CoachingPage() {
+  const coachListRef = useRef(null);
+  const coachStartDateInputRef = useRef(null);
+  const { user } = useAuth();
+  const { data: coaches = [], isLoading } = useCoaches();
+  const canRequestCoach = ["user", "admin"].includes(user?.role);
+  const { data: myCoachRequests = [] } = useMyCoachRequests(Boolean(canRequestCoach));
+  const createCoachRequest = useCreateCoachRequest();
+  const [selectedSport, setSelectedSport] = useState("All");
+  const [selectedCoach, setSelectedCoach] = useState(null);
+  const [requestForm, setRequestForm] = useState({
+    notes: "",
+    paymentMethod: "UPI",
+    preferredStartDate: futureDate(3),
+    timing: "",
+  });
+  const sports = ["All", ...new Set(coaches.map((coach) => coach.sport).filter(Boolean))];
+  const visibleCoaches = selectedSport === "All" ? coaches : coaches.filter((coach) => coach.sport === selectedSport);
+  const requestByCoach = new Map(myCoachRequests.map((request) => [request.coachId, request]));
+  const paidRequests = myCoachRequests.filter((request) => request.paymentStatus === "paid");
+  const pendingRequests = paidRequests.filter((request) => request.approvalStatus === "pending");
+  const approvedRequests = paidRequests.filter((request) => request.approvalStatus === "approved");
+
+  function openCoachRequest(coach) {
+    setSelectedCoach(coach);
+    setRequestForm({
+      notes: "",
+      paymentMethod: "UPI",
+      preferredStartDate: futureDate(3),
+      timing: coach.timings[0] || "",
+    });
+  }
+
+  function openCoachStartDatePicker() {
+    const input = coachStartDateInputRef.current;
+    if (!input) return;
+    if (input.showPicker) {
+      input.showPicker();
+      return;
+    }
+    input.click();
+  }
+
+  async function submitCoachRequest(event) {
+    event.preventDefault();
+    if (!selectedCoach) return;
+
+    try {
+      await createCoachRequest.mutateAsync({
+        coachId: selectedCoach.coachId,
+        ...requestForm,
+      });
+      setSelectedCoach(null);
+      notify("Coach payment successful. Waiting for turf owner approval.");
+    } catch (error) {
+      notify(error.response?.data?.message || error.message);
+    }
+  }
+
   return (
     <main className="page-shell py-10">
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-center">
@@ -1366,23 +1029,230 @@ export function CoachingPage() {
           <Badge variant="secondary">Performance Academy</Badge>
           <h1 className="mt-4 text-5xl font-black tracking-normal">Certified coaching for measurable athletic progress.</h1>
           <p className="mt-4 text-ink-muted">
-            Book private coaches, join elite batches, and connect every session to your TURFX athlete profile.
+            Book private coaches attached to real TURFX venues. Pay the monthly fee, then the turf owner approves your coaching slot.
           </p>
-          <Button as={Link} className="mt-7" to="/support">Find a Coach</Button>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Button onClick={() => coachListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+              Find a Coach
+            </Button>
+            {canRequestCoach && (
+              <Button as={Link} to="/coaching/my" variant="outline">
+                My Coaching
+              </Button>
+            )}
+          </div>
         </div>
         <img alt="Performance training" className="min-h-96 rounded-3xl object-cover" src={assetImages.training} />
       </div>
+
       <div className="mt-10 grid gap-5 md:grid-cols-3">
         {["Technical Skills", "Strength Lab", "Match Intelligence"].map((item) => (
           <Card interactive key={item}>
             <CardContent>
               <Icon className="text-primary" name="Dumbbell" />
               <h2 className="mt-4 text-xl font-black">{item}</h2>
-              <p className="mt-2 text-sm text-ink-muted">Structured plans, progress reviews, and coach feedback after every session.</p>
+              <p className="mt-2 text-sm text-ink-muted">Structured plans, progress check-ins, and coach feedback after every session.</p>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <section className="mt-12 grid gap-5 md:grid-cols-3">
+        <StatsCard icon="Dumbbell" label="Available Coaches" value={String(coaches.length)} />
+        <StatsCard icon="Clock" label="Pending Approvals" tone="warning" value={String(pendingRequests.length)} />
+        <StatsCard icon="BadgeCheck" label="Approved Plans" tone="secondary" value={String(approvedRequests.length)} />
+      </section>
+
+      {canRequestCoach && Boolean(myCoachRequests.length) && (
+        <section className="mt-12">
+          <SectionHeader
+            action={<Button as={Link} to="/coaching/my" variant="ghost">View All <ChevronRight size={16} /></Button>}
+            subtitle="Paid coaching plans stay pending until the venue owner approves the coach timing."
+            title="My Coaching Status"
+          />
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {myCoachRequests.slice(0, 3).map((request) => (
+              <Card key={request.id}>
+                <CardContent>
+                  <Badge variant={request.approvalStatus === "approved" ? "success" : request.approvalStatus === "rejected" ? "danger" : "warning"}>
+                    {request.status}
+                  </Badge>
+                  <h2 className="mt-4 text-xl font-black">{request.coachName}</h2>
+                  <p className="mt-2 text-sm text-ink-muted">{request.venue}</p>
+                  <div className="mt-5 grid gap-2 text-sm">
+                    <p className="flex justify-between gap-4"><span>Timing</span><strong className="text-right">{request.timing}</strong></p>
+                    <p className="flex justify-between gap-4"><span>Monthly fee</span><strong>{currency(request.monthlyFee)}</strong></p>
+                    <p className="flex justify-between gap-4"><span>Payment</span><strong>{request.paymentStatus}</strong></p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="mt-12 scroll-mt-24" ref={coachListRef}>
+        <SectionHeader
+          subtitle="Coaches are generated from approved turf venues, with dummy monthly plans and real owner approval flow."
+          title="Available Turf Coaches"
+        />
+        <div className="mb-5 flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+          {sports.map((sport) => (
+            <Button
+              key={sport}
+              onClick={() => setSelectedSport(sport)}
+              variant={selectedSport === sport ? "primary" : "outline"}
+            >
+              {sport}
+            </Button>
+          ))}
+        </div>
+        {isLoading ? (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <Card key={item}>
+                <CardContent>
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="mt-4 h-28 w-full" />
+                  <Skeleton className="mt-4 h-10 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : visibleCoaches.length ? (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {visibleCoaches.map((coach) => {
+              const existingRequest = requestByCoach.get(coach.coachId);
+              return (
+                <Card interactive className="h-full" key={coach.coachId}>
+                  <CardContent className="flex h-full flex-col">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <Badge variant="primary">{coach.sport}</Badge>
+                        <h2 className="mt-4 text-2xl font-black">{coach.coachName}</h2>
+                      </div>
+                      <div className="grid h-12 w-12 place-items-center rounded-xl bg-secondary-soft text-secondary-deep">
+                        <Icon name="Dumbbell" />
+                      </div>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-ink-muted">{coach.specialty}</p>
+                    <div className="mt-5 rounded-xl bg-surface-low p-4">
+                      <p className="text-sm font-black">{coach.venue}</p>
+                      <p className="mt-1 text-xs text-ink-muted">{coach.turf.location || coach.turf.city}</p>
+                    </div>
+                    <div className="mt-5 grid gap-3 text-sm">
+                      <p className="flex justify-between gap-4"><span className="text-ink-muted">Monthly fee</span><strong>{currency(coach.monthlyFee)}</strong></p>
+                      <p className="flex justify-between gap-4"><span className="text-ink-muted">Sessions</span><strong>{coach.sessionsPerMonth} / month</strong></p>
+                      <p className="flex justify-between gap-4"><span className="text-ink-muted">Experience</span><strong>{coach.experience}</strong></p>
+                    </div>
+                    <div className="mt-5 space-y-2">
+                      {coach.timings.map((timing) => (
+                        <p className="rounded-lg border border-surface-border px-3 py-2 text-xs font-bold text-ink-muted" key={timing}>
+                          {timing}
+                        </p>
+                      ))}
+                    </div>
+                    <div className="mt-auto pt-6">
+                      {existingRequest ? (
+                        <Button as={Link} className="w-full" to="/coaching/my" variant="outline">
+                          {existingRequest.approvalStatus === "approved" ? "Successful Plan" : "View Pending Plan"}
+                        </Button>
+                      ) : user ? (
+                        <Button
+                          className="w-full"
+                          disabled={!canRequestCoach}
+                          onClick={() => openCoachRequest(coach)}
+                        >
+                          Pay Monthly Fee
+                        </Button>
+                      ) : (
+                        <Button as={Link} className="w-full" to="/login">
+                          Login to Book Coach
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            description="Approved turf venues will automatically show coach plans here."
+            icon="Dumbbell"
+            title="No coaches available yet"
+          />
+        )}
+      </section>
+
+      <Modal onOpenChange={(open) => !open && setSelectedCoach(null)} open={Boolean(selectedCoach)} title="Confirm Monthly Coaching">
+        {selectedCoach && (
+          <form className="grid gap-4" onSubmit={submitCoachRequest}>
+            <div className="rounded-xl bg-surface-low p-4">
+              <h2 className="text-xl font-black">{selectedCoach.coachName}</h2>
+              <p className="mt-1 text-sm text-ink-muted">{selectedCoach.venue} - {selectedCoach.sport}</p>
+              <p className="mt-3 text-2xl font-black text-primary">{currency(selectedCoach.monthlyFee)} / month</p>
+              <p className="mt-1 text-xs text-ink-muted">Payment succeeds now. Turf owner approval is required before sessions become active.</p>
+            </div>
+            <label className="text-sm font-bold">
+              Timing
+              <select
+                className="focus-ring mt-2 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm"
+                onChange={(event) => setRequestForm((current) => ({ ...current, timing: event.target.value }))}
+                value={requestForm.timing}
+              >
+                {selectedCoach.timings.map((timing) => <option key={timing} value={timing}>{timing}</option>)}
+              </select>
+            </label>
+            <div>
+              <label className="text-sm font-bold" htmlFor="coach-start-date">
+                Preferred start date
+              </label>
+              <div className="relative mt-2">
+                <button
+                  aria-label="Choose preferred start date"
+                  className="focus-ring flex h-11 w-full items-center justify-between gap-3 rounded-lg border border-surface-outline bg-white px-3 text-left text-sm font-bold text-ink"
+                  onClick={openCoachStartDatePicker}
+                  type="button"
+                >
+                  <span>{formatDateLabel(requestForm.preferredStartDate)}</span>
+                  <CalendarDays aria-hidden="true" className="shrink-0 text-ink-soft" size={18} />
+                </button>
+                <input
+                  aria-label="Preferred start date"
+                  className="pointer-events-none absolute h-px w-px opacity-0"
+                  id="coach-start-date"
+                  min={futureDate(1)}
+                  onChange={(event) => setRequestForm((current) => ({ ...current, preferredStartDate: event.target.value }))}
+                  ref={coachStartDateInputRef}
+                  tabIndex={-1}
+                  type="date"
+                  value={requestForm.preferredStartDate}
+                />
+              </div>
+            </div>
+            <label className="text-sm font-bold">
+              Payment method
+              <select
+                className="focus-ring mt-2 h-11 w-full rounded-lg border border-surface-outline bg-white px-3 text-sm"
+                onChange={(event) => setRequestForm((current) => ({ ...current, paymentMethod: event.target.value }))}
+                value={requestForm.paymentMethod}
+              >
+                {["UPI", "Card", "Mock Payment"].map((method) => <option key={method} value={method}>{method}</option>)}
+              </select>
+            </label>
+            <Textarea
+              maxLength={500}
+              onChange={(event) => setRequestForm((current) => ({ ...current, notes: event.target.value }))}
+              placeholder="Any training goal or note for the coach"
+              value={requestForm.notes}
+            />
+            <Button disabled={createCoachRequest.isPending} type="submit">
+              Pay & Request Owner Approval
+            </Button>
+          </form>
+        )}
+      </Modal>
     </main>
   );
 }

@@ -2,19 +2,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { responseData } from "../services/api/client.js";
 import {
   createDemoTurf,
-  normalizeEvent,
+  normalizeCoach,
+  normalizeCoachRequest,
   normalizePayment,
   normalizeTournament,
+  normalizeTournamentRegistration,
   normalizeTurf,
 } from "../services/api/normalize.js";
 import {
   adminApi,
-  eventsApi,
+  coachingApi,
   favoritesApi,
   notificationsApi,
-  ownerApi,
   paymentsApi,
-  reviewsApi,
   tournamentsApi,
   usersApi,
 } from "../services/api/platform.js";
@@ -47,37 +47,52 @@ export function usePayments() {
   return useQuery({
     queryKey: ["payments"],
     queryFn: async () => (responseData(await paymentsApi.history()).payments || []).map(normalizePayment),
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   });
 }
 
-export function useEvents() {
+export function useCoaches() {
   return useQuery({
-    queryKey: ["events"],
-    queryFn: async () => (responseData(await eventsApi.list()).events || []).map(normalizeEvent),
+    queryKey: ["coaching", "coaches"],
+    queryFn: async () => (responseData(await coachingApi.coaches()).coaches || []).map(normalizeCoach),
   });
 }
 
-export function useEvent(id) {
+export function useMyCoachRequests(enabled = true) {
   return useQuery({
-    queryKey: ["events", id],
-    enabled: Boolean(id),
-    queryFn: async () => normalizeEvent(responseData(await eventsApi.detail(id)).event),
+    queryKey: ["coaching", "mine"],
+    enabled,
+    queryFn: async () => (responseData(await coachingApi.mine()).coachRequests || []).map(normalizeCoachRequest),
   });
 }
 
-export function useCreateEvent() {
+export function useCreateCoachRequest() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload) => eventsApi.create(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["events"] }),
+    mutationFn: (payload) => coachingApi.createRequest(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coaching"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 }
 
-export function useDeleteEvent() {
+export function useOwnerCoachRequests() {
+  return useQuery({
+    queryKey: ["coaching", "owner"],
+    queryFn: async () => (responseData(await coachingApi.ownerRequests()).coachRequests || []).map(normalizeCoachRequest),
+  });
+}
+
+export function useUpdateCoachRequestStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id) => eventsApi.remove(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["events"] }),
+    mutationFn: ({ id, status, reason = "" }) => coachingApi.updateStatus(id, { reason, status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coaching"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 }
 
@@ -89,11 +104,22 @@ export function useTournaments(params = {}) {
   });
 }
 
+export function useOwnerTournaments() {
+  return useQuery({
+    queryKey: ["tournaments", "owner"],
+    queryFn: async () =>
+      (responseData(await tournamentsApi.ownerList()).tournaments || []).map(normalizeTournament),
+  });
+}
+
 export function useCreateTournament() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload) => tournamentsApi.create(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tournaments"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 }
 
@@ -113,10 +139,43 @@ export function useTournament(id) {
   });
 }
 
-export function useOwnerReviews() {
+export function useMyTournamentRegistrations(enabled = true) {
   return useQuery({
-    queryKey: ["owner", "reviews"],
-    queryFn: async () => responseData(await ownerApi.reviews()).reviews || [],
+    queryKey: ["tournaments", "registrations", "mine"],
+    enabled,
+    queryFn: async () =>
+      (responseData(await tournamentsApi.myRegistrations()).registrations || []).map(normalizeTournamentRegistration),
+  });
+}
+
+export function useCreateTournamentRegistration() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }) => tournamentsApi.createRegistration(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["tournaments", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+export function useOwnerTournamentRegistrations() {
+  return useQuery({
+    queryKey: ["tournaments", "registrations", "owner"],
+    queryFn: async () =>
+      (responseData(await tournamentsApi.ownerRegistrations()).registrations || []).map(normalizeTournamentRegistration),
+  });
+}
+
+export function useUpdateTournamentRegistrationStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason = "", status }) => tournamentsApi.updateRegistrationStatus(id, { reason, status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 }
 
@@ -141,13 +200,6 @@ export function useAdminTurfs() {
       const data = responseData(await turfsApi.list({ includeUnapproved: true, limit: 100 }));
       return (data.turfs || []).map(normalizeTurf);
     },
-  });
-}
-
-export function useAdminSettings() {
-  return useQuery({
-    queryKey: ["admin", "settings"],
-    queryFn: async () => responseData(await adminApi.settings()).settings || [],
   });
 }
 
@@ -203,47 +255,6 @@ export function useDeleteNotification() {
   });
 }
 
-export function useMyReviews(enabled = true) {
-  return useQuery({
-    queryKey: ["reviews", "mine"],
-    enabled,
-    queryFn: async () => responseData(await reviewsApi.mine()).reviews || [],
-  });
-}
-
-export function useCreateReview() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload) => reviewsApi.create(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reviews"] });
-      queryClient.invalidateQueries({ queryKey: ["turfs"] });
-    },
-  });
-}
-
-export function useUpdateReview() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, payload }) => reviewsApi.update(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reviews"] });
-      queryClient.invalidateQueries({ queryKey: ["turfs"] });
-    },
-  });
-}
-
-export function useDeleteReview() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id) => reviewsApi.remove(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reviews"] });
-      queryClient.invalidateQueries({ queryKey: ["turfs"] });
-    },
-  });
-}
-
 export function useCreateNotification() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -277,13 +288,5 @@ export function useDeleteUser() {
   return useMutation({
     mutationFn: (id) => usersApi.remove(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "users"] }),
-  });
-}
-
-export function useSaveSetting() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ key, payload }) => adminApi.saveSetting(key, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "settings"] }),
   });
 }

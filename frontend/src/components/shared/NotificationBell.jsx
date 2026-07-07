@@ -15,7 +15,7 @@ export function NotificationBell({ className = "", fallbackHref = "/notification
   function openNotification(notification) {
     if (!notification.isRead) markRead.mutate(notification.id);
     setOpen(false);
-    navigate(notification.targetUrl || fallbackHref);
+    if (notification.targetUrl) navigate(notification.targetUrl);
   }
 
   return (

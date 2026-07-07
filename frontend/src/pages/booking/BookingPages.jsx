@@ -732,8 +732,13 @@ function SuccessScreen({ booking = true }) {
     <main className="page-shell flex min-h-[72vh] items-center justify-center py-10">
       <Card className="max-w-2xl overflow-hidden text-center">
         <div className="relative h-64">
-          <img alt="Success turf" className="h-full w-full object-cover" onError={handleImageError} src={bookingData?.image || assetImages.stadium} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+          <img alt="Success turf" className="h-full w-full object-cover object-bottom" onError={handleImageError} src={bookingData?.image || assetImages.stadium} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/75" />
+          <div className="absolute left-6 right-6 top-6 text-left text-white">
+            <p className="text-xs font-bold uppercase tracking-wider text-white/65">{booking ? "Booking confirmed" : "Payment hold"}</p>
+            <h2 className="mt-1 truncate text-2xl font-black">{bookingData?.venue || "TURFX Venue"}</h2>
+            <p className="mt-1 truncate text-sm font-bold text-white/75">{bookingData ? `${bookingData.sport || "Turf"} - ${bookingData.location || "TURFX venue"}` : "Ready for check-in"}</p>
+          </div>
           <div className="absolute inset-0 grid place-items-center">
             <div className="grid h-24 w-24 place-items-center rounded-full bg-accent text-white shadow-lift">
               <Check size={44} />

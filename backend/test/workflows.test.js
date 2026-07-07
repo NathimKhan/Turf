@@ -14,23 +14,23 @@ const generateToken = require("../src/utils/generateToken");
 const AuditLog = require("../src/models/AuditLog");
 const Booking = require("../src/models/Booking");
 const BookingConflictLog = require("../src/models/BookingConflictLog");
+const CoachBooking = require("../src/models/CoachBooking");
 const Notification = require("../src/models/Notification");
 const Payment = require("../src/models/Payment");
-const PlatformSetting = require("../src/models/PlatformSetting");
-const Review = require("../src/models/Review");
 const Turf = require("../src/models/Turf");
+const Tournament = require("../src/models/Tournament");
+const TournamentRegistration = require("../src/models/TournamentRegistration");
 const User = require("../src/models/User");
-const {
-  bootstrapPlatformOwner,
-  bootstrapSettings,
-} = require("../src/seed/seed");
+const { completeExpiredBookings } = require("../src/services/bookingLifecycleService");
+const { getBookingLifecycleStatus } = require("../src/utils/bookingLifecycle");
+const { bootstrapPlatformOwner } = require("../src/seed/seed");
 
 let mongo;
 
 before(async () => {
   mongo = await MongoMemoryServer.create();
   await mongoose.connect(mongo.getUri());
-  await Promise.all([AuditLog.syncIndexes(), Booking.syncIndexes(), BookingConflictLog.syncIndexes(), Payment.syncIndexes(), Review.syncIndexes(), Turf.syncIndexes(), User.syncIndexes()]);
+  await Promise.all([AuditLog.syncIndexes(), Booking.syncIndexes(), BookingConflictLog.syncIndexes(), CoachBooking.syncIndexes(), Payment.syncIndexes(), Turf.syncIndexes(), Tournament.syncIndexes(), TournamentRegistration.syncIndexes(), User.syncIndexes()]);
 });
 
 beforeEach(async () => {
@@ -38,11 +38,12 @@ beforeEach(async () => {
     Booking.deleteMany(),
     AuditLog.deleteMany(),
     BookingConflictLog.deleteMany(),
+    CoachBooking.deleteMany(),
     Notification.deleteMany(),
     Payment.deleteMany(),
-    PlatformSetting.deleteMany(),
-    Review.deleteMany(),
     Turf.deleteMany(),
+    Tournament.deleteMany(),
+    TournamentRegistration.deleteMany(),
     User.deleteMany(),
   ]);
 });
@@ -56,6 +57,10 @@ function bearer(token) {
   return { Authorization: `Bearer ${token}` };
 }
 
+function notificationUserId(notification) {
+  return String(notification.userId?._id || notification.userId);
+}
+
 async function createAdmin() {
   const admin = await User.create({
     name: "Platform Owner",
@@ -64,7 +69,6 @@ async function createAdmin() {
     role: "admin",
     approvalStatus: "ACTIVE",
     accountStatus: "active",
-    membershipPlan: "Admin",
   });
   return { admin, token: generateToken(admin._id) };
 }
@@ -77,7 +81,6 @@ test("admins and users bypass approval status checks", async () => {
     role: "admin",
     approvalStatus: "ACTIVE",
     accountStatus: "active",
-    membershipPlan: "Admin",
   });
   await User.updateOne(
     { _id: admin._id },
@@ -127,7 +130,7 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
   assert.ok(userRegistration.body.data.token);
   const userToken = userRegistration.body.data.token;
 
-  const { token: adminToken } = await createAdmin();
+  const { admin, token: adminToken } = await createAdmin();
 
   const ownerRegistration = await request(app).post("/api/auth/register-owner").send({
     name: "Venue Owner",
@@ -203,7 +206,22 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
   assert.equal(turfCreation.status, 201);
   const turfId = turfCreation.body.data.turf._id;
   assert.equal(turfCreation.body.data.turf.isApproved, false);
+  assert.equal(turfCreation.body.data.turf.approvalStatus, "PENDING");
   assert.equal(turfCreation.body.data.turf.status, "PENDING");
+  assert.equal(turfCreation.body.data.turf.visibility, "PRIVATE");
+  assert.equal(turfCreation.body.data.turf.isPublished, false);
+  assert.equal(turfCreation.body.data.turf.isVerified, false);
+  assert.ok(turfCreation.body.data.turf.submittedAt);
+  assert.ok(turfCreation.body.data.turf.heroImage);
+  assert.ok(turfCreation.body.data.turf.coverImage);
+  assert.ok(turfCreation.body.data.turf.thumbnail);
+  assert.ok(turfCreation.body.data.turf.videoThumbnail);
+  assert.ok(turfCreation.body.data.turf.gallery.length >= 8);
+  assert.ok(turfCreation.body.data.turf.groundImages.length >= 4);
+  assert.ok(turfCreation.body.data.turf.amenityImages.length >= 8);
+  assert.ok(turfCreation.body.data.turf.locationImages.length >= 4);
+  assert.ok(turfCreation.body.data.turf.sportsImages.length >= 2);
+  assert.notEqual(turfCreation.body.data.turf.heroImage, turfCreation.body.data.turf.coverImage);
 
   const hiddenBeforeApproval = await request(app).get("/api/turfs");
   assert.equal(hiddenBeforeApproval.status, 200);
@@ -226,18 +244,146 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
     .send({ isApproved: true, name: "Production Arena" });
   assert.equal(selfApprovalAttempt.status, 200);
   assert.equal(selfApprovalAttempt.body.data.turf.isApproved, false);
+  assert.equal(selfApprovalAttempt.body.data.turf.approvalStatus, "PENDING");
+  assert.equal(selfApprovalAttempt.body.data.turf.visibility, "PRIVATE");
 
   const turfApproval = await request(app)
     .patch(`/api/admin/turfs/${turfId}/status`)
     .set(bearer(adminToken))
-    .send({ status: "LIVE" });
+    .send({ status: "APPROVED" });
   assert.equal(turfApproval.status, 200);
   assert.equal(turfApproval.body.data.turf.isApproved, true);
-  assert.equal(turfApproval.body.data.turf.status, "LIVE");
+  assert.equal(turfApproval.body.data.turf.approvalStatus, "APPROVED");
+  assert.equal(turfApproval.body.data.turf.status, "ACTIVE");
+  assert.equal(turfApproval.body.data.turf.visibility, "PUBLIC");
+  assert.equal(turfApproval.body.data.turf.isPublished, true);
+  assert.equal(turfApproval.body.data.turf.isVerified, true);
+  assert.ok(turfApproval.body.data.turf.approvedAt);
+  assert.ok(turfApproval.body.data.turf.approvalHistory.some((entry) => entry.toStatus === "APPROVED"));
 
   const visibleAfterApproval = await request(app).get("/api/turfs");
   assert.equal(visibleAfterApproval.status, 200);
   assert.equal(visibleAfterApproval.body.data.turfs.length, 1);
+
+  const tournamentCreation = await request(app)
+    .post("/api/tournaments")
+    .set(bearer(ownerToken))
+    .send({
+      title: "Production Turf Cup",
+      description: "A paid owner-created tournament attached to an approved turf.",
+      sport: "Football",
+      turfId,
+      entryFee: 500,
+      prizePool: 5000,
+      maxTeams: 8,
+      startDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+      endDate: new Date(Date.now() + 8 * 86400000).toISOString().slice(0, 10),
+    });
+  assert.equal(tournamentCreation.status, 201);
+  assert.equal(tournamentCreation.body.data.tournament.turfId.name, "Production Arena");
+  assert.equal(tournamentCreation.body.data.tournament.entryFee, 500);
+  const tournamentId = tournamentCreation.body.data.tournament._id;
+
+  const tournamentRegistration = await request(app)
+    .post(`/api/tournaments/${tournamentId}/register`)
+    .set(bearer(userToken))
+    .send({
+      captainName: "Booking User",
+      participantCount: 5,
+      paymentMethod: "UPI",
+      teamName: "Booking Strikers",
+    });
+  assert.equal(tournamentRegistration.status, 201);
+  assert.equal(tournamentRegistration.body.data.registration.paymentStatus, "paid");
+  assert.equal(tournamentRegistration.body.data.registration.approvalStatus, "pending");
+  assert.equal(tournamentRegistration.body.data.registration.entryFee, 500);
+  assert.ok(tournamentRegistration.body.data.registration.transactionId.startsWith("TOURNEY-"));
+
+  const userTournamentRegistrations = await request(app)
+    .get("/api/tournaments/mine/registrations")
+    .set(bearer(userToken));
+  assert.equal(userTournamentRegistrations.status, 200);
+  assert.equal(userTournamentRegistrations.body.data.registrations.length, 1);
+  assert.equal(userTournamentRegistrations.body.data.registrations[0].turfId.name, "Production Arena");
+
+  const ownerTournamentRegistrations = await request(app)
+    .get("/api/tournaments/owner/registrations")
+    .set(bearer(ownerToken));
+  assert.equal(ownerTournamentRegistrations.status, 200);
+  assert.equal(ownerTournamentRegistrations.body.data.registrations.length, 1);
+
+  const ownerTournamentNotification = await request(app).get("/api/notifications").set(bearer(ownerToken));
+  assert.equal(ownerTournamentNotification.status, 200);
+  assert.ok(ownerTournamentNotification.body.data.notifications.some((notification) =>
+    notification.title === "Tournament approval needed" && notification.targetUrl === "/owner/tournaments"));
+
+  const tournamentApproval = await request(app)
+    .patch(`/api/tournaments/registrations/${tournamentRegistration.body.data.registration._id}/status`)
+    .set(bearer(ownerToken))
+    .send({ status: "approved" });
+  assert.equal(tournamentApproval.status, 200);
+  assert.equal(tournamentApproval.body.data.registration.approvalStatus, "approved");
+  assert.equal(tournamentApproval.body.data.registration.registrationStatus, "successful");
+
+  const approvedTournamentRegistrations = await request(app)
+    .get("/api/tournaments/mine/registrations")
+    .set(bearer(userToken));
+  assert.equal(approvedTournamentRegistrations.status, 200);
+  assert.equal(approvedTournamentRegistrations.body.data.registrations[0].approvalStatus, "approved");
+
+  const tournamentDetailAfterApproval = await request(app).get(`/api/tournaments/${tournamentId}`);
+  assert.equal(tournamentDetailAfterApproval.status, 200);
+  assert.equal(tournamentDetailAfterApproval.body.data.tournament.participants.length, 1);
+
+  await Turf.updateOne(
+    { _id: turfId },
+    { $set: { status: "PENDING", isApproved: true, moderationStatus: "approved" } },
+  );
+
+  const coaches = await request(app).get("/api/coaching/coaches");
+  assert.equal(coaches.status, 200);
+  assert.ok(coaches.body.data.coaches.length >= 1);
+  assert.equal(coaches.body.data.coaches[0].turf.name, "Production Arena");
+
+  const coach = coaches.body.data.coaches[0];
+  const coachPayment = await request(app)
+    .post("/api/coaching/requests")
+    .set(bearer(userToken))
+    .send({
+      coachId: coach.coachId,
+      paymentMethod: "UPI",
+      preferredStartDate: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+      timing: coach.timings[0],
+    });
+  assert.equal(coachPayment.status, 201);
+  assert.equal(coachPayment.body.data.coachRequest.paymentStatus, "paid");
+  assert.equal(coachPayment.body.data.coachRequest.approvalStatus, "pending");
+  assert.ok(coachPayment.body.data.coachRequest.transactionId.startsWith("COACH-"));
+
+  const userCoachRequests = await request(app).get("/api/coaching/mine").set(bearer(userToken));
+  assert.equal(userCoachRequests.status, 200);
+  assert.equal(userCoachRequests.body.data.coachRequests.length, 1);
+  assert.equal(userCoachRequests.body.data.coachRequests[0].timing, coach.timings[0]);
+
+  const ownerCoachRequests = await request(app).get("/api/coaching/owner/requests").set(bearer(ownerToken));
+  assert.equal(ownerCoachRequests.status, 200);
+  assert.equal(ownerCoachRequests.body.data.coachRequests.length, 1);
+
+  const ownerCoachNotification = await request(app).get("/api/notifications").set(bearer(ownerToken));
+  assert.equal(ownerCoachNotification.status, 200);
+  assert.ok(ownerCoachNotification.body.data.notifications.some((notification) =>
+    notification.title === "Coach approval needed" && notification.targetUrl === "/owner/coaching"));
+
+  const coachApproval = await request(app)
+    .patch(`/api/coaching/requests/${coachPayment.body.data.coachRequest._id}/status`)
+    .set(bearer(ownerToken))
+    .send({ status: "approved" });
+  assert.equal(coachApproval.status, 200);
+  assert.equal(coachApproval.body.data.coachRequest.approvalStatus, "approved");
+
+  const approvedCoachRequests = await request(app).get("/api/coaching/mine").set(bearer(userToken));
+  assert.equal(approvedCoachRequests.status, 200);
+  assert.equal(approvedCoachRequests.body.data.coachRequests[0].approvalStatus, "approved");
 
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const availability = await request(app).get(`/api/turfs/${turfId}/availability`).query({ date });
@@ -302,20 +448,15 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
 
   const ownerDashboard = await request(app).get("/api/owner/dashboard").set(bearer(ownerToken));
   assert.equal(ownerDashboard.status, 200);
-  assert.equal(ownerDashboard.body.data.revenue, 1080);
-  assert.equal(ownerDashboard.body.data.completedRevenue, 1080);
+  assert.equal(ownerDashboard.body.data.paidRevenue, 1080);
+  assert.equal(ownerDashboard.body.data.revenue, 0);
+  assert.equal(ownerDashboard.body.data.completedRevenue, 0);
 
   const adminDashboard = await request(app).get("/api/admin/dashboard").set(bearer(adminToken));
   assert.equal(adminDashboard.status, 200);
-  assert.equal(adminDashboard.body.data.platformRevenue, 120);
-  assert.equal(adminDashboard.body.data.ownerRevenue, 1080);
-
-  const membership = await request(app)
-    .post("/api/auth/membership/upgrade")
-    .set(bearer(userToken))
-    .send({ plan: "Gold" });
-  assert.equal(membership.status, 200);
-  assert.equal(membership.body.data.user.membershipPlan, "Gold");
+  assert.equal(adminDashboard.body.data.platformRevenue, 0);
+  assert.equal(adminDashboard.body.data.ownerRevenue, 0);
+  assert.equal(adminDashboard.body.data.paidGrossRevenue, 1200);
 
   const favorite = await request(app)
     .post(`/api/favorites/${turfId}`)
@@ -352,31 +493,21 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
   assert.equal(completed.status, 200);
   assert.equal(completed.body.data.booking.bookingStatus, "completed");
 
-  const review = await request(app)
-    .post("/api/reviews")
-    .set(bearer(userToken))
-    .send({ turfId, rating: 5, comment: "Excellent venue and booking experience." });
-  assert.equal(review.status, 201);
-  const reviewId = review.body.data.review._id;
+  const ownerDashboardAfterCompletion = await request(app).get("/api/owner/dashboard").set(bearer(ownerToken));
+  assert.equal(ownerDashboardAfterCompletion.status, 200);
+  assert.equal(ownerDashboardAfterCompletion.body.data.revenue, 1080);
+  assert.equal(ownerDashboardAfterCompletion.body.data.completedRevenue, 1080);
 
-  const updatedReview = await request(app)
-    .put(`/api/reviews/${reviewId}`)
-    .set(bearer(userToken))
-    .send({ rating: 4, comment: "Updated review after another look at the venue." });
-  assert.equal(updatedReview.status, 200);
-  assert.equal(updatedReview.body.data.review.rating, 4);
-
-  const myReviews = await request(app).get("/api/reviews/mine").set(bearer(userToken));
-  assert.equal(myReviews.status, 200);
-  assert.equal(myReviews.body.data.reviews.length, 1);
-
-  const deletedReview = await request(app)
-    .delete(`/api/reviews/${reviewId}`)
-    .set(bearer(userToken));
-  assert.equal(deletedReview.status, 200);
+  const adminDashboardAfterCompletion = await request(app).get("/api/admin/dashboard").set(bearer(adminToken));
+  assert.equal(adminDashboardAfterCompletion.status, 200);
+  assert.equal(adminDashboardAfterCompletion.body.data.platformRevenue, 120);
+  assert.equal(adminDashboardAfterCompletion.body.data.ownerRevenue, 1080);
+  assert.equal(adminDashboardAfterCompletion.body.data.completedBookings, 1);
 
   const notifications = await request(app).get("/api/notifications").set(bearer(userToken));
   assert.equal(notifications.status, 200);
+  assert.ok(notifications.body.data.notifications.every((notification) =>
+    notificationUserId(notification) === userRegistration.body.data.user._id));
   assert.ok(notifications.body.data.notifications.length >= 3);
   assert.ok(notifications.body.data.notifications.some((notification) =>
     notification.title === "Payment successful" && notification.targetUrl?.startsWith("/payments")));
@@ -385,21 +516,25 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
 
   const ownerNotifications = await request(app).get("/api/notifications").set(bearer(ownerToken));
   assert.equal(ownerNotifications.status, 200);
+  assert.ok(ownerNotifications.body.data.notifications.every((notification) =>
+    notificationUserId(notification) === ownerId));
   assert.ok(ownerNotifications.body.data.notifications.some((notification) =>
     notification.title === "Account Approved" && notification.targetUrl === "/owner/dashboard"));
   assert.ok(ownerNotifications.body.data.notifications.some((notification) =>
     notification.title === "Venue Approved" && notification.targetUrl === `/owner/turfs/${turfId}`));
   assert.ok(ownerNotifications.body.data.notifications.some((notification) =>
-    /credited/i.test(notification.title) && notification.targetUrl === "/owner/revenue"));
+    /pending finalization/i.test(notification.title) && notification.targetUrl === "/owner/revenue"));
 
   const platformNotifications = await request(app).get("/api/notifications").set(bearer(adminToken));
   assert.equal(platformNotifications.status, 200);
+  assert.ok(platformNotifications.body.data.notifications.every((notification) =>
+    notificationUserId(notification) === String(admin._id)));
   assert.ok(platformNotifications.body.data.notifications.some((notification) =>
     notification.title === "New Turf Owner registered" && notification.targetUrl === "/admin/owners"));
   assert.ok(platformNotifications.body.data.notifications.some((notification) =>
     notification.title === "Venue awaiting approval" && notification.targetUrl === "/admin/turfs"));
   assert.ok(platformNotifications.body.data.notifications.some((notification) =>
-    notification.title === "Platform fee received" && notification.targetUrl === "/admin/revenue"));
+    notification.title === "Platform fee pending finalization" && notification.targetUrl === "/admin/revenue"));
 
   const auditLogs = await request(app).get("/api/admin/audit-logs").set(bearer(adminToken));
   assert.equal(auditLogs.status, 200);
@@ -429,6 +564,226 @@ test("production user, owner, venue, booking, payment, and favorite workflows", 
   assert.equal(markRead.status, 200);
 });
 
+test("paid bookings move from upcoming to ongoing and complete automatically after the slot", async () => {
+  const owner = await User.create({
+    name: "Lifecycle Owner",
+    email: "lifecycle-owner@test.local",
+    password: "OwnerPass1",
+    role: "owner",
+    accountStatus: "active",
+  });
+  const user = await User.create({
+    name: "Lifecycle User",
+    email: "lifecycle-user@test.local",
+    password: "UserPass1",
+    role: "user",
+    accountStatus: "active",
+  });
+  const turf = await Turf.create({
+    name: "Lifecycle Arena",
+    description: "A venue used to validate automatic booking lifecycle changes.",
+    location: "Central District",
+    address: "18 Lifecycle Road",
+    city: "Mumbai",
+    state: "Maharashtra",
+    sportsSupported: ["Football"],
+    pricePerHour: 1000,
+    ownerId: owner._id,
+    isApproved: true,
+    moderationStatus: "approved",
+  });
+  const bookingDate = new Date(Date.UTC(2026, 0, 1));
+  const lifecycleBooking = {
+    bookingDate,
+    bookingStatus: "confirmed",
+    paymentStatus: "paid",
+    slotEndTime: "19:00",
+    slotStartTime: "18:00",
+  };
+
+  assert.equal(getBookingLifecycleStatus(lifecycleBooking, new Date(2026, 0, 1, 17, 45)), "upcoming");
+  assert.equal(getBookingLifecycleStatus(lifecycleBooking, new Date(2026, 0, 1, 18, 0)), "ongoing");
+  assert.equal(getBookingLifecycleStatus(lifecycleBooking, new Date(2026, 0, 1, 18, 35)), "ongoing");
+  assert.equal(getBookingLifecycleStatus(lifecycleBooking, new Date(2026, 0, 1, 19, 0)), "completed");
+
+  const booking = await Booking.create({
+    ...lifecycleBooking,
+    hoursBooked: 1,
+    occupancyKeys: [`${turf._id}:2026-01-01:1080`],
+    ownerId: owner._id,
+    slotKey: `${turf._id}:2026-01-01:18:00:19:00`,
+    sport: "Football",
+    totalAmount: 1000,
+    turfId: turf._id,
+    userId: user._id,
+  });
+  const payment = await Payment.create({
+    amount: 1000,
+    bookingId: booking._id,
+    ownerId: owner._id,
+    ownerRevenue: 900,
+    paidAt: new Date(2026, 0, 1, 17, 30),
+    paymentMethod: "Card",
+    paymentStatus: "paid",
+    platformFee: 100,
+    platformFeeRate: 0.1,
+    transactionId: "TXN-LIFECYCLE-001",
+    userId: user._id,
+    venueId: turf._id,
+  });
+
+  const ongoingResult = await completeExpiredBookings(new Date(2026, 0, 1, 18, 1));
+  assert.equal(ongoingResult.completedBookings, 0);
+  assert.equal(ongoingResult.finalizedPayments, 0);
+
+  const ongoingBooking = await Booking.findById(booking._id).select("+occupancyKeys");
+  assert.equal(ongoingBooking.bookingStatus, "ongoing");
+  assert.equal(ongoingBooking.qrStatus, "active");
+  assert.deepEqual(ongoingBooking.occupancyKeys, [`${turf._id}:2026-01-01:1080`]);
+  assert.equal(ongoingBooking.slotKey, `${turf._id}:2026-01-01:18:00:19:00`);
+
+  const lifecycleResult = await completeExpiredBookings(new Date(2026, 0, 1, 19, 0));
+  assert.equal(lifecycleResult.completedBookings, 1);
+  assert.equal(lifecycleResult.finalizedPayments, 1);
+
+  const completedBooking = await Booking.findById(booking._id).select("+occupancyKeys");
+  assert.equal(completedBooking.bookingStatus, "completed");
+  assert.ok(completedBooking.completedAt);
+  assert.equal(completedBooking.invoiceStatus, "ready");
+  assert.ok(completedBooking.invoiceId);
+  assert.equal(completedBooking.qrStatus, "expired");
+  assert.deepEqual(completedBooking.occupancyKeys, []);
+  assert.equal(completedBooking.slotKey, undefined);
+
+  const finalizedPayment = await Payment.findById(payment._id);
+  assert.ok(finalizedPayment.finalizedAt);
+  assert.equal(finalizedPayment.invoiceStatus, "ready");
+  assert.equal(finalizedPayment.invoiceId, completedBooking.invoiceId);
+
+});
+
+test("completed demo bookings with pending payment are reconciled and invoiced", async () => {
+  const owner = await User.create({
+    name: "Demo Lifecycle Owner",
+    email: "demo-lifecycle-owner@test.local",
+    password: "OwnerPass1",
+    role: "owner",
+    accountStatus: "active",
+  });
+  const user = await User.create({
+    name: "Demo Lifecycle User",
+    email: "demo-lifecycle-user@test.local",
+    password: "UserPass1",
+    role: "user",
+    accountStatus: "active",
+  });
+  const turf = await Turf.create({
+    name: "Demo Lifecycle Arena",
+    description: "A venue used to validate demo payment reconciliation.",
+    location: "Central District",
+    address: "28 Demo Road",
+    city: "Mumbai",
+    state: "Maharashtra",
+    sportsSupported: ["Football"],
+    pricePerHour: 1300,
+    ownerId: owner._id,
+    isApproved: true,
+    moderationStatus: "approved",
+  });
+
+  const booking = await Booking.create({
+    bookingDate: new Date(Date.UTC(2026, 5, 7)),
+    bookingStatus: "completed",
+    hoursBooked: 1,
+    occupancyKeys: [`${turf._id}:2026-06-07:360`],
+    ownerId: owner._id,
+    paymentStatus: "pending",
+    qrStatus: "active",
+    slotEndTime: "07:00",
+    slotKey: `${turf._id}:2026-06-07:06:00:07:00`,
+    slotStartTime: "06:00",
+    sport: "Football",
+    totalAmount: 1300,
+    turfId: turf._id,
+    userId: user._id,
+  });
+
+  const lifecycleResult = await completeExpiredBookings(new Date(2026, 5, 7, 7, 1));
+  assert.equal(lifecycleResult.demoPaymentsSynced, 1);
+  assert.ok(lifecycleResult.invoicesGenerated >= 1);
+
+  const syncedBooking = await Booking.findById(booking._id).select("+occupancyKeys");
+  assert.equal(syncedBooking.bookingStatus, "completed");
+  assert.equal(syncedBooking.paymentStatus, "paid");
+  assert.ok(syncedBooking.completedAt);
+  assert.equal(syncedBooking.invoiceStatus, "ready");
+  assert.ok(syncedBooking.invoiceId.startsWith("INV-"));
+  assert.equal(syncedBooking.qrStatus, "expired");
+  assert.deepEqual(syncedBooking.occupancyKeys, []);
+  assert.equal(syncedBooking.slotKey, undefined);
+
+  const payment = await Payment.findOne({ bookingId: booking._id });
+  assert.equal(payment.paymentStatus, "paid");
+  assert.equal(payment.transactionId, `DEMO-${String(booking._id).slice(-8).toUpperCase()}`);
+  assert.equal(payment.invoiceId, syncedBooking.invoiceId);
+  assert.ok(payment.finalizedAt);
+});
+
+test("expired unpaid booking holds are cancelled and released", async () => {
+  const owner = await User.create({
+    name: "Expired Hold Owner",
+    email: "expired-hold-owner@test.local",
+    password: "OwnerPass1",
+    role: "owner",
+    accountStatus: "active",
+  });
+  const user = await User.create({
+    name: "Expired Hold User",
+    email: "expired-hold-user@test.local",
+    password: "UserPass1",
+    role: "user",
+    accountStatus: "active",
+  });
+  const turf = await Turf.create({
+    name: "Expired Hold Arena",
+    description: "A venue used to validate stale hold release.",
+    location: "Central District",
+    address: "31 Hold Road",
+    city: "Mumbai",
+    state: "Maharashtra",
+    sportsSupported: ["Football"],
+    pricePerHour: 1000,
+    ownerId: owner._id,
+    isApproved: true,
+    moderationStatus: "approved",
+  });
+  const booking = await Booking.create({
+    bookingDate: new Date(Date.UTC(2026, 0, 1)),
+    bookingStatus: "pending",
+    hoursBooked: 1,
+    occupancyKeys: [`${turf._id}:2026-01-01:1080`],
+    ownerId: owner._id,
+    paymentStatus: "pending",
+    slotEndTime: "19:00",
+    slotKey: `${turf._id}:2026-01-01:18:00:19:00`,
+    slotStartTime: "18:00",
+    sport: "Football",
+    totalAmount: 1000,
+    turfId: turf._id,
+    userId: user._id,
+  });
+
+  const lifecycleResult = await completeExpiredBookings(new Date(2026, 0, 1, 19, 1));
+  assert.equal(lifecycleResult.cancelledExpiredBookings, 1);
+
+  const releasedBooking = await Booking.findById(booking._id).select("+occupancyKeys");
+  assert.equal(releasedBooking.bookingStatus, "cancelled");
+  assert.equal(releasedBooking.invoiceStatus, "not_required");
+  assert.equal(releasedBooking.qrStatus, "cancelled");
+  assert.deepEqual(releasedBooking.occupancyKeys, []);
+  assert.equal(releasedBooking.slotKey, undefined);
+});
+
 test("platform owner can reject owner applications and venues", async () => {
   const { token: adminToken } = await createAdmin();
   const user = await User.create({
@@ -442,7 +797,7 @@ test("platform owner can reject owner applications and venues", async () => {
   const ownerRegistration = await request(app).post("/api/auth/register-owner").send({
     name: "Rejected Owner",
     businessName: "Rejected Venue Company",
-    address: "9 Review Road",
+    address: "9 Approval Road",
     phone: "9876500000",
     email: "rejected-owner@test.local",
     password: "OwnerPass1",
@@ -478,7 +833,7 @@ test("platform owner can reject owner applications and venues", async () => {
       name: "Rejected Arena",
       description: "A venue used to validate rejection workflow.",
       location: "Central District",
-      address: "44 Review Street",
+      address: "44 Approval Street",
       city: "Mumbai",
       state: "Maharashtra",
       sportsSupported: ["Football"],
@@ -493,6 +848,9 @@ test("platform owner can reject owner applications and venues", async () => {
     .send({ status: "REJECTED", reason: "Photos were incomplete." });
   assert.equal(venueRejection.status, 200);
   assert.equal(venueRejection.body.data.turf.status, "REJECTED");
+  assert.equal(venueRejection.body.data.turf.approvalStatus, "REJECTED");
+  assert.equal(venueRejection.body.data.turf.visibility, "PRIVATE");
+  assert.equal(venueRejection.body.data.turf.isPublished, false);
 
   const publicTurfs = await request(app).get("/api/turfs");
   assert.equal(publicTurfs.status, 200);
@@ -514,12 +872,30 @@ test("platform owner can reject owner applications and venues", async () => {
   assert.ok(ownerNotifications.body.data.notifications.some((notification) =>
     notification.title === "Venue Rejected" && /Photos were incomplete/.test(notification.message)));
 
+  const changeRequest = await request(app)
+    .patch(`/api/admin/turfs/${venueCreation.body.data.turf._id}/status`)
+    .set(bearer(adminToken))
+    .send({ status: "NEED_CHANGES", reason: "Upload daylight photos before approval." });
+  assert.equal(changeRequest.status, 200);
+  assert.equal(changeRequest.body.data.turf.approvalStatus, "NEED_CHANGES");
+
+  const resubmission = await request(app)
+    .post(`/api/turfs/${venueCreation.body.data.turf._id}/resubmit`)
+    .set(bearer(ownerToken));
+  assert.equal(resubmission.status, 200);
+  assert.equal(resubmission.body.data.turf.approvalStatus, "PENDING");
+  assert.equal(resubmission.body.data.turf.visibility, "PRIVATE");
+
   const auditLogs = await request(app).get("/api/admin/audit-logs").set(bearer(adminToken));
   assert.equal(auditLogs.status, 200);
   assert.ok(auditLogs.body.data.logs.some((log) =>
     log.entityType === "USER" && log.action === "REJECTED" && /Documents/.test(log.reason)));
   assert.ok(auditLogs.body.data.logs.some((log) =>
     log.entityType === "VENUE" && log.action === "REJECTED" && /Photos/.test(log.reason)));
+  assert.ok(auditLogs.body.data.logs.some((log) =>
+    log.entityType === "VENUE" && log.action === "NEED_CHANGES" && /daylight photos/.test(log.reason)));
+  assert.ok(auditLogs.body.data.logs.some((log) =>
+    log.entityType === "VENUE" && log.action === "RESUBMITTED" && log.status === "PENDING"));
 });
 
 test("owners cannot manage venues belonging to another owner", async () => {
@@ -588,6 +964,77 @@ test("venue creation rejects placeholder sport and amenity values", async () => 
   assert.match(response.body.message, /Sports must be one of/);
   assert.match(response.body.message, /Amenities must be one of/);
   assert.equal(await Turf.countDocuments(), 0);
+});
+
+test("turf image system backfills legacy data and accepts categorized media", async () => {
+  const owner = await User.create({
+    name: "Image Owner",
+    email: "image-owner@test.local",
+    password: "OwnerPass1",
+    role: "owner",
+    approvalStatus: "ACTIVE",
+    accountStatus: "active",
+  });
+  const ownerToken = generateToken(owner._id);
+
+  const categorized = await request(app)
+    .post("/api/turfs")
+    .set(bearer(ownerToken))
+    .send({
+      name: "Image Ready Arena",
+      description: "A venue with categorized image URLs.",
+      location: "Media District",
+      address: "44 Media Road",
+      city: "Chennai",
+      state: "Tamil Nadu",
+      sportsSupported: ["Football"],
+      amenities: ["Parking", "Washroom"],
+      pricePerHour: 1500,
+      heroImage: "https://cdn.test/arena-hero.jpg",
+      coverImage: "https://cdn.test/arena-cover.jpg",
+      gallery: ["https://cdn.test/arena-gallery-1.jpg", "https://cdn.test/arena-gallery-2.jpg"],
+      groundImages: ["https://cdn.test/arena-ground.jpg"],
+      amenityImages: ["https://cdn.test/arena-parking.jpg"],
+      locationImages: ["https://cdn.test/arena-entrance.jpg"],
+      sportsImages: ["https://cdn.test/arena-football.jpg"],
+    });
+
+  assert.equal(categorized.status, 201);
+  assert.equal(categorized.body.data.turf.heroImage, "https://cdn.test/arena-hero.jpg");
+  assert.equal(categorized.body.data.turf.coverImage, "https://cdn.test/arena-cover.jpg");
+  assert.ok(categorized.body.data.turf.gallery.includes("https://cdn.test/arena-gallery-1.jpg"));
+  assert.ok(categorized.body.data.turf.groundImages.includes("https://cdn.test/arena-ground.jpg"));
+  assert.ok(categorized.body.data.turf.amenityImages.includes("https://cdn.test/arena-parking.jpg"));
+  assert.ok(categorized.body.data.turf.locationImages.includes("https://cdn.test/arena-entrance.jpg"));
+  assert.ok(categorized.body.data.turf.sportsImages.includes("https://cdn.test/arena-football.jpg"));
+
+  const legacyImage = "https://cdn.test/legacy-only.jpg";
+  const legacyTurf = await Turf.create({
+    name: "Legacy Image Arena",
+    description: "A legacy venue with only the original images array.",
+    location: "Legacy District",
+    address: "55 Legacy Road",
+    city: "Pune",
+    state: "Maharashtra",
+    sportsSupported: ["Cricket"],
+    amenities: ["Parking"],
+    pricePerHour: 900,
+    images: [legacyImage],
+    ownerId: owner._id,
+    isApproved: true,
+    moderationStatus: "approved",
+  });
+
+  const legacyResponse = await request(app).get(`/api/turfs/${legacyTurf._id}`);
+  assert.equal(legacyResponse.status, 200);
+  assert.ok(legacyResponse.body.data.turf.gallery.includes(legacyImage));
+  assert.ok(legacyResponse.body.data.turf.heroImage.startsWith("/api/turfs/generated-media/"));
+  assert.notEqual(legacyResponse.body.data.turf.heroImage, legacyImage);
+  assert.ok(legacyResponse.body.data.turf.createdImages.length >= 1);
+
+  const generatedMedia = await request(app).get(legacyResponse.body.data.turf.heroImage);
+  assert.equal(generatedMedia.status, 200);
+  assert.match(generatedMedia.headers["content-type"], /image\/svg\+xml/);
 });
 
 test("dynamic booking engine supports buffers and flexible start times", async () => {
@@ -747,7 +1194,6 @@ test("production bootstrap is idempotent and preserves application data", async 
   process.env.ADMIN_EMAIL = "bootstrap@test.local";
   process.env.ADMIN_PASSWORD = "BootstrapPass1";
   process.env.ADMIN_ROTATE_PASSWORD = "false";
-  process.env.SUPPORT_EMAIL = "support@test.local";
 
   const existingUser = await User.create({
     name: "Existing User",
@@ -758,19 +1204,12 @@ test("production bootstrap is idempotent and preserves application data", async 
   });
 
   const first = await bootstrapPlatformOwner();
-  await bootstrapSettings(first.admin._id);
   const second = await bootstrapPlatformOwner();
-  await bootstrapSettings(second.admin._id);
 
   assert.equal(first.created, true);
   assert.equal(second.created, false);
   assert.equal(await User.countDocuments({ role: "admin" }), 1);
   assert.ok(await User.findById(existingUser._id));
-  assert.equal(await PlatformSetting.countDocuments(), 3);
-  assert.equal(
-    (await PlatformSetting.findOne({ key: "platform.support_email" })).value,
-    "support@test.local",
-  );
 });
 
 test("cancellation releases a slot and protected admin routes do not leak", async () => {
@@ -843,7 +1282,7 @@ test("cancellation releases a slot and protected admin routes do not leak", asyn
   assert.equal(replacementBooking.status, 201);
 });
 
-test("forgot password reports simulated email delivery without exposing account existence", async () => {
+test("forgot password returns simulated email delivery without exposing account existence", async () => {
   delete process.env.SMTP_HOST;
   delete process.env.SMTP_USER;
   delete process.env.SMTP_PASS;

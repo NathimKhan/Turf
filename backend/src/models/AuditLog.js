@@ -4,7 +4,18 @@ const auditLogSchema = new mongoose.Schema(
   {
     action: {
       type: String,
-      enum: ["APPROVED", "REJECTED", "SUSPENDED", "UPDATED", "SUBMITTED"],
+      enum: [
+        "APPROVED",
+        "ARCHIVED",
+        "EXPIRED",
+        "NEED_CHANGES",
+        "PENDING",
+        "REJECTED",
+        "RESUBMITTED",
+        "SUSPENDED",
+        "UPDATED",
+        "SUBMITTED",
+      ],
       required: true,
       index: true,
     },

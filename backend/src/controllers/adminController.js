@@ -3,18 +3,39 @@ const Booking = require("../models/Booking");
 const BookingConflictLog = require("../models/BookingConflictLog");
 const Notification = require("../models/Notification");
 const Payment = require("../models/Payment");
-const PlatformSetting = require("../models/PlatformSetting");
 const Turf = require("../models/Turf");
 const User = require("../models/User");
 const {
   OWNER_ACCOUNT_STATUS_BY_APPROVAL,
   normalizeOwnerAccountStatus,
   normalizeOwnerApprovalStatus,
-  normalizeVenueStatus,
 } = require("../utils/approval");
+const {
+  applyVenueState,
+  normalizeMarketplaceAction,
+  publicVenueFilter,
+} = require("../services/venueApprovalService");
+const { completeExpiredBookings } = require("../services/bookingLifecycleService");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 
 const PLATFORM_FEE_RATE = 0.1;
+const REVENUE_PAYMENT_STATUSES = ["paid", "partially_refunded"];
+
+function remainingRatio(payment) {
+  const amount = Number(payment.amount || 0);
+  if (amount <= 0) return 1;
+  return Math.max(0, (amount - Number(payment.refundedAmount || 0)) / amount);
+}
+
+function netAmount(payment, field, fallbackMultiplier = 1) {
+  const amount = Number(payment.amount || 0);
+  const base = Number(payment[field] ?? amount * fallbackMultiplier);
+  return Number((base * remainingRatio(payment)).toFixed(2));
+}
+
+function isRevenuePayment(payment) {
+  return REVENUE_PAYMENT_STATUSES.includes(payment.paymentStatus);
+}
 
 function pendingOwnerFilter() {
   return {
@@ -25,9 +46,11 @@ function pendingOwnerFilter() {
 
 function pendingVenueFilter() {
   return {
-    isApproved: false,
     $or: [
+      { approvalStatus: "PENDING" },
+      { approvalStatus: "NEED_CHANGES" },
       { status: "PENDING" },
+      { status: "NEED_CHANGES" },
       { moderationStatus: "pending" },
       { status: { $exists: false }, moderationStatus: { $exists: false } },
     ],
@@ -35,12 +58,16 @@ function pendingVenueFilter() {
 }
 
 const getAdminDashboard = asyncHandler(async (req, res) => {
+  await completeExpiredBookings();
+
   const [
     totalUsers,
     totalOwners,
     totalTurfs,
     totalBookings,
-    revenueResult,
+    completedBookings,
+    cancelledBookings,
+    dashboardPayments,
     recentUsers,
     recentBookings,
     recentPayments,
@@ -55,25 +82,10 @@ const getAdminDashboard = asyncHandler(async (req, res) => {
     User.countDocuments({ role: "owner" }),
     Turf.countDocuments(),
     Booking.countDocuments(),
-    Payment.aggregate([
-      { $match: { paymentStatus: "paid" } },
-      {
-        $group: {
-          _id: null,
-          grossRevenue: { $sum: "$amount" },
-          platformRevenue: {
-            $sum: {
-              $ifNull: ["$platformFee", { $multiply: ["$amount", PLATFORM_FEE_RATE] }],
-            },
-          },
-          ownerRevenue: {
-            $sum: {
-              $ifNull: ["$ownerRevenue", { $multiply: ["$amount", 1 - PLATFORM_FEE_RATE] }],
-            },
-          },
-        },
-      },
-    ]),
+    Booking.countDocuments({ bookingStatus: "completed" }),
+    Booking.countDocuments({ bookingStatus: "cancelled" }),
+    Payment.find({ paymentStatus: { $in: [...REVENUE_PAYMENT_STATUSES, "refunded"] } })
+      .select("amount platformFee ownerRevenue paymentStatus finalizedAt refundedAmount"),
     User.find().sort({ createdAt: -1 }).limit(5).select("name email role createdAt approvalStatus accountStatus"),
     Booking.find()
       .populate("userId", "name email")
@@ -87,23 +99,27 @@ const getAdminDashboard = asyncHandler(async (req, res) => {
       .limit(5),
     User.countDocuments(pendingOwnerFilter()),
     Turf.countDocuments(pendingVenueFilter()),
+    Turf.countDocuments(publicVenueFilter()),
     Turf.countDocuments({
-      isApproved: true,
-      $or: [{ status: "LIVE" }, { moderationStatus: "approved" }, { status: { $exists: false } }],
-    }),
-    Turf.countDocuments({
-      $or: [{ status: "REJECTED" }, { moderationStatus: "rejected" }],
+      $or: [{ approvalStatus: "REJECTED" }, { status: "REJECTED" }, { moderationStatus: "rejected" }],
     }),
     User.find(pendingOwnerFilter())
       .select("name businessName email phone approvalStatus accountStatus createdAt")
       .sort({ createdAt: -1 })
       .limit(10),
     Turf.find(pendingVenueFilter())
-      .populate("ownerId", "name email businessName")
-      .select("name city location sportsSupported ownerId status moderationStatus createdAt")
+      .populate("ownerId", "name email phone businessName")
+      .select("name area city state address location latitude longitude sportsSupported amenities ownerId status approvalStatus visibility isPublished isVerified moderationStatus submittedAt createdAt gallery coverImage heroImage thumbnail pricePerHour sportRates")
       .sort({ createdAt: -1 })
       .limit(10),
   ]);
+
+  const revenuePayments = dashboardPayments.filter(isRevenuePayment);
+  const finalizedPayments = revenuePayments.filter((payment) => payment.finalizedAt);
+  const grossRevenue = finalizedPayments.reduce((sum, payment) => sum + netAmount(payment, "amount"), 0);
+  const platformRevenue = finalizedPayments.reduce((sum, payment) => sum + netAmount(payment, "platformFee", PLATFORM_FEE_RATE), 0);
+  const ownerRevenue = finalizedPayments.reduce((sum, payment) => sum + netAmount(payment, "ownerRevenue", 1 - PLATFORM_FEE_RATE), 0);
+  const paidGrossRevenue = revenuePayments.reduce((sum, payment) => sum + netAmount(payment, "amount"), 0);
 
   const recentActivities = [
     ...recentUsers.map((user) => ({
@@ -130,10 +146,15 @@ const getAdminDashboard = asyncHandler(async (req, res) => {
     totalOwners,
     totalTurfs,
     totalBookings,
-    grossRevenue: revenueResult[0]?.grossRevenue || 0,
-    ownerRevenue: revenueResult[0]?.ownerRevenue || 0,
-    platformRevenue: revenueResult[0]?.platformRevenue || 0,
-    totalRevenue: revenueResult[0]?.platformRevenue || revenueResult[0]?.grossRevenue || 0,
+    completedBookings,
+    cancelledBookings,
+    grossRevenue,
+    ownerRevenue,
+    platformRevenue,
+    paidGrossRevenue,
+    finalizedPlatformRevenue: platformRevenue,
+    finalizedOwnerRevenue: ownerRevenue,
+    totalRevenue: platformRevenue,
     pendingOwners,
     pendingTurfs,
     liveVenues,
@@ -206,13 +227,13 @@ const updateOwnerStatus = asyncHandler(async (req, res) => {
 
   const titles = {
     ACTIVE: "Account Approved",
-    PENDING: "Turf owner application under review",
+    PENDING: "Turf owner application pending approval",
     REJECTED: "Account Rejected",
     SUSPENDED: "Turf owner account suspended",
   };
   const messages = {
     ACTIVE: "Your turf owner account is approved. You can now manage venues.",
-    PENDING: "Your turf owner application is under review.",
+    PENDING: "Your turf owner application is pending approval.",
     REJECTED: owner.rejectionReason,
     SUSPENDED: "Your turf owner account has been suspended. Contact platform support for assistance.",
   };
@@ -249,33 +270,31 @@ const moderateTurf = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const status = normalizeVenueStatus(req.body.status);
-  turf.status = status;
-  turf.rejectionReason = status === "REJECTED" ? req.body.reason || "Venue did not meet platform requirements." : "";
-  turf.approvedAt = status === "LIVE" ? new Date() : undefined;
-  turf.approvedBy = status === "LIVE" ? req.user._id : undefined;
+  const action = normalizeMarketplaceAction(req.body.status);
+  applyVenueState(turf, action, {
+    actorId: req.user._id,
+    reason: req.body.reason || "",
+  });
   await turf.save();
 
-  if (["LIVE", "REJECTED", "SUSPENDED"].includes(status)) {
-    await AuditLog.create({
-      action: status === "LIVE" ? "APPROVED" : status,
-      actorId: req.user._id,
-      entityId: turf._id,
-      entityType: "VENUE",
-      reason: turf.rejectionReason || req.body.reason || "",
-      status,
-    });
-  }
+  await AuditLog.create({
+    action,
+    actorId: req.user._id,
+    entityId: turf._id,
+    entityType: "VENUE",
+    reason: turf.rejectionReason || req.body.reason || "",
+    status: turf.approvalStatus,
+  });
 
   const notificationCopy = {
-    LIVE: {
+    APPROVED: {
       title: "Venue Approved",
       message: `${turf.name} is approved and visible to users.`,
       targetUrl: `/owner/turfs/${turf._id}`,
     },
     PENDING: {
-      title: "Venue submitted for review",
-      message: `${turf.name} is pending Platform Owner review.`,
+      title: "Venue submitted for approval",
+      message: `${turf.name} is pending Platform Owner approval.`,
       targetUrl: "/owner/turfs",
     },
     REJECTED: {
@@ -283,34 +302,45 @@ const moderateTurf = asyncHandler(async (req, res) => {
       message: `${turf.name} was rejected.${turf.rejectionReason ? ` ${turf.rejectionReason}` : ""}`,
       targetUrl: "/owner/turfs",
     },
+    NEED_CHANGES: {
+      title: "Venue changes requested",
+      message: `${turf.name} needs updates before approval.${turf.rejectionReason ? ` ${turf.rejectionReason}` : ""}`,
+      targetUrl: `/owner/add-turf?edit=${turf._id}`,
+    },
     SUSPENDED: {
       title: "Venue Suspended",
       message: `${turf.name} has been suspended. Contact platform support for assistance.`,
       targetUrl: "/owner/turfs",
     },
+    ARCHIVED: {
+      title: "Venue Archived",
+      message: `${turf.name} was archived by the platform owner.`,
+      targetUrl: "/owner/turfs",
+    },
+    EXPIRED: {
+      title: "Venue Approval Expired",
+      message: `${turf.name} approval expired. Please resubmit after updating the venue.`,
+      targetUrl: "/owner/turfs",
+    },
   };
+  const copy = notificationCopy[action] || notificationCopy.PENDING;
 
   await Notification.create({
     userId: turf.ownerId,
-    title: notificationCopy[status].title,
-    message: notificationCopy[status].message,
-    metadata: { turfId: turf._id, status },
-    targetUrl: notificationCopy[status].targetUrl,
+    title: copy.title,
+    message: copy.message,
+    metadata: { turfId: turf._id, status: turf.approvalStatus },
+    targetUrl: copy.targetUrl,
     type: "venue",
   });
 
   return successResponse(res, "Venue moderation status updated", { turf });
 });
 
-const getSettings = asyncHandler(async (req, res) => {
-  const settings = await PlatformSetting.find().sort({ category: 1, key: 1 });
-  return successResponse(res, "Platform settings fetched", { settings });
-});
-
 const getVenueSchedules = asyncHandler(async (req, res) => {
   const schedules = await Turf.find()
     .populate("ownerId", "name email businessName")
-    .select("name city ownerId isApproved moderationStatus status schedule")
+    .select("name area city state address location latitude longitude ownerId isApproved isPublished isVerified visibility approvalStatus moderationStatus status schedule")
     .sort({ name: 1 })
     .limit(100);
 
@@ -339,7 +369,7 @@ const getConflictLogs = asyncHandler(async (req, res) => {
   if (req.query.turfId) filter.turfId = req.query.turfId;
 
   const logs = await BookingConflictLog.find(filter)
-    .populate("turfId", "name city")
+    .populate("turfId", "name area city")
     .populate("userId", "name email")
     .sort({ createdAt: -1 })
     .limit(safeLimit);
@@ -347,34 +377,12 @@ const getConflictLogs = asyncHandler(async (req, res) => {
   return successResponse(res, "Booking conflict logs fetched", { logs });
 });
 
-const updateSetting = asyncHandler(async (req, res) => {
-  const setting = await PlatformSetting.findOneAndUpdate(
-    { key: req.params.key.toLowerCase() },
-    {
-      value: req.body.value,
-      category: req.body.category || "general",
-      description: req.body.description || "",
-      isPublic: Boolean(req.body.isPublic),
-      updatedBy: req.user._id,
-    },
-    {
-      new: true,
-      runValidators: true,
-      upsert: true,
-    },
-  );
-
-  return successResponse(res, "Platform setting saved", { setting });
-});
-
 module.exports = {
   getAdminDashboard,
   getAuditLogs,
   getConflictLogs,
   getOwners,
-  getSettings,
   getVenueSchedules,
   moderateTurf,
-  updateSetting,
   updateOwnerStatus,
 };

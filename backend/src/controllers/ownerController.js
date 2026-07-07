@@ -1,15 +1,20 @@
 const Booking = require("../models/Booking");
 const Payment = require("../models/Payment");
-const Review = require("../models/Review");
 const Turf = require("../models/Turf");
+const { ACTIVE_BOOKING_STATUSES } = require("../utils/bookingLifecycle");
 const { approvalStatusForUser, isOwnerActive } = require("../utils/approval");
+const { completeExpiredBookings } = require("../services/bookingLifecycleService");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 
 const PLATFORM_FEE_RATE = 0.1;
-const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed", "checked_in", "upcoming"];
+const REVENUE_PAYMENT_STATUSES = ["paid", "partially_refunded"];
 
 function paymentOwnerRevenue(payment) {
-  return Number(Number(payment.ownerRevenue ?? (Number(payment.amount || 0) * (1 - PLATFORM_FEE_RATE))).toFixed(2));
+  const amount = Number(payment.amount || 0);
+  const baseRevenue = Number(payment.ownerRevenue ?? (amount * (1 - PLATFORM_FEE_RATE)));
+  const refundedAmount = Number(payment.refundedAmount || 0);
+  const remainingRatio = amount > 0 ? Math.max(0, (amount - refundedAmount) / amount) : 1;
+  return Number(Number(baseRevenue * remainingRatio).toFixed(2));
 }
 
 function sumPayments(payments, predicate = () => true) {
@@ -31,7 +36,42 @@ function isSameUtcDay(firstDate, secondDate) {
   );
 }
 
+function paymentEventDate(payment) {
+  return new Date(payment.finalizedAt || payment.paidAt || payment.createdAt);
+}
+
+function isRevenuePayment(payment) {
+  return REVENUE_PAYMENT_STATUSES.includes(payment.paymentStatus);
+}
+
+function isFinalizedRevenuePayment(payment) {
+  return isRevenuePayment(payment) && payment.finalizedAt;
+}
+
+function buildMonthlyEarnings(payments) {
+  const monthlyMap = new Map();
+
+  payments.filter(isFinalizedRevenuePayment).forEach((payment) => {
+    const date = paymentEventDate(payment);
+    const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+    const current = monthlyMap.get(key) || {
+      month: date.getMonth() + 1,
+      payments: 0,
+      revenue: 0,
+      year: date.getFullYear(),
+    };
+    current.payments += 1;
+    current.revenue = Number((current.revenue + paymentOwnerRevenue(payment)).toFixed(2));
+    monthlyMap.set(key, current);
+  });
+
+  return [...monthlyMap.values()].sort((first, second) =>
+    first.year === second.year ? first.month - second.month : first.year - second.year);
+}
+
 const getOwnerDashboard = asyncHandler(async (req, res) => {
+  await completeExpiredBookings();
+
   const turfs = await Turf.find({ ownerId: req.user._id }).select("_id name sportsSupported");
   const turfIds = turfs.map((turf) => turf._id);
   const now = new Date();
@@ -45,7 +85,7 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
   const [totalBookings, recentBookings, scopedPayments, dashboardBookings] = await Promise.all([
     Booking.countDocuments({ turfId: { $in: turfIds } }),
     Booking.find({ turfId: { $in: turfIds } })
-      .populate("turfId", "name city")
+      .populate("turfId", "name area city")
       .populate("userId", "name email")
       .sort({ createdAt: -1 })
       .limit(8),
@@ -55,23 +95,25 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
         { venueId: { $in: turfIds } },
       ],
     })
-      .select("amount ownerRevenue platformFee paymentStatus paidAt createdAt bookingId ownerId venueId")
+      .select("amount ownerRevenue platformFee paymentStatus paidAt finalizedAt refundedAmount createdAt bookingId ownerId venueId")
       .populate("bookingId", "sport"),
     Booking.find({ turfId: { $in: turfIds } })
-      .populate("turfId", "name city sportsSupported")
+      .populate("turfId", "name area city sportsSupported")
       .populate("userId", "name email")
       .sort({ bookingDate: 1, slotStartTime: 1 }),
   ]);
 
-  const revenue = sumPayments(scopedPayments, (payment) => payment.paymentStatus === "paid");
+  const paidRevenue = sumPayments(scopedPayments, isRevenuePayment);
+  const completedRevenue = sumPayments(scopedPayments, isFinalizedRevenuePayment);
+  const revenue = completedRevenue;
   const todayRevenue = sumPayments(scopedPayments, (payment) =>
-    payment.paymentStatus === "paid" && new Date(payment.paidAt || payment.createdAt) >= todayStart);
+    isFinalizedRevenuePayment(payment) && paymentEventDate(payment) >= todayStart);
   const weeklyRevenue = sumPayments(scopedPayments, (payment) =>
-    payment.paymentStatus === "paid" && new Date(payment.paidAt || payment.createdAt) >= weekStart);
+    isFinalizedRevenuePayment(payment) && paymentEventDate(payment) >= weekStart);
   const monthlyRevenue = sumPayments(scopedPayments, (payment) =>
-    payment.paymentStatus === "paid" && new Date(payment.paidAt || payment.createdAt) >= monthStart);
-  const pendingRevenue = sumPayments(scopedPayments, (payment) => payment.paymentStatus === "pending");
-  const completedRevenue = revenue;
+    isFinalizedRevenuePayment(payment) && paymentEventDate(payment) >= monthStart);
+  const pendingRevenue = sumPayments(scopedPayments, (payment) =>
+    payment.paymentStatus === "pending" || (isRevenuePayment(payment) && !payment.finalizedAt));
   const refundedRevenue = sumPayments(scopedPayments, (payment) => payment.paymentStatus === "refunded");
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const todayBookings = dashboardBookings.filter((booking) => isSameUtcDay(new Date(booking.bookingDate), now));
@@ -86,10 +128,11 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
     timeToMinutes(booking.slotEndTime) > nowMinutes
   ));
   const cancelledBookings = dashboardBookings.filter((booking) => booking.bookingStatus === "cancelled");
+  const completedBookings = dashboardBookings.filter((booking) => booking.bookingStatus === "completed");
   const perSportRevenueMap = new Map();
 
   scopedPayments
-    .filter((payment) => payment.paymentStatus === "paid")
+    .filter(isFinalizedRevenuePayment)
     .forEach((payment) => {
       const sport = payment.bookingId?.sport || "Unassigned";
       perSportRevenueMap.set(sport, (perSportRevenueMap.get(sport) || 0) + paymentOwnerRevenue(payment));
@@ -98,41 +141,7 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
     .sort((first, second) => second[1] - first[1])
     .map(([sport, revenue]) => ({ sport, revenue: Number(revenue.toFixed(2)) }));
 
-  const monthlyEarnings = await Payment.aggregate([
-    {
-      $match: {
-        paymentStatus: "paid",
-        $or: [
-          { ownerId: req.user._id },
-          { venueId: { $in: turfIds } },
-        ],
-      },
-    },
-    {
-      $group: {
-        _id: {
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
-        },
-        revenue: {
-          $sum: {
-            $ifNull: ["$ownerRevenue", { $multiply: ["$amount", 1 - PLATFORM_FEE_RATE] }],
-          },
-        },
-        payments: { $sum: 1 },
-      },
-    },
-    { $sort: { "_id.year": 1, "_id.month": 1 } },
-    {
-      $project: {
-        _id: 0,
-        year: "$_id.year",
-        month: "$_id.month",
-        revenue: 1,
-        payments: 1,
-      },
-    },
-  ]);
+  const monthlyEarnings = buildMonthlyEarnings(scopedPayments);
 
   return successResponse(res, "Owner dashboard fetched", {
     accountStatus: req.user.accountStatus,
@@ -143,6 +152,7 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
     totalBookings,
     bookingBreakdown: {
       cancelled: cancelledBookings.length,
+      completed: completedBookings.length,
       live: liveBookings.length,
       today: todayBookings.length,
       upcoming: upcomingBookings.length,
@@ -152,6 +162,8 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
     todaysBookings: todayBookings.slice(0, 8),
     upcomingBookings: upcomingBookings.slice(0, 8),
     revenue,
+    paidRevenue,
+    finalizedRevenue: completedRevenue,
     perSportRevenue,
     todayRevenue,
     weeklyRevenue,
@@ -164,17 +176,6 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
   });
 });
 
-const getOwnerReviews = asyncHandler(async (req, res) => {
-  const turfs = await Turf.find({ ownerId: req.user._id }).select("_id");
-  const reviews = await Review.find({ turfId: { $in: turfs.map((turf) => turf._id) } })
-    .populate("turfId", "name")
-    .populate("userId", "name profileImage")
-    .sort({ createdAt: -1 });
-
-  return successResponse(res, "Owner reviews fetched", { reviews });
-});
-
 module.exports = {
   getOwnerDashboard,
-  getOwnerReviews,
 };

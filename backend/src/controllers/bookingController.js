@@ -1,8 +1,10 @@
 const { body } = require("express-validator");
 const Booking = require("../models/Booking");
 const Notification = require("../models/Notification");
+const Payment = require("../models/Payment");
 const Turf = require("../models/Turf");
 const { isOwnerActive, isVenueLive } = require("../utils/approval");
+const { ACTIVE_BOOKING_STATUSES, PAID_BOOKING_PAYMENT_STATUSES, hasBookingStarted } = require("../utils/bookingLifecycle");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 const {
   buildOccupancyKeys,
@@ -14,13 +16,14 @@ const {
   sportRateForTurf,
   validateSlotRequest,
 } = require("../services/availabilityService");
+const { completeExpiredBookings, syncBookingById } = require("../services/bookingLifecycleService");
 const { recordBookingConflict } = require("../services/conflictLogService");
 
 async function findActiveBookings(turfId, bookingDate) {
   return Booking.find({
     turfId,
     bookingDate,
-    bookingStatus: { $in: ["pending", "confirmed", "checked_in", "upcoming"] },
+    bookingStatus: { $in: ACTIVE_BOOKING_STATUSES },
   }).select("slotStartTime slotEndTime bookingStatus paymentStatus");
 }
 
@@ -60,12 +63,19 @@ const createBooking = asyncHandler(async (req, res) => {
     throw error;
   }
 
+  if (hasBookingStarted({ bookingDate: dateOnly, slotStartTime })) {
+    const error = new Error("Past time slots cannot be booked");
+    error.statusCode = 400;
+    throw error;
+  }
+
   if (!selectedSport || !configuredSports.includes(selectedSport)) {
     const error = new Error("Selected sport is not available at this venue");
     error.statusCode = 400;
     throw error;
   }
 
+  await completeExpiredBookings();
   const activeBookings = await findActiveBookings(turfId, dateOnly);
   const availability = validateSlotRequest(turf, dateOnly, slotStartTime, slotEndTime, activeBookings);
 
@@ -101,6 +111,12 @@ const createBooking = asyncHandler(async (req, res) => {
       bookingStatus: "pending",
       occupancyKeys: buildOccupancyKeys(turfId, dateOnly, slotStartTime, slotEndTime, getBufferMinutes(turf)),
       slotKey: buildSlotKey(turfId, dateOnly, slotStartTime, slotEndTime),
+      history: [{
+        at: new Date(),
+        note: "Booking created and awaiting payment",
+        source: "customer",
+        status: "created",
+      }],
     });
   } catch (error) {
     if (error.code === 11000 && error.keyPattern?.slotKey) {
@@ -155,6 +171,8 @@ const createBooking = asyncHandler(async (req, res) => {
 });
 
 const getMyBookings = asyncHandler(async (req, res) => {
+  await completeExpiredBookings();
+
   const filter = {};
 
   if (req.user.role === "user") {
@@ -165,7 +183,7 @@ const getMyBookings = asyncHandler(async (req, res) => {
   }
 
   const bookings = await Booking.find(filter)
-    .populate("turfId", "name city location images pricePerHour sportRates sportsSupported")
+    .populate("turfId", "name area city state address location latitude longitude images pricePerHour sportRates sportsSupported status approvalStatus visibility isPublished isVerified isApproved moderationStatus")
     .populate("userId", "name email phone")
     .sort({ bookingDate: -1, slotStartTime: -1 });
 
@@ -173,8 +191,11 @@ const getMyBookings = asyncHandler(async (req, res) => {
 });
 
 const getBookingById = asyncHandler(async (req, res) => {
+  await completeExpiredBookings();
+  await syncBookingById(req.params.id);
+
   const booking = await Booking.findById(req.params.id)
-    .populate("turfId", "name city location images pricePerHour sportRates sportsSupported ownerId")
+    .populate("turfId", "name area city state address location latitude longitude images pricePerHour sportRates sportsSupported ownerId status approvalStatus visibility isPublished isVerified isApproved moderationStatus")
     .populate("userId", "name email phone");
 
   if (!booking) {
@@ -192,10 +213,14 @@ const getBookingById = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  return successResponse(res, "Booking fetched", { booking });
+  const payment = await Payment.findOne({ bookingId: booking._id }).sort({ createdAt: -1, _id: -1 });
+
+  return successResponse(res, "Booking fetched", { booking, payment });
 });
 
 const cancelBooking = asyncHandler(async (req, res) => {
+  await completeExpiredBookings();
+
   const booking = await Booking.findById(req.params.id).populate("turfId", "ownerId name");
 
   if (!booking) {
@@ -228,7 +253,22 @@ const cancelBooking = asyncHandler(async (req, res) => {
   booking.slotKey = undefined;
   booking.cancelledAt = new Date();
   booking.cancelledBy = req.user._id;
+  booking.qrStatus = "cancelled";
+  booking.qrExpiresAt = booking.cancelledAt;
+  if (!PAID_BOOKING_PAYMENT_STATUSES.includes(booking.paymentStatus)) {
+    booking.invoiceStatus = "not_required";
+  }
+  booking.history = booking.history || [];
+  if (!booking.history.some((entry) => entry.status === "cancelled" && entry.source === "manual")) {
+    booking.history.push({
+      at: booking.cancelledAt,
+      note: "Booking cancelled and slot released",
+      source: "manual",
+      status: "cancelled",
+    });
+  }
   await booking.save();
+  await syncBookingById(booking._id, { now: booking.cancelledAt, source: "manual" });
 
   await Notification.create({
     userId: booking.userId,
@@ -254,6 +294,8 @@ const cancelBooking = asyncHandler(async (req, res) => {
 });
 
 const updateBookingStatus = asyncHandler(async (req, res) => {
+  await completeExpiredBookings();
+
   const booking = await Booking.findById(req.params.id).populate("turfId", "ownerId name");
 
   if (!booking) {
@@ -284,9 +326,10 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
 
   const transitions = {
     pending: ["confirmed", "cancelled"],
-    confirmed: ["checked_in", "cancelled"],
+    confirmed: ["checked_in", "cancelled", "completed"],
     checked_in: ["completed"],
-    upcoming: ["confirmed", "checked_in", "cancelled"],
+    ongoing: ["completed"],
+    upcoming: ["confirmed", "checked_in", "cancelled", "completed"],
   };
   if (!transitions[booking.bookingStatus]?.includes(nextStatus)) {
     const error = new Error(`Booking cannot move from ${booking.bookingStatus} to ${nextStatus}`);
@@ -300,15 +343,47 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
     booking.slotKey = undefined;
     booking.cancelledAt = new Date();
     booking.cancelledBy = req.user._id;
+    booking.qrStatus = "cancelled";
+    booking.qrExpiresAt = booking.cancelledAt;
+    if (!PAID_BOOKING_PAYMENT_STATUSES.includes(booking.paymentStatus)) {
+      booking.invoiceStatus = "not_required";
+    }
+  }
+  if (nextStatus === "completed") {
+    if (!PAID_BOOKING_PAYMENT_STATUSES.includes(booking.paymentStatus)) {
+      const error = new Error("Only paid bookings can be completed");
+      error.statusCode = 409;
+      throw error;
+    }
+    booking.occupancyKeys = [];
+    booking.slotKey = undefined;
+    booking.completedAt = new Date();
+    booking.qrStatus = "expired";
+    booking.qrExpiresAt = booking.completedAt;
+  }
+  booking.history = booking.history || [];
+  if (!booking.history.some((entry) => entry.status === nextStatus && entry.source === "manual")) {
+    booking.history.push({
+      at: nextStatus === "completed" ? booking.completedAt : new Date(),
+      note: `Booking moved to ${nextStatus.replace("_", " ")}`,
+      source: "manual",
+      status: nextStatus,
+    });
   }
   await booking.save();
+
+  if (nextStatus === "completed") {
+    await syncBookingById(booking._id, { now: booking.completedAt, source: "manual" });
+  } else if (nextStatus === "cancelled") {
+    await syncBookingById(booking._id, { now: booking.cancelledAt, source: "manual" });
+  }
 
   await Notification.create({
     userId: booking.userId,
     title: nextStatus === "checked_in" ? "Booking checked in" : `Booking ${nextStatus}`,
     message:
       nextStatus === "completed"
-        ? `Your booking at ${booking.turfId.name} is complete. Share a review from Booking Details.`
+        ? `Your booking at ${booking.turfId.name} is complete. Your invoice is ready in Booking Details.`
         : `Your booking at ${booking.turfId.name} is now ${nextStatus.replace("_", " ")}.`,
     metadata: { bookingId: booking._id, turfId: booking.turfId._id || booking.turfId },
     targetUrl: `/bookings/${booking._id}`,

@@ -187,7 +187,7 @@ function AuthCard({ title, subtitle, mode }) {
                 <p aria-live="polite">{selectedDemo.helperText}</p>
               ) : (
                 <>
-                  <p><span className="font-bold text-ink">Platform Owner</span> = Website Administrator</p>
+                  <p><span className="font-bold text-ink">Platform Admin</span> = Website Administrator</p>
                   <p><span className="font-bold text-ink">Turf Owner</span> = Venue Manager</p>
                   <p><span className="font-bold text-ink">User</span> = Customer / Player</p>
                 </>

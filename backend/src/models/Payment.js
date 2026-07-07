@@ -52,7 +52,7 @@ const paymentSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed", "refunded"],
+      enum: ["pending", "paid", "failed", "refunded", "partially_refunded"],
       default: "pending",
       index: true,
     },
@@ -77,7 +77,43 @@ const paymentSchema = new mongoose.Schema(
       default: "",
     },
     paidAt: Date,
+    finalizedAt: Date,
     refundedAt: Date,
+    refundedAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    refundStatus: {
+      type: String,
+      enum: ["none", "partial", "full"],
+      default: "none",
+      index: true,
+    },
+    refundHistory: {
+      type: [
+        {
+          amount: { type: Number, required: true, min: 0 },
+          at: { type: Date, default: Date.now },
+          providerReference: { type: String, trim: true, default: "" },
+          status: { type: String, trim: true, default: "refunded" },
+        },
+      ],
+      default: [],
+    },
+    invoiceStatus: {
+      type: String,
+      enum: ["pending", "ready", "void", "not_required"],
+      default: "pending",
+      index: true,
+    },
+    invoiceId: {
+      type: String,
+      trim: true,
+      default: "",
+      index: true,
+    },
+    invoiceGeneratedAt: Date,
   },
   {
     timestamps: { createdAt: true, updatedAt: false },

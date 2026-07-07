@@ -85,9 +85,9 @@ export function useTurfs(params = {}) {
   });
 }
 
-export function useTurf(id) {
+export function useTurf(id, params = {}) {
   return useQuery({
-    queryKey: ["turfs", id],
+    queryKey: ["turfs", id, params],
     enabled: Boolean(id),
     retry: false,
     queryFn: async () => {
@@ -95,7 +95,7 @@ export function useTurf(id) {
       if (!lookup) return createDemoTurf();
 
       try {
-        const turf = responseData(await withPrototypeTimeout(turfsApi.detail(lookup))).turf;
+        const turf = responseData(await withPrototypeTimeout(turfsApi.detail(lookup, params))).turf;
         return turf ? normalizeTurf(turf) : resolveFallbackTurf(lookup);
       } catch {
         return resolveFallbackTurf(lookup);
@@ -118,6 +118,15 @@ export function useTurfMetadata() {
         };
       }
     },
+  });
+}
+
+export function useNearbyTurfs(userLocation, params = {}) {
+  return useTurfs({
+    ...params,
+    latitude: userLocation?.latitude,
+    longitude: userLocation?.longitude,
+    radiusKm: params.radiusKm || 25,
   });
 }
 
@@ -170,6 +179,18 @@ export function useDeleteTurf() {
   return useMutation({
     mutationFn: (id) => turfsApi.remove(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["turfs"] }),
+  });
+}
+
+export function useResubmitTurf() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => turfsApi.resubmit(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["turfs"] });
+      queryClient.invalidateQueries({ queryKey: ["turfs", id] });
+      queryClient.invalidateQueries({ queryKey: ["turfs", "mine"] });
+    },
   });
 }
 

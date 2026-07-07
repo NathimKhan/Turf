@@ -96,7 +96,6 @@ const register = asyncHandler(async (req, res) => {
     role,
     approvalStatus,
     accountStatus: OWNER_ACCOUNT_STATUS_BY_APPROVAL[approvalStatus],
-    membershipPlan: role === "owner" ? "Venue Pro" : "Starter",
   });
 
   if (role === "owner") {
@@ -199,56 +198,6 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   return successResponse(res, "Profile updated", { user: req.user });
-});
-
-const upgradeMembership = asyncHandler(async (req, res) => {
-  if (req.user.role !== "user") {
-    const error = new Error("Membership upgrades are available to user accounts");
-    error.statusCode = 403;
-    throw error;
-  }
-
-  const plans = {
-    Gold: 29,
-    Elite: 49,
-  };
-  const plan = req.body.plan;
-  const ranks = { Starter: 0, Gold: 1, Elite: 2 };
-
-  if (ranks[plan] <= ranks[req.user.membershipPlan || "Starter"]) {
-    const error = new Error(`Your current ${req.user.membershipPlan} plan already includes this tier`);
-    error.statusCode = 409;
-    throw error;
-  }
-
-  const reference = `MEM-${Date.now()}-${String(req.user._id).slice(-6).toUpperCase()}`;
-  req.user.membershipPlan = plan;
-  req.user.membershipUpdatedAt = new Date();
-  req.user.membershipHistory.push({
-    plan,
-    amount: plans[plan],
-    reference,
-  });
-  await req.user.save();
-
-  await Notification.create({
-    userId: req.user._id,
-    title: "Membership upgraded",
-    message: `Your TURFX membership is now ${plan}. Reference: ${reference}.`,
-    metadata: { membershipPlan: plan, reference },
-    targetUrl: "/membership-center",
-    type: "membership",
-  });
-
-  return successResponse(res, "Membership upgraded", {
-    membership: {
-      plan,
-      amount: plans[plan],
-      reference,
-      upgradedAt: req.user.membershipUpdatedAt,
-    },
-    user: req.user,
-  });
 });
 
 const updateWallet = asyncHandler(async (req, res) => {
@@ -370,7 +319,6 @@ module.exports = {
   register,
   registerValidation,
   resetPassword,
-  upgradeMembership,
   updateProfile,
   updateWallet,
 };

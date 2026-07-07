@@ -5,10 +5,8 @@ const {
   getAdminDashboard,
   getAuditLogs,
   getOwners,
-  getSettings,
   getVenueSchedules,
   moderateTurf,
-  updateSetting,
   updateOwnerStatus,
 } = require("../controllers/adminController");
 const adminOnly = require("../middleware/adminMiddleware");
@@ -24,16 +22,6 @@ router.get("/owners", getOwners);
 router.get("/audit-logs", getAuditLogs);
 router.get("/venue-schedules", getVenueSchedules);
 router.get("/conflict-logs", getConflictLogs);
-router.get("/settings", getSettings);
-router.put(
-  "/settings/:key",
-  param("key").trim().isLength({ min: 2, max: 80 }).withMessage("Valid setting key is required"),
-  body("value").exists().withMessage("Setting value is required"),
-  body("category").optional().trim().isLength({ max: 80 }).withMessage("Category is too long"),
-  body("description").optional().trim().isLength({ max: 500 }).withMessage("Description is too long"),
-  validateRequest,
-  updateSetting,
-);
 router.patch(
   "/owners/:id/status",
   param("id").isMongoId().withMessage("Valid owner id is required"),
@@ -48,7 +36,30 @@ router.patch(
   "/turfs/:id/status",
   param("id").isMongoId().withMessage("Valid turf id is required"),
   body("status")
-    .isIn(["DRAFT", "PENDING", "LIVE", "REJECTED", "SUSPENDED", "pending", "approved", "rejected", "suspended", "published", "live"])
+    .isIn([
+      "DRAFT",
+      "PENDING",
+      "ACTIVE",
+      "LIVE",
+      "APPROVED",
+      "REJECTED",
+      "SUSPENDED",
+      "ARCHIVED",
+      "EXPIRED",
+      "NEED_CHANGES",
+      "pending",
+      "approved",
+      "active",
+      "rejected",
+      "suspended",
+      "archived",
+      "expired",
+      "published",
+      "live",
+      "need_changes",
+      "needs_changes",
+      "changes_requested",
+    ])
     .withMessage("Invalid venue status"),
   body("reason").optional().trim().isLength({ max: 500 }).withMessage("Reason is too long"),
   validateRequest,

@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App.jsx";
 import { AuthProvider } from "./store/AuthProvider.jsx";
+import { LocationProvider } from "./store/LocationProvider.jsx";
 import { store } from "./store/store.js";
 import { notify } from "./utils/notify.js";
 import "./styles/index.css";
@@ -29,9 +30,11 @@ createRoot(document.getElementById("root")).render(
     <Provider store={store}>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <LocationProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </LocationProvider>
         </QueryClientProvider>
       </AuthProvider>
     </Provider>

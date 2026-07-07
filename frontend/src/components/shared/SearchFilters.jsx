@@ -14,6 +14,7 @@ export function SearchFilters({
   const [filters, setFilters] = useState({
     date: initialFilters.date || "",
     location: initialFilters.location || "",
+    radiusKm: initialFilters.radiusKm || "",
     sport: initialFilters.sport || "",
   });
 
@@ -21,9 +22,10 @@ export function SearchFilters({
     setFilters({
       date: initialFilters.date || "",
       location: initialFilters.location || "",
+      radiusKm: initialFilters.radiusKm || "",
       sport: initialFilters.sport || "",
     });
-  }, [initialFilters.date, initialFilters.location, initialFilters.sport]);
+  }, [initialFilters.date, initialFilters.location, initialFilters.radiusKm, initialFilters.sport]);
 
   const groups = [
     { key: "sport", label: "Sport", options: metadata.sports || [] },
@@ -75,6 +77,39 @@ export function SearchFilters({
             </div>
           </div>
         ))}
+        <div>
+          <p className="text-sm font-black">Distance</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold ${
+                !filters.radiusKm ? "border-primary bg-primary text-white" : "border-surface-border bg-white"
+              }`}
+              onClick={() => setFilters((current) => ({ ...current, radiusKm: "" }))}
+              type="button"
+            >
+              {!filters.radiusKm && <Check size={13} />}
+              Any
+            </button>
+            {["2", "5", "10", "25"].map((radius) => {
+              const active = filters.radiusKm === radius;
+              return (
+                <button
+                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                    active
+                      ? "border-primary bg-primary text-white"
+                      : "border-surface-border bg-white text-ink-muted hover:border-primary hover:text-primary"
+                  }`}
+                  key={radius}
+                  onClick={() => setFilters((current) => ({ ...current, radiusKm: radius }))}
+                  type="button"
+                >
+                  {active && <Check size={13} />}
+                  Within {radius} km
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <label className="block">
           <span className="text-sm font-black">Date</span>
           <Input

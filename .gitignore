@@ -3,11 +3,15 @@ frontend/dist/
 frontend/stitch_turf/
 frontend/*.log
 frontend/.env
+frontend/.env.*
+!frontend/.env.example
 
 backend/node_modules/
 backend/uploads/*
 !backend/uploads/.gitkeep
 backend/.env
+backend/.env.*
+!backend/.env.example
 
 .codex-logs/
 test-results/

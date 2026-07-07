@@ -16,35 +16,11 @@ export const assetImages = {
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCQK_AshRM6fn9cU3MLYusjA-3q-jZ52hlbLa92DFAASZ6MuZbvEQhkmrlL1HqwGUxGWUvOrSpYcE1iwTc2NF3PjAo8fNYSiHkMMt4cZ2gTzbKyd-HelGCcBkLroz5SxyKL71jnWnJQ6Dhgsg7layD5rem657c_9WBuLy8yhxXgIiJb2dy7JBfSGSK86IWQ8MX7wcccae8hJd4fCF2OeqKRVvhXfIAPlZYyFJZSquTTE8V3OHQe0opZXtIo00dSm7ltD3DAAMVhTqMD",
   training:
     "https://lh3.googleusercontent.com/aida-public/AB6AXuDaLjoQKrWIMsODh1UUOlq5vzCfFOwX60vC3XQA5SkSnEG3m3nuqT4PoSBJORxxNvqYs_S8vuZRWF-bJ_UT0KaH9r3PaGgYVFyX-3TpYt_gN2d_LuiH76Dzpm_AXNe0pAMqq9zmUfSD6kMQIDUe5A4icAEvDl_q63obuyW_8pVVW42h2cBO3cM0UtRZymZyjTw6fA8flnNZbolCrQY7uqOr1UYBO551M-8pnv6YlyFMlUUc0f7RufmiB3azhr9IRKPP_p89dTidnqD-",
-  event:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuAmDKDpQlxbFtagRCnv-4GVxhhZW-xf8zgOp08AdX_bc2nspPZ9Whynmr4BeYbrUraZNK38trwDPLbRvNoFR3c_S3FZcmb5C3g5izH4CKocoaVwtS01QQWjAJ9hBLw72rWtZzRWA-8cFJUMP4I7goHueCxXeznGjzARCk5CCoeW4wgFBhQuMoZN5Qm_02jkdiHQjBOgKrhm_ZHN5RaXOLypqXNuQtPObd5dtVvFBZFVm5yd9JbbAL17Xca5A-PqAGPtTXPDIBeqY7IQ",
   profile:
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCGDRYC8_4ug5pBu_nstu9-NRpLNJEf7hIbQw7g_94Nyi_u_KlVhlf-SUsmLPn0ZIi18MDcZ6kbI1uM_uXCyYFol0x9-Hf8RZxuguOCIhmbM7cT88TfX2XFi1r6wkAhvVIx5CBfDwJWiK9Nv6kX1Og-Uz7jsM1KQ7PkmvyNOBFXXdqxEqh7K1JhDDTiTdDFZa1BHEk6g17mC9U33LPdFkUJG3CEhrd8zha1sP0178uFMNQsZt8cZUmxi-HDdekZTSqPZMh2yxDIR84l",
   map:
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCRq36jCZdzas-s-bUZhT3F9EH8TofHwZyaZq7CchUijnfC3i8Vbjafk8eKIfreJUoM-t1bdJekvTA3YJreIBCMUmLy0YHUYD-JxaaWuXXUc1ngrOq0Ah_vPtMBh5lMoNWI9MLiS0_LfT_t-vkAKdHh8-taC8VXopPLoHq_jvMFUUTTPLAnK2rSoRG5PXNsACMxVqG0iFatxGOiwonDH_xhYel8dE7bTcF9K7SB3x_eIrXtjzw1sjw3nEz3yTCJkvxja4N25FbZmlbm",
 };
-
-export const membershipTiers = [
-  {
-    name: "Starter",
-    price: 0,
-    label: "For casual players",
-    perks: ["Standard booking window", "Basic rewards", "Community events"],
-  },
-  {
-    name: "Gold",
-    price: 19,
-    label: "Most popular",
-    featured: true,
-    perks: ["15% member savings", "Early booking access", "Recovery lounge passes", "Priority support"],
-  },
-  {
-    name: "Elite",
-    price: 49,
-    label: "For competitive teams",
-    perks: ["Team wallet", "Tournament priority", "Coach matching", "Analytics reports"],
-  },
-];
 
 export const addTurfSteps = [
   "Basic Information",
@@ -53,6 +29,6 @@ export const addTurfSteps = [
   "Pricing",
   "Amenities",
   "Scheduling",
-  "Review",
+  "Confirm",
   "Publish",
 ];

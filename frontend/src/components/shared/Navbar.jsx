@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Heart, Menu, Search, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { publicNav } from "../../constants/routes.js";
 import { authService } from "../../services/authService.js";
 import { useAuth } from "../../store/authContext.js";
@@ -13,7 +13,6 @@ export function Navbar() {
   const { initialized, user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const role = authService.normalizeRole(user?.role);
-  const favoritesHref = role === "owner" ? "/owner/turfs" : role === "admin" ? "/admin/turfs" : user ? "/favorites" : "/login";
   const notificationsHref = role === "owner" ? "/owner/bookings" : role === "admin" ? "/admin/notifications" : user ? "/notifications" : "/login";
 
   return (
@@ -38,12 +37,6 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <Link className="focus-ring hidden rounded-full p-2 text-ink-muted hover:bg-surface-low sm:inline-flex" title="Search" to="/search">
-            <Search size={20} />
-          </Link>
-          <Link className="focus-ring hidden rounded-full p-2 text-ink-muted hover:bg-surface-low sm:inline-flex" title="Saved venues" to={favoritesHref}>
-            <Heart size={20} />
-          </Link>
           {user && <NotificationBell className="focus-ring hidden sm:inline-flex" fallbackHref={notificationsHref} title="Notifications" />}
           {!initialized ? (
             <div className="hidden h-9 w-32 animate-pulse rounded-full bg-surface-low sm:block" />

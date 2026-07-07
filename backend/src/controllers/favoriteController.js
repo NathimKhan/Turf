@@ -1,5 +1,6 @@
 const Turf = require("../models/Turf");
 const User = require("../models/User");
+const { publicVenueFilter } = require("../services/venueApprovalService");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
 
 async function liveFavoriteFilter(extra = {}) {
@@ -15,9 +16,8 @@ async function liveFavoriteFilter(extra = {}) {
 
   return {
     ...extra,
-    isApproved: true,
     ownerId: { $in: owners.map((owner) => owner._id) },
-    $or: [{ status: "LIVE" }, { moderationStatus: "approved" }, { status: { $exists: false } }],
+    ...publicVenueFilter(),
   };
 }
 

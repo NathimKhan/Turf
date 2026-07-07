@@ -63,7 +63,7 @@ If SMTP values are empty, Nodemailer uses JSON transport so forgot-password stil
 
 `npm run seed` is idempotent and does not delete application data. It creates
 or verifies one Platform Owner from `ADMIN_NAME`, `ADMIN_EMAIL`, and
-`ADMIN_PASSWORD`, then upserts baseline platform settings.
+`ADMIN_PASSWORD`.
 
 ## API Response Format
 

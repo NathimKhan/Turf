@@ -83,7 +83,6 @@ const updateUser = asyncHandler(async (req, res) => {
     "role",
     "profileImage",
     "walletBalance",
-    "membershipPlan",
     "approvalStatus",
     "accountStatus",
   ];

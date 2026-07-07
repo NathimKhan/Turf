@@ -4,11 +4,22 @@ export function bookingQrPayload(booking, user) {
     userId: booking.userId || booking.user?.id || booking.user?._id || user?.id || user?._id || "",
     venueId: booking.venueId || booking.turf?.id || booking.turf?._id || "",
     date: String(booking.dateValue || booking.bookingDate || booking.date || "").slice(0, 10),
+    expiresAt: booking.qrExpiresAt || "",
+    status: booking.statusValue || booking.status || "",
     slot: `${booking.slotStartTime}-${booking.slotEndTime}`,
   });
 }
 
+export function isBookingQrExpired(booking = {}) {
+  return ["completed", "cancelled"].includes(booking.statusValue) ||
+    ["expired", "cancelled", "inactive"].includes(booking.qrStatus);
+}
+
 export async function createBookingQr(booking, user) {
+  if (isBookingQrExpired(booking)) {
+    throw new Error("Booking QR is expired.");
+  }
+
   const { default: QRCode } = await import("qrcode");
   return QRCode.toDataURL(bookingQrPayload(booking, user), {
     color: { dark: "#111827", light: "#FFFFFF" },
@@ -19,6 +30,10 @@ export async function createBookingQr(booking, user) {
 }
 
 export async function downloadBookingPass(booking, user) {
+  if (isBookingQrExpired(booking)) {
+    throw new Error("Booking pass has expired.");
+  }
+
   const { jsPDF } = await import("jspdf");
   const qrDataUrl = await createBookingQr(booking, user);
   const pdf = new jsPDF({ format: "a4", unit: "mm" });
@@ -43,7 +58,7 @@ export async function downloadBookingPass(booking, user) {
   const rows = [
     ["Booking ID", booking.id],
     ["Booking reference", reference],
-    ["User", user?.name || booking.user?.name || "TURFX Member"],
+    ["User", user?.name || booking.user?.name || "TURFX Player"],
     ["Date", booking.date],
     ["Time", `${booking.slotStartTime} - ${booking.slotEndTime}`],
     ["Status", booking.status],
@@ -72,6 +87,61 @@ export async function downloadBookingPass(booking, user) {
   pdf.save(`TURFX-PASS-${booking.id}.pdf`);
 }
 
+export async function downloadBookingInvoice(booking, payment = {}, user = {}) {
+  const { jsPDF } = await import("jspdf");
+  const pdf = new jsPDF({ format: "a4", unit: "mm" });
+  const invoiceId = booking.invoiceId || payment.invoiceId || `INV-${String(booking.id || "").slice(-8).toUpperCase()}`;
+  const transactionId = payment.paymentId || payment.transactionId || "-";
+
+  pdf.setFillColor(37, 99, 235);
+  pdf.roundedRect(18, 16, 18, 18, 3, 3, "F");
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(11);
+  pdf.text("TX", 27, 27.5, { align: "center" });
+  pdf.setTextColor(37, 99, 235);
+  pdf.setFontSize(22);
+  pdf.text("TURFX", 42, 29);
+
+  pdf.setTextColor(17, 24, 39);
+  pdf.setFontSize(24);
+  pdf.text("Booking Invoice", 18, 52);
+  pdf.setFontSize(13);
+  pdf.text(booking.venue || payment.venue || "TURFX Venue", 18, 64);
+
+  const rows = [
+    ["Invoice ID", invoiceId],
+    ["Transaction ID", transactionId],
+    ["Booking ID", booking.bookingReference || booking.id || "-"],
+    ["Customer", user.name || booking.user?.name || payment.customerName || "TURFX Player"],
+    ["Venue", booking.venue || payment.venue || "-"],
+    ["Date", booking.date || payment.date || "-"],
+    ["Time", booking.time || payment.time || "-"],
+    ["Amount", `INR ${Number(payment.amount || booking.paid || booking.totalAmount || 0).toLocaleString("en-IN")}`],
+    ["Payment Status", payment.status || booking.paymentStatus || "-"],
+    ["Booking Status", booking.status || "-"],
+  ];
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(11);
+  rows.forEach(([label, value], index) => {
+    const y = 84 + index * 11;
+    pdf.setTextColor(107, 114, 128);
+    pdf.text(label, 18, y);
+    pdf.setTextColor(17, 24, 39);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(String(value || "-"), 70, y);
+    pdf.setFont("helvetica", "normal");
+  });
+
+  pdf.setDrawColor(229, 231, 235);
+  pdf.line(18, 204, 192, 204);
+  pdf.setTextColor(107, 114, 128);
+  pdf.setFontSize(10);
+  pdf.text("Invoice generated after booking completion from the synchronized TURFX record.", 18, 216);
+  pdf.save(`TURFX-INVOICE-${invoiceId}.pdf`);
+}
+
 export async function downloadPaymentReceipt(payment, user = {}) {
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ format: "a4", unit: "mm" });
@@ -97,7 +167,7 @@ export async function downloadPaymentReceipt(payment, user = {}) {
   const rows = [
     ["Transaction ID", transactionId],
     ["Booking ID", bookingId],
-    ["User", user.name || payment.customerName || "TURFX Member"],
+    ["User", user.name || payment.customerName || "TURFX Player"],
     ["Venue", payment.venue || "-"],
     ["Date", payment.date || "-"],
     ["Time", payment.time || "-"],

@@ -87,35 +87,6 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
-    membershipPlan: {
-      type: String,
-      enum: ["Starter", "Gold", "Elite", "Venue Pro", "Admin"],
-      default: "Starter",
-    },
-    membershipUpdatedAt: Date,
-    membershipHistory: [
-      {
-        plan: {
-          type: String,
-          enum: ["Starter", "Gold", "Elite"],
-          required: true,
-        },
-        amount: {
-          type: Number,
-          min: 0,
-          default: 0,
-        },
-        reference: {
-          type: String,
-          trim: true,
-          default: "",
-        },
-        upgradedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
     favorites: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -169,10 +140,6 @@ userSchema.pre("validate", function syncApprovalStatus(next) {
   this.approvalStatus = normalizeOwnerApprovalStatus(this.approvalStatus);
   this.accountStatus = OWNER_ACCOUNT_STATUS_BY_APPROVAL[this.approvalStatus];
   return next();
-});
-
-userSchema.virtual("membership").get(function getMembership() {
-  return this.membershipPlan;
 });
 
 userSchema.pre("save", async function hashPassword(next) {

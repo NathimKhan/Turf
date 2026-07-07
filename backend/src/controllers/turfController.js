@@ -7,9 +7,15 @@ const User = require("../models/User");
 const {
   isOwnerActive,
   isVenueLive,
-  normalizeVenueStatus,
 } = require("../utils/approval");
+const {
+  applyVenueState,
+  initializeVenueSubmission,
+  publicVenueFilter,
+  resubmitVenue,
+} = require("../services/venueApprovalService");
 const { asyncHandler, successResponse } = require("../utils/responseHandler");
+const { ACTIVE_BOOKING_STATUSES } = require("../utils/bookingLifecycle");
 const {
   buildAvailabilityTimeline,
   configuredSportsForTurf,
@@ -25,7 +31,20 @@ const {
   sportRateForTurf,
   validateSlotRequest,
 } = require("../services/availabilityService");
+const { completeExpiredBookings } = require("../services/bookingLifecycleService");
 const { recordBookingConflict } = require("../services/conflictLogService");
+const {
+  calculateDistanceKm,
+  geocodeVenue,
+  queryCoordinates,
+  radiusKmFromQuery,
+} = require("../services/geocodingService");
+const {
+  IMAGE_COLLECTION_FIELDS,
+  SINGLE_IMAGE_FIELDS,
+  generatedTurfImageSvgFromToken,
+  uniqueImageValues,
+} = require("../utils/turfImages");
 
 function parseArray(value) {
   if (Array.isArray(value)) return value;
@@ -61,8 +80,79 @@ function parseObject(value) {
   }
 }
 
-function fileUrls(req) {
-  return (req.files || []).map((file) => `${req.protocol}://${req.get("host")}/uploads/${file.filename}`);
+function uploadUrl(req, file) {
+  return `${req.protocol}://${req.get("host")}/uploads/${file.filename}`;
+}
+
+function fileUrls(req, fieldName) {
+  if (Array.isArray(req.files)) {
+    return req.files
+      .filter((file) => !fieldName || file.fieldname === fieldName)
+      .map((file) => uploadUrl(req, file));
+  }
+
+  if (req.files && typeof req.files === "object") {
+    const files = fieldName
+      ? req.files[fieldName] || []
+      : Object.values(req.files).flat();
+    return files.map((file) => uploadUrl(req, file));
+  }
+
+  return [];
+}
+
+function allUploadedImageUrls(req) {
+  return fileUrls(req);
+}
+
+function firstImage(value) {
+  return parseArray(value).find(Boolean) || "";
+}
+
+function imagePayloadFromRequest(req) {
+  const payload = {};
+  const legacyImages = uniqueImageValues([
+    ...parseArray(req.body.images),
+    ...fileUrls(req, "images"),
+  ]);
+
+  if (req.body.images !== undefined || fileUrls(req, "images").length) {
+    payload.images = legacyImages;
+  }
+
+  SINGLE_IMAGE_FIELDS.forEach((field) => {
+    const uploads = fileUrls(req, field);
+    const bodyImage = firstImage(req.body[field]);
+    if (uploads[0] || req.body[field] !== undefined) {
+      payload[field] = uploads[0] || bodyImage;
+    }
+  });
+
+  IMAGE_COLLECTION_FIELDS.forEach((field) => {
+    const uploads = fileUrls(req, field);
+    if (req.body[field] !== undefined || uploads.length) {
+      payload[field] = uniqueImageValues([...parseArray(req.body[field]), ...uploads]);
+    }
+  });
+
+  const featuredFallback = uniqueImageValues([
+    ...(payload.gallery || []),
+    ...(payload.images || []),
+    ...allUploadedImageUrls(req),
+  ]);
+
+  if (!payload.heroImage && featuredFallback[0]) payload.heroImage = featuredFallback[0];
+  if (!payload.coverImage && featuredFallback[1]) payload.coverImage = featuredFallback[1];
+  if (!payload.profileImage && featuredFallback[2]) payload.profileImage = featuredFallback[2];
+  if (!payload.thumbnail && payload.heroImage) payload.thumbnail = payload.heroImage;
+
+  return payload;
+}
+
+function applyImagePayload(turf, payload = {}) {
+  Object.entries(payload).forEach(([field, value]) => {
+    turf[field] = value;
+  });
 }
 
 function parseSchedule(value) {
@@ -224,14 +314,7 @@ function canManageTurf(user, turf) {
 }
 
 function liveVenueFilter() {
-  return {
-    isApproved: true,
-    $or: [
-      { status: "LIVE" },
-      { moderationStatus: "approved" },
-      { status: { $exists: false } },
-    ],
-  };
+  return publicVenueFilter();
 }
 
 async function activeVenueOwnerIds() {
@@ -248,6 +331,122 @@ async function activeVenueOwnerIds() {
   return owners.map((owner) => owner._id);
 }
 
+function areaFromPayload(payload = {}, fallback = "") {
+  const safeFallback = typeof fallback === "string" ? fallback : "";
+  const rawLocation = typeof payload.location === "string" ? payload.location : "";
+  return String(payload.area || rawLocation || payload.locationLabel || safeFallback || "").trim();
+}
+
+function locationPayload(payload = {}, existing = {}) {
+  const existingObject = existing.toObject ? existing.toObject() : existing;
+  const area = areaFromPayload(payload, existingObject.area || existingObject.location);
+  const textLocationChanged = ["address", "area", "city", "location", "state"].some((field) => payload[field] !== undefined);
+  const shouldReuseCoordinates = !textLocationChanged;
+
+  return {
+    address: payload.address ?? existingObject.address,
+    area,
+    city: payload.city ?? existingObject.city,
+    coordinates: payload.coordinates ?? payload.locationCoordinates,
+    latitude: payload.latitude ?? payload.lat ?? (shouldReuseCoordinates ? existingObject.latitude : undefined),
+    location: payload.geoLocation || (typeof payload.location === "object" ? payload.location : shouldReuseCoordinates ? existingObject.location : undefined),
+    longitude: payload.longitude ?? payload.lng ?? payload.lon ?? (shouldReuseCoordinates ? existingObject.longitude : undefined),
+    state: payload.state ?? existingObject.state,
+  };
+}
+
+function hasLocationPayload(payload = {}) {
+  return [
+    "address",
+    "area",
+    "city",
+    "coordinates",
+    "geoLocation",
+    "lat",
+    "latitude",
+    "lng",
+    "location",
+    "locationCoordinates",
+    "lon",
+    "longitude",
+    "state",
+  ].some((field) => payload[field] !== undefined);
+}
+
+function withDistance(turf, distanceInKm) {
+  if (distanceInKm === undefined || distanceInKm === null) return turf;
+  if (turf?.$locals) {
+    turf.$locals.distanceInKm = Number(distanceInKm);
+  }
+  return turf;
+}
+
+async function hydrateDistanceRows(rows = []) {
+  const ids = rows.map((row) => row._id);
+  const distances = new Map(rows.map((row) => [String(row._id), Number((Number(row.distanceInMeters || 0) / 1000).toFixed(2))]));
+  const docs = await Turf.find({ _id: { $in: ids } }).populate("ownerId", "name email phone businessName");
+  const byId = new Map(docs.map((doc) => [String(doc._id), doc]));
+
+  return ids
+    .map((id) => byId.get(String(id)))
+    .filter(Boolean)
+    .map((doc) => withDistance(doc, distances.get(String(doc._id))));
+}
+
+async function findTurfsByDistance({ filter, near, radiusKm, requestedDate, safeLimit, safePage }) {
+  const geoFilter = {
+    ...filter,
+    "location.coordinates": { $type: "array" },
+    "location.type": "Point",
+  };
+  const geoNear = {
+    $geoNear: {
+      distanceField: "distanceInMeters",
+      key: "location",
+      near: near.point,
+      query: geoFilter,
+      spherical: true,
+    },
+  };
+
+  if (radiusKm) {
+    geoNear.$geoNear.maxDistance = radiusKm * 1000;
+  }
+
+  if (requestedDate) {
+    const rows = await Turf.aggregate([
+      geoNear,
+      { $sort: { distanceInMeters: 1, createdAt: -1 } },
+    ]);
+    const matchingTurfs = await hydrateDistanceRows(rows);
+    const availableTurfs = matchingTurfs.filter(
+      (turf) => generateScheduledSlots(turf, requestedDate).length > 0,
+    );
+    return {
+      total: availableTurfs.length,
+      turfs: availableTurfs.slice((safePage - 1) * safeLimit, safePage * safeLimit),
+    };
+  }
+
+  const [rows, countRows] = await Promise.all([
+    Turf.aggregate([
+      geoNear,
+      { $sort: { distanceInMeters: 1, createdAt: -1 } },
+      { $skip: (safePage - 1) * safeLimit },
+      { $limit: safeLimit },
+    ]),
+    Turf.aggregate([
+      geoNear,
+      { $count: "total" },
+    ]),
+  ]);
+
+  return {
+    total: countRows[0]?.total || 0,
+    turfs: await hydrateDistanceRows(rows),
+  };
+}
+
 const turfValidation = [
   body("name").trim().notEmpty().withMessage("Name is required"),
   body("description").trim().notEmpty().withMessage("Description is required"),
@@ -262,6 +461,8 @@ const turfValidation = [
     validateAllowedArray(value, Turf.allowedAmenities, "At least one amenity is required", "Amenities"),
   ),
   body("pricePerHour").isFloat({ min: 0 }).withMessage("Price per hour must be positive"),
+  body("latitude").optional({ checkFalsy: true }).isFloat({ min: -90, max: 90 }).withMessage("Latitude must be between -90 and 90"),
+  body("longitude").optional({ checkFalsy: true }).isFloat({ min: -180, max: 180 }).withMessage("Longitude must be between -180 and 180"),
 ];
 
 const turfUpdateValidation = [
@@ -278,6 +479,8 @@ const turfUpdateValidation = [
     validateAllowedArray(value, Turf.allowedAmenities, "At least one amenity is required", "Amenities"),
   ),
   body("pricePerHour").optional().isFloat({ min: 0 }).withMessage("Price per hour must be positive"),
+  body("latitude").optional({ checkFalsy: true }).isFloat({ min: -90, max: 90 }).withMessage("Latitude must be between -90 and 90"),
+  body("longitude").optional({ checkFalsy: true }).isFloat({ min: -180, max: 180 }).withMessage("Longitude must be between -180 and 180"),
 ];
 
 const getTurfs = asyncHandler(async (req, res) => {
@@ -286,7 +489,6 @@ const getTurfs = asyncHandler(async (req, res) => {
     sport,
     minPrice,
     maxPrice,
-    rating,
     search,
     name,
     page = 1,
@@ -295,19 +497,19 @@ const getTurfs = asyncHandler(async (req, res) => {
   } = req.query;
 
   const filter = {};
+  const near = queryCoordinates(req.query);
+  const radiusKm = radiusKmFromQuery(req.query);
   const safePage = Math.max(Number(page) || 1, 1);
   const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
 
   if (!includeUnapproved || req.user?.role !== "admin") {
-    filter.isApproved = true;
-    filter.$and = [liveVenueFilter()];
+    filter.$and = [...(filter.$and || []), liveVenueFilter()];
     filter.ownerId = { $in: await activeVenueOwnerIds() };
   }
 
   if (city) filter.city = { $regex: city, $options: "i" };
   if (sport) filter.sportsSupported = sport;
   if (name) filter.name = { $regex: name, $options: "i" };
-  if (rating) filter.rating = { $gte: Number(rating) };
   if (minPrice || maxPrice) {
     filter.pricePerHour = {};
     if (minPrice) filter.pricePerHour.$gte = Number(minPrice);
@@ -316,19 +518,31 @@ const getTurfs = asyncHandler(async (req, res) => {
   if (search) {
     filter.$or = [
       { name: { $regex: search, $options: "i" } },
+      { area: { $regex: search, $options: "i" } },
       { city: { $regex: search, $options: "i" } },
       { sportsSupported: { $regex: search, $options: "i" } },
     ];
   }
 
+  const requestedDate = req.query.date ? normalizeDate(req.query.date) : null;
   let turfs;
   let total;
 
-  if (req.query.date) {
-    const requestedDate = normalizeDate(req.query.date);
+  if (near) {
+    const result = await findTurfsByDistance({
+      filter,
+      near,
+      radiusKm,
+      requestedDate,
+      safeLimit,
+      safePage,
+    });
+    turfs = result.turfs;
+    total = result.total;
+  } else if (requestedDate) {
     const matchingTurfs = await Turf.find(filter)
       .populate("ownerId", "name email phone businessName")
-      .sort({ rating: -1, createdAt: -1 });
+      .sort({ createdAt: -1 });
     const availableTurfs = matchingTurfs.filter(
       (turf) => generateScheduledSlots(turf, requestedDate).length > 0,
     );
@@ -338,7 +552,7 @@ const getTurfs = asyncHandler(async (req, res) => {
     [turfs, total] = await Promise.all([
       Turf.find(filter)
         .populate("ownerId", "name email phone businessName")
-        .sort({ rating: -1, createdAt: -1 })
+        .sort({ createdAt: -1 })
         .skip((safePage - 1) * safeLimit)
         .limit(safeLimit),
       Turf.countDocuments(filter),
@@ -361,9 +575,34 @@ const searchTurfs = asyncHandler(async (req, res) => {
   return getTurfs(req, res);
 });
 
+const getNearbyTurfs = asyncHandler(async (req, res) => {
+  if (!queryCoordinates(req.query)) {
+    const error = new Error("Latitude and longitude are required for nearby turf search.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  req.query.radiusKm = req.query.radiusKm || req.query.radius || 25;
+  return getTurfs(req, res);
+});
+
 const getTurfsByCity = asyncHandler(async (req, res) => {
   req.query.city = req.params.city;
   return getTurfs(req, res);
+});
+
+const getGeneratedTurfMedia = asyncHandler(async (req, res) => {
+  const svg = generatedTurfImageSvgFromToken(req.params.token);
+  if (!svg) {
+    const error = new Error("Generated turf media not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  res
+    .set("Cache-Control", "public, max-age=31536000, immutable")
+    .type("image/svg+xml")
+    .send(svg);
 });
 
 const getTurfById = asyncHandler(async (req, res) => {
@@ -385,6 +624,11 @@ const getTurfById = asyncHandler(async (req, res) => {
     throw error;
   }
 
+  const near = queryCoordinates(req.query);
+  if (near) {
+    withDistance(turf, calculateDistanceKm({ point: near.point }, { location: turf.location }));
+  }
+
   return successResponse(res, "Turf fetched", { turf });
 });
 
@@ -392,7 +636,7 @@ const getTurfMetadata = asyncHandler(async (req, res) => {
   const ownerIds = await activeVenueOwnerIds();
   const [cities, locations, sports, amenities] = await Promise.all([
     Turf.distinct("city", { ...liveVenueFilter(), ownerId: { $in: ownerIds } }),
-    Turf.distinct("location", { ...liveVenueFilter(), ownerId: { $in: ownerIds } }),
+    Turf.distinct("area", { ...liveVenueFilter(), ownerId: { $in: ownerIds } }),
     Turf.distinct("sportsSupported", { ...liveVenueFilter(), ownerId: { $in: ownerIds } }),
     Turf.distinct("amenities", { ...liveVenueFilter(), ownerId: { $in: ownerIds } }),
   ]);
@@ -402,6 +646,26 @@ const getTurfMetadata = asyncHandler(async (req, res) => {
     locations: locations.filter(Boolean).sort(),
     sports: sports.filter(Boolean).sort(),
     amenities: amenities.filter(Boolean).sort(),
+  });
+});
+
+const geocodeTurfAddress = asyncHandler(async (req, res) => {
+  const geocoded = await geocodeVenue({
+    address: req.query.address || req.query.q,
+    area: req.query.area || req.query.location,
+    city: req.query.city,
+    latitude: req.query.latitude,
+    longitude: req.query.longitude,
+    state: req.query.state,
+  });
+
+  return successResponse(res, "Address geocoded", {
+    area: geocoded.area,
+    coordinates: geocoded.location.coordinates,
+    formattedAddress: geocoded.formattedAddress,
+    latitude: geocoded.latitude,
+    longitude: geocoded.longitude,
+    source: geocoded.source,
   });
 });
 
@@ -425,10 +689,11 @@ const getTurfAvailability = asyncHandler(async (req, res) => {
 
   const bookingDate = normalizeDate(req.query.date);
   const { startTime, endTime } = req.query;
+  await completeExpiredBookings();
   const bookings = await Booking.find({
     turfId: turf._id,
     bookingDate,
-    bookingStatus: { $in: ["pending", "confirmed", "checked_in", "upcoming"] },
+    bookingStatus: { $in: ACTIVE_BOOKING_STATUSES },
   }).select("slotStartTime slotEndTime bookingStatus paymentStatus sport");
 
   const timeline = buildAvailabilityTimeline(turf, bookingDate, bookings);
@@ -482,30 +747,40 @@ const getTurfAvailability = asyncHandler(async (req, res) => {
 });
 
 const createTurf = asyncHandler(async (req, res) => {
-  const images = [...parseArray(req.body.images), ...fileUrls(req)];
+  const imagePayload = imagePayloadFromRequest(req);
   const sportsSupported = parseArray(req.body.sportsSupported || req.body.sport);
   const pricePerHour = Number(req.body.pricePerHour);
   const sportRates = normalizeSportRatesPayload(req.body.sportRates, sportsSupported, pricePerHour);
+  const geocoded = await geocodeVenue(locationPayload(req.body));
 
-  const turf = await Turf.create({
+  const turf = new Turf({
     name: req.body.name,
     description: req.body.description,
-    location: req.body.location,
+    area: geocoded.area || req.body.location,
+    location: geocoded.location,
+    latitude: geocoded.latitude,
+    longitude: geocoded.longitude,
     address: req.body.address,
     city: req.body.city,
     state: req.body.state,
     sportsSupported,
     pricePerHour,
     sportRates,
-    images,
+    ...imagePayload,
     amenities: parseArray(req.body.amenities),
     ownerId: req.user._id,
-    status:
-      req.user.role === "admin" && parseBoolean(req.body.isApproved, true)
-        ? normalizeVenueStatus(req.body.status || "LIVE")
-        : "PENDING",
     schedule: parseSchedule(req.body.schedule),
   });
+
+  if (req.user.role === "admin" && parseBoolean(req.body.isApproved, true)) {
+    applyVenueState(turf, req.body.status || "APPROVED", { actorId: req.user._id });
+    turf.submittedAt = turf.submittedAt || new Date();
+    turf.submittedBy = turf.submittedBy || req.user._id;
+  } else {
+    initializeVenueSubmission(turf, req.user._id);
+  }
+
+  await turf.save();
 
   if (!isVenueLive(turf)) {
     const admins = await User.find({ role: "admin" }).select("_id");
@@ -549,12 +824,24 @@ const updateTurf = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const fields = ["name", "description", "location", "address", "city", "state", "pricePerHour"];
+  const fields = ["name", "description", "address", "city", "state", "pricePerHour"];
   fields.forEach((field) => {
     if (req.body[field] !== undefined) {
       turf[field] = req.body[field];
     }
   });
+
+  if (req.body.location !== undefined || req.body.area !== undefined) {
+    turf.area = areaFromPayload(req.body, turf.area);
+  }
+
+  if (hasLocationPayload(req.body)) {
+    const geocoded = await geocodeVenue(locationPayload(req.body, turf));
+    turf.area = geocoded.area || turf.area;
+    turf.location = geocoded.location;
+    turf.latitude = geocoded.latitude;
+    turf.longitude = geocoded.longitude;
+  }
 
   if (req.body.sportsSupported || req.body.sport) {
     turf.sportsSupported = parseArray(req.body.sportsSupported || req.body.sport);
@@ -573,10 +860,15 @@ const updateTurf = asyncHandler(async (req, res) => {
     turf.amenities = parseArray(req.body.amenities);
   }
 
-  const uploadedImages = fileUrls(req);
-  if (req.body.images || uploadedImages.length) {
-    turf.images = [...parseArray(req.body.images), ...uploadedImages];
+  const imagePayload = imagePayloadFromRequest(req);
+  const uploadedImages = allUploadedImageUrls(req);
+  if (uploadedImages.length) {
+    imagePayload.updatedImages = uniqueImageValues([
+      ...(turf.updatedImages || []),
+      ...uploadedImages,
+    ]);
   }
+  applyImagePayload(turf, imagePayload);
 
   if (req.body.schedule) {
     turf.schedule = parseSchedule(req.body.schedule);
@@ -600,7 +892,7 @@ const updateTurf = asyncHandler(async (req, res) => {
     }
   }
 
-  if (turf.isApproved) {
+  if (isVenueLive(turf)) {
     const followers = await User.find({ favorites: turf._id }).select("_id");
     if (followers.length) {
       await Notification.insertMany(
@@ -614,6 +906,55 @@ const updateTurf = asyncHandler(async (req, res) => {
   }
 
   return successResponse(res, "Turf updated", { turf });
+});
+
+const resubmitTurf = asyncHandler(async (req, res) => {
+  const turf = await Turf.findById(req.params.id);
+
+  if (!turf) {
+    const error = new Error("Turf not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!canManageTurf(req.user, turf)) {
+    const error = new Error("Only the turf owner or admin can resubmit this turf");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  if (req.user.role === "owner" && turf.approvalStatus === "APPROVED") {
+    const error = new Error("Approved venues are already public. Edit updates do not require resubmission.");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  resubmitVenue(turf, req.user._id);
+  await turf.save();
+
+  const admins = await User.find({ role: "admin" }).select("_id");
+  if (admins.length) {
+    await Notification.insertMany(
+      admins.map((admin) => ({
+        userId: admin._id,
+        title: "Venue resubmitted",
+        message: `${turf.name} was resubmitted by ${req.user.businessName || req.user.name}.`,
+        metadata: { turfId: turf._id, ownerId: req.user._id },
+        targetUrl: "/admin/turfs",
+        type: "venue",
+      })),
+    );
+  }
+
+  await AuditLog.create({
+    action: "RESUBMITTED",
+    actorId: req.user._id,
+    entityId: turf._id,
+    entityType: "VENUE",
+    status: turf.approvalStatus,
+  });
+
+  return successResponse(res, "Venue resubmitted for approval.", { turf });
 });
 
 const deleteTurf = asyncHandler(async (req, res) => {
@@ -631,9 +972,10 @@ const deleteTurf = asyncHandler(async (req, res) => {
     throw error;
   }
 
+  await completeExpiredBookings();
   const activeBookings = await Booking.countDocuments({
     turfId: turf._id,
-    bookingStatus: { $in: ["pending", "confirmed", "checked_in", "upcoming"] },
+    bookingStatus: { $in: ACTIVE_BOOKING_STATUSES },
   });
 
   if (activeBookings > 0) {
@@ -676,13 +1018,17 @@ const updateTurfSlots = asyncHandler(async (req, res) => {
 module.exports = {
   createTurf,
   deleteTurf,
+  geocodeTurfAddress,
+  getGeneratedTurfMedia,
   getMyTurfs,
+  getNearbyTurfs,
   getTurfById,
   getTurfAvailability,
   getTurfMetadata,
   getTurfs,
   getTurfsByCity,
   searchTurfs,
+  resubmitTurf,
   turfUpdateValidation,
   turfValidation,
   updateTurf,

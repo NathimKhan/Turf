@@ -39,6 +39,26 @@ function parseDnsServers() {
     .filter(Boolean);
 }
 
+function isLoopbackDnsServer(server = "") {
+  const normalized = String(server).replace(/^\[|\]$/g, "");
+  return normalized === "127.0.0.1" || normalized === "::1" || normalized === "localhost";
+}
+
+function configureMongoDnsServers() {
+  const currentServers = dns.getServers();
+  const shouldUsePublicDns =
+    process.env.MONGO_USE_SYSTEM_DNS !== "true" &&
+    (!currentServers.length || currentServers.some(isLoopbackDnsServer));
+
+  if (!shouldUsePublicDns) return;
+
+  const fallbackServers = parseDnsServers();
+  dns.setServers(fallbackServers);
+  console.warn(
+    `[db] system DNS servers (${currentServers.join(", ") || "none"}) cannot resolve Atlas SRV reliably; using ${fallbackServers.join(", ")} for Mongo lookups.`,
+  );
+}
+
 function parseMongoUri(rawUri) {
   const mongoUri = rawUri.trim();
 
@@ -150,7 +170,13 @@ async function connectWithFallback(mongoUri, parsedUri) {
     console.warn("[db] Retrying Atlas connection with DNS-resolved mongodb:// seed list.");
 
     const fallbackUri = await buildSeedListUriFromSrv(mongoUri, parsedUri);
-    return mongoose.connect(fallbackUri, connectionOptions);
+    try {
+      return await mongoose.connect(fallbackUri, connectionOptions);
+    } catch (fallbackError) {
+      console.error(`[db] Atlas seed-list fallback failed: ${fallbackError.message}`);
+      console.error("[db] Check that your current IP is allowed in MongoDB Atlas Network Access and that outbound port 27017 is not blocked.");
+      throw fallbackError;
+    }
   }
 }
 
@@ -171,6 +197,7 @@ async function connectDatabase() {
   registerConnectionLifecycleLogs();
 
   if (parsedUri.protocol === "mongodb+srv:") {
+    configureMongoDnsServers();
     await logSrvDiagnostics(parsedUri.hostname);
   }
 

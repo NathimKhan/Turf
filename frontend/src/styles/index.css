@@ -84,4 +84,14 @@
       linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
     background-size: 42px 42px;
   }
+
+  .turfx-map {
+    min-height: 100%;
+    width: 100%;
+  }
+
+  .turfx-map .leaflet-pane,
+  .turfx-map .leaflet-control {
+    z-index: 10;
+  }
 }
